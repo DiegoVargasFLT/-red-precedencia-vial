@@ -9,7 +9,7 @@
 //
 // Mientras estén vacíos, el panel funciona igual usando solo localStorage.
 window.RP_SUPABASE = {
-  url: "",
-  anonKey: "",
+  url: "https://olkcsvcgjtgwujhluyio.supabase.co",
+  anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9sa2NzdmNnanRnd3VqaGx1eWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwODA4MjQsImV4cCI6MjA5ODY1NjgyNH0.xuYfsCHJTy-5uvuFuptDIvihCzuHb7h5K3w4I5Pm7iA",
   boardId: "red-precedencia-vial"
 };
