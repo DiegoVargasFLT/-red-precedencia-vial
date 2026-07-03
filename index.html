@@ -155,10 +155,16 @@
               <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Sin dependencias (nivel 0)</div>
             </sc-if>
             <sc-for list="{{depList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#FFFFFF;border:1px solid #D9E1EC;padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
-                <span style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
-                <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+              <button onClick="{{d.onClick}}" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
+                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+                </div>
               </button>
             </sc-for>
           </div>
@@ -168,10 +174,16 @@
               <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— No habilita otras actividades</div>
             </sc-if>
             <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#FFFFFF;border:1px solid #D9E1EC;padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
-                <span style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
-                <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+              <button onClick="{{d.onClick}}" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
+                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+                </div>
               </button>
             </sc-for>
           </div>
@@ -220,13 +232,34 @@
             <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
             <div style="max-height:230px;overflow:auto;border:1px solid #D9E1EC;background:#F4F7FB">
               <sc-for list="{{depOptions}}" as="o" hint-placeholder-count="4">
-                <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #FFFFFF;cursor:pointer;font-size:12px;color:#1F3B6F" style-hover="background:#FFFFFF">
+                <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #FFFFFF;border-left:3px solid {{o.areaColor}};cursor:pointer;font-size:12px;color:#1F3B6F" style-hover="background:#FFFFFF">
                   <input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}" style="accent-color:#61B1E3;flex:none">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{{o.areaColor}};flex:none;min-width:32px">{{o.areaAbbr}}</span>
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{o.id}}</span>
-                  <span style="line-height:1.3">{{o.titulo}}</span>
+                  <span style="line-height:1.3;flex:1">{{o.titulo}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.1em;color:{{o.faseColor}};flex:none">{{o.faseCode}}</span>
                 </label>
               </sc-for>
             </div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">HABILITA ({{enCount}})</div>
+            <sc-if value="{{enEmpty}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— No habilita otras actividades</div>
+            </sc-if>
+            <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
+              <button onClick="{{d.onClick}}" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
+                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+                </div>
+              </button>
+            </sc-for>
           </div>
           <div style="display:flex;gap:10px">
             <button onClick="{{onListo}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">LISTO</button>
@@ -802,6 +835,10 @@ class Component extends DCLogic {
     // Paleta de identificación por área (colores de marca, fríos primero).
     // Cada área recibe un color estable para su línea divisoria, riel y etiqueta.
     const AREA_PALETTE = ['#1F3B6F','#61B1E3','#025850','#332664','#74C6D3','#AD1924','#7486A6','#1F3B6F'];
+    // Color estable por área (independiente de qué tan ocultas estén otras),
+    // usado para identificar el área de un ítem en cualquier listado.
+    const areaColorMap = {};
+    orderedAreas.forEach((a, i) => { areaColorMap[a] = AREA_PALETTE[i % AREA_PALETTE.length]; });
     const laneY = {};
     let yCur = 34;
     const lanes = visAreas.map((a, i) => {
@@ -938,7 +975,18 @@ class Component extends DCLogic {
     const showManage = mode === 'manage';
     const showDetail = !!selNode && mode !== 'edit';
     const showForm = !!selNode && mode === 'edit';
-    const mkItem = n => ({id: n.id, titulo: n.titulo, color: sc[n.estado] || '#5E7196', onClick: () => this.selectNode(n.id)});
+    // Código corto de fase, para identificar de un vistazo (p.ej. "PRE" = Preconstrucción)
+    // en cualquier listado de dependencias sin ocupar espacio.
+    const FASE_CODES = {'Preconstrucción':'PRE','Construcción':'CON','Entrega a Beneficiarios':'ENT','Liquidación':'LIQ'};
+    const faseCodeFor = f => FASE_CODES[f] || (f||'').slice(0,3).toUpperCase();
+    const faseColorFor = f => (FASE_STYLES[f] && FASE_STYLES[f].fg) || '#94A1BA';
+    const mkItem = n => ({
+      id: n.id, titulo: n.titulo, estado: n.estado,
+      color: sc[n.estado] || '#5E7196',
+      area: n.area, areaColor: areaColorMap[n.area] || '#94A1BA',
+      faseCode: faseCodeFor(n.fase), faseColor: faseColorFor(n.fase),
+      onClick: () => this.selectNode(n.id)
+    });
 
     // opciones para los selects del formulario y datos de gestión
     const areaOptions = orderedAreas.map(a => ({name: a}));
@@ -959,10 +1007,12 @@ class Component extends DCLogic {
       const excl = new Set([selId]);
       this.collectDesc(excl, nodes);
       depOptions = nodes.filter(n => !excl.has(n.id)).map(n => ({
-        id: n.id, titulo: n.titulo,
+        id: n.id, titulo: n.titulo, area: n.area,
+        areaAbbr: this.prefixFor(n.area), areaColor: areaColorMap[n.area] || '#94A1BA',
+        faseCode: faseCodeFor(n.fase), faseColor: faseColorFor(n.fase),
         checked: (selNode.dependeDe||[]).includes(n.id),
         onToggle: () => this.toggleDep(selId, n.id)
-      }));
+      })).sort((a, b) => a.area.localeCompare(b.area) || a.id.localeCompare(b.id));
     }
 
     // Los <select> de ÁREA y ESTADO se construyen como elementos React porque
@@ -1011,7 +1061,7 @@ class Component extends DCLogic {
       selNota: selNode ? (selNode.nota || '') : '',
       fAreaSelect, fEstadoSelect,
       depCount: depList.length, depEmpty: showDetail && depList.length === 0, depList,
-      enCount: enList.length, enEmpty: showDetail && enList.length === 0, enList,
+      enCount: enList.length, enEmpty: enList.length === 0, enList,
       onEditar: () => this.setState({mode: 'edit'}),
       onListo: () => this.setState({mode: 'detail'}),
       onEliminar: () => this.deleteNode(selId),
