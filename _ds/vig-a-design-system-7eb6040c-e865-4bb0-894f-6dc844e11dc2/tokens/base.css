@@ -1,0 +1,59 @@
+/* Vigía — base layer: light reset + element defaults bound to tokens. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--body-font);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--text-body);
+  background: var(--surface-page);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings use the editorial serif */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--heading-font);
+  color: var(--text-strong);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-snug);
+  margin: 0 0 0.5em;
+  font-optical-sizing: auto;
+}
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-xl); }
+h3 { font-size: var(--text-lg); }
+
+p { margin: 0 0 1em; text-wrap: pretty; }
+
+a { color: var(--text-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+small { font-size: var(--text-xs); }
+
+code, kbd, samp {
+  font-family: var(--data-font);
+  font-size: 0.9em;
+}
+
+::selection { background: var(--gold-200); color: var(--neutral-900); }
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Eyebrow / overline helper — common in civic editorial UI */
+.vigia-eyebrow {
+  font-family: var(--ui-font);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

@@ -1,0 +1,123 @@
+/* Vigía — Color tokens
+ * Palette derived from the Colombian tricolor (azul / oro / rojo), reworked for
+ * civic-tech: a confident Andean blue leads, gold is the energetic accent used
+ * sparingly, red is reserved for alerts. Warm "papel/tinta" neutrals give the
+ * editorial, printed-document feel. Green is added for positive data deltas.
+ */
+:root {
+  /* ---- Andes blue (primary / brand) ---- */
+  --blue-50:  #EDF2FC;
+  --blue-100: #D6E1F7;
+  --blue-200: #AFC3EE;
+  --blue-300: #84A0E2;
+  --blue-400: #5A7DD6;
+  --blue-500: #3A5DC4;
+  --blue-600: #2C49A8;
+  --blue-700: #233A85;
+  --blue-800: #1B2C63;
+  --blue-900: #142046;
+
+  /* ---- Oro (accent / highlight) ---- */
+  --gold-50:  #FEF8E7;
+  --gold-100: #FCEEC0;
+  --gold-200: #F9DD84;
+  --gold-300: #F5C944;
+  --gold-400: #EFB81C;
+  --gold-500: #D89E0C;
+  --gold-600: #B07C08;
+  --gold-700: #855C0A;
+  --gold-800: #5E410B;
+  --gold-900: #3D2A08;
+
+  /* ---- Rojo (alert / negative) ---- */
+  --red-50:  #FDECEC;
+  --red-100: #FAD2D2;
+  --red-200: #F2A3A3;
+  --red-300: #E66E6E;
+  --red-400: #D6424A;
+  --red-500: #C21F2E;
+  --red-600: #9F1623;
+  --red-700: #7C121C;
+  --red-800: #5A0E16;
+  --red-900: #3C0A10;
+
+  /* ---- Selva green (positive / success) ---- */
+  --green-50:  #E9F7EF;
+  --green-100: #C9ECD8;
+  --green-200: #93D8B2;
+  --green-300: #54BE89;
+  --green-400: #25A06A;
+  --green-500: #14834F;
+  --green-600: #0E6B41;
+  --green-700: #0B5234;
+  --green-800: #083B26;
+  --green-900: #052619;
+
+  /* ---- Papel / Tinta (warm neutrals) ---- */
+  --neutral-0:   #FFFFFF;
+  --paper:       #FBFAF6;
+  --neutral-50:  #F4F2EC;
+  --neutral-100: #E9E6DC;
+  --neutral-200: #D7D2C4;
+  --neutral-300: #BBB4A2;
+  --neutral-400: #948C78;
+  --neutral-500: #6E6757;
+  --neutral-600: #524C40;
+  --neutral-700: #3A352C;
+  --neutral-800: #26221C;
+  --neutral-900: #14110D;
+
+  /* ---- Categorical data-viz ramp (parties / categories) ---- */
+  --viz-1: #3A5DC4; /* blue   */
+  --viz-2: #EFB81C; /* gold   */
+  --viz-3: #14834F; /* green  */
+  --viz-4: #C21F2E; /* red    */
+  --viz-5: #7C5CD0; /* violet */
+  --viz-6: #1E9AAE; /* teal   */
+  --viz-7: #E07A1C; /* orange */
+  --viz-8: #98694B; /* clay   */
+
+  /* =====================  SEMANTIC ALIASES  ===================== */
+
+  /* Text */
+  --text-strong:  var(--neutral-900);
+  --text-body:    var(--neutral-800);
+  --text-muted:   var(--neutral-500);
+  --text-subtle:  var(--neutral-400);
+  --text-link:    var(--blue-600);
+  --text-on-brand:var(--neutral-0);
+  --text-on-accent: var(--neutral-900);
+
+  /* Surfaces */
+  --surface-page:    var(--paper);
+  --surface-card:    var(--neutral-0);
+  --surface-sunken:  var(--neutral-50);
+  --surface-raised:  var(--neutral-0);
+  --surface-brand:   var(--blue-500);
+  --surface-brand-strong: var(--blue-700);
+  --surface-inverse: var(--neutral-900);
+  --surface-accent-soft: var(--gold-50);
+  --surface-brand-soft:  var(--blue-50);
+
+  /* Borders */
+  --border-subtle:  var(--neutral-200);
+  --border-default: var(--neutral-300);
+  --border-strong:  var(--neutral-400);
+  --border-brand:   var(--blue-500);
+  --border-focus:   var(--blue-500);
+
+  /* Intent */
+  --accent:        var(--gold-400);
+  --accent-hover:  var(--gold-500);
+  --info:          var(--blue-500);
+  --success:       var(--green-500);
+  --success-soft:  var(--green-50);
+  --warning:       var(--gold-500);
+  --warning-soft:  var(--gold-50);
+  --danger:        var(--red-500);
+  --danger-hover:  var(--red-600);
+  --danger-soft:   var(--red-50);
+
+  /* Focus ring */
+  --ring: 0 0 0 3px var(--blue-200);
+}

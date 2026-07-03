@@ -1,0 +1,14 @@
+/* Vigía — Motion tokens
+ * Restrained, functional motion. Quick ease-out for entrances, gentle for hovers.
+ * No bounces, no decorative loops. Respect prefers-reduced-motion in components.
+ */
+:root {
+  --duration-instant: 80ms;  /* @kind other */
+  --duration-fast:    140ms; /* @kind other */
+  --duration-normal:  220ms; /* @kind other */
+  --duration-slow:    360ms; /* @kind other */
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);     /* @kind other */
+  --ease-out:      cubic-bezier(0.16, 1, 0.3, 1);  /* @kind other */
+  --ease-in-out:   cubic-bezier(0.65, 0, 0.35, 1); /* @kind other */
+}

@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    html,body{margin:0;padding:0;background:#0E141D;}
+    *{box-sizing:border-box;}
+    ::-webkit-scrollbar{width:10px;height:10px;background:#0E141D;}
+    ::-webkit-scrollbar-thumb{background:#2A3646;border:2px solid #0E141D;}
+    ::-webkit-scrollbar-corner{background:#0E141D;}
+    input:focus,select:focus,textarea:focus{outline:1px solid #5B8DEF;outline-offset:1px;}
+    option{background:#161F2C;color:#DDE5EF;}
+  </style>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;background:#0E141D;color:#DDE5EF;font-family:'IBM Plex Sans',sans-serif;overflow:hidden">
+
+  <div style="display:flex;align-items:center;gap:24px;padding:14px 20px;background:#161F2C;border-bottom:1px solid #2A3646;flex-wrap:wrap">
+    <div style="min-width:230px">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#7E8CA0">RED DE PRECEDENCIA · IDU</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;color:#F2F6FB;letter-spacing:-0.01em">Proyecto vial — actividades</div>
+    </div>
+    <div style="display:flex;gap:22px;align-items:stretch">
+      <div style="border-left:2px solid #2A3646;padding-left:10px">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#F2F6FB;line-height:1">{{statTotal}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-top:4px">ACTIVIDADES</div>
+      </div>
+      <div style="border-left:2px solid #57C99B;padding-left:10px">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#57C99B;line-height:1">{{statPct}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-top:4px">COMPLETADO</div>
+      </div>
+      <div style="border-left:2px solid #5B8DEF;padding-left:10px">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#5B8DEF;line-height:1">{{statProc}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-top:4px">EN PROCESO</div>
+      </div>
+      <div style="border-left:2px solid #D6604D;padding-left:10px">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#D6604D;line-height:1">{{statBloq}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-top:4px">BLOQUEADAS</div>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <input value="{{searchVal}}" onChange="{{onSearch}}" placeholder="Buscar actividad…" style="width:220px;background:#0E141D;border:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 12px">
+    <div style="display:flex;gap:10px">
+      <button onClick="{{onAgregar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#5B8DEF;color:#0E141D;border:1px solid #5B8DEF;padding:9px 14px;cursor:pointer;font-weight:600" style-hover="background:#4A7BDD;border-color:#4A7BDD">+ AGREGAR ACTIVIDAD</button>
+      <button onClick="{{onReset}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#8A97A8;border:1px solid #2A3646;padding:9px 14px;cursor:pointer" style-hover="border-color:#3D4F66;color:#DDE5EF">RESTABLECER</button>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#121A26;border-bottom:1px solid #2A3646;flex-wrap:wrap">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-right:4px">ÁREAS</span>
+    <sc-for list="{{chips}}" as="c" hint-placeholder-count="7">
+      <button onClick="{{c.onToggle}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#5B8DEF">{{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
+    </sc-for>
+    <div style="flex:1"></div>
+    <div style="display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7E8CA0">
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#57C99B"></span>COMPLETADO</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#5B8DEF"></span>EN PROCESO</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#8A97A8"></span>PENDIENTE</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:#D6604D"></span>BLOQUEADO</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:2px;background:#4A5B72"></span>MISMA ÁREA</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:2px;background:#5B8DEF"></span>CRUZADA</span>
+    </div>
+  </div>
+
+  <div style="display:flex;flex:1;min-height:0">
+
+    <div style="flex:1;position:relative;min-width:0">
+     <div style="position:absolute;inset:0;overflow:auto">
+      <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;zoom:{{zoom}};background-image:radial-gradient(circle, rgba(91,141,239,0.10) 1px, transparent 1.4px);background-size:26px 26px">
+        <sc-for list="{{fasesBands}}" as="f" hint-placeholder-count="4">
+          <div style="position:absolute;left:{{f.x}}px;top:0;width:{{f.w}}px;height:{{canvasH}}px;background:{{f.bg}};border-left:1px dashed {{f.bd}};pointer-events:none;white-space:nowrap">
+            <span style="position:sticky;left:196px;display:inline-block;margin-top:8px;margin-left:12px;padding:3px 8px;background:rgba(14,20,29,0.85);border:1px solid {{f.bd}};font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;color:{{f.fg}}">{{f.label}}</span>
+          </div>
+        </sc-for>
+        <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
+          <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:1px dashed #22304A;pointer-events:none"></div>
+        </sc-for>
+        {{edgesSvg}}
+        <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
+          <div onClick="{{n.onClick}}" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease" style-hover="border-color:#3D4F66">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7E8CA0">{{n.id}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;color:{{n.color}}">{{n.estadoU}}</span>
+            </div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:600;color:#F2F6FB;line-height:1.25;overflow:hidden">{{n.titulo}}</div>
+            <div style="display:{{n.metaDisplay}};justify-content:space-between;gap:6px;margin-top:auto">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#5E6C80">{{n.fase}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#8A97A8">{{n.notaMark}}</span>
+            </div>
+          </div>
+        </sc-for>
+        <div style="position:sticky;left:0;width:182px;height:0;z-index:4;display:block">
+          <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
+            <div style="position:absolute;left:0;top:{{l.labelY}}px;background:rgba(14,20,29,0.92);border:1px solid #2A3646;border-left:3px solid #3D4F66;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#B9C4D4;max-width:176px">{{l.label}} <span style="color:#5E6C80">/ {{l.count}}</span></div>
+          </sc-for>
+        </div>
+      </div>
+     </div>
+     <div style="position:absolute;left:16px;bottom:16px;z-index:6;display:flex;align-items:stretch;background:rgba(22,31,44,0.94);border:1px solid #2A3646">
+       <button onClick="{{onZoomOut}}" title="Alejar" style="width:34px;height:34px;background:transparent;border:none;border-right:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#1C2733">−</button>
+       <button onClick="{{onZoomReset}}" title="Restablecer zoom" style="min-width:52px;padding:0 8px;background:transparent;border:none;border-right:1px solid #2A3646;color:#B9C4D4;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#1C2733">{{zoomPct}}</button>
+       <button onClick="{{onZoomIn}}" title="Acercar" style="width:34px;height:34px;background:transparent;border:none;color:#DDE5EF;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#1C2733">+</button>
+     </div>
+    </div>
+
+    <sc-if value="{{panelOpen}}" hint-placeholder-val="{{ false }}">
+    <div style="width:340px;flex:none;background:#161F2C;border-left:1px solid #2A3646;overflow:auto">
+
+      <sc-if value="{{showDetail}}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#7E8CA0">{{selId}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{selColor}};border:1px solid {{selColor}};padding:3px 8px">{{selEstadoU}}</span>
+          </div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;color:#F2F6FB;line-height:1.3">{{selTitulo}}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="border:1px solid #2A3646;padding:8px 10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:4px">ÁREA</div>
+              <div style="font-size:12px;color:#DDE5EF">{{selArea}}</div>
+            </div>
+            <div style="border:1px solid #2A3646;padding:8px 10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:4px">FASE</div>
+              <div style="font-size:12px;color:#DDE5EF">{{selFase}}</div>
+            </div>
+          </div>
+          <sc-if value="{{selHasNota}}" hint-placeholder-val="{{ false }}">
+            <div style="border-left:2px solid #8A97A8;padding:8px 12px;background:#1C2733;font-size:12px;color:#B9C4D4;line-height:1.6">{{selNota}}</div>
+          </sc-if>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0">DEPENDE DE ({{depCount}})</div>
+            <sc-if value="{{depEmpty}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;color:#5E6C80;margin-top:8px">— Sin dependencias (nivel 0)</div>
+            </sc-if>
+            <sc-for list="{{depList}}" as="d" hint-placeholder-count="2">
+              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#1C2733;border:1px solid #2A3646;padding:8px 10px;margin-top:6px;cursor:pointer;color:#DDE5EF" style-hover="border-color:#5B8DEF">
+                <span style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A97A8;flex:none">{{d.id}}</span>
+                <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0">HABILITA ({{enCount}})</div>
+            <sc-if value="{{enEmpty}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;color:#5E6C80;margin-top:8px">— No habilita otras actividades</div>
+            </sc-if>
+            <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
+              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#1C2733;border:1px solid #2A3646;padding:8px 10px;margin-top:6px;cursor:pointer;color:#DDE5EF" style-hover="border-color:#5B8DEF">
+                <span style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A97A8;flex:none">{{d.id}}</span>
+                <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onClick="{{onEditar}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#5B8DEF;color:#0E141D;border:1px solid #5B8DEF;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#4A7BDD;border-color:#4A7BDD">EDITAR</button>
+            <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#D6604D;border:1px solid #D6604D;padding:10px 14px;cursor:pointer" style-hover="background:#D6604D;color:#0E141D">ELIMINAR</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{showForm}}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#5B8DEF">EDITANDO</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#7E8CA0">{{selId}}</span>
+          </div>
+          <label style="display:block">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:5px">TÍTULO</div>
+            <input value="{{fTitulo}}" onChange="{{onFTitulo}}" style="width:100%;background:#0E141D;border:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:8px 10px">
+          </label>
+          <label style="display:block">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:5px">ÁREA</div>
+            <select value="{{fArea}}" onChange="{{onFArea}}" style="width:100%;background:#0E141D;border:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:8px 10px">
+              <option>Legal/Jurídica</option>
+              <option>IDU</option>
+              <option>Entidades de servicios</option>
+              <option>Ambiental</option>
+              <option>Social</option>
+              <option>Predial</option>
+              <option>EAAB</option>
+              <option>SDM</option>
+            </select>
+          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label style="display:block">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:5px">FASE</div>
+              <select value="{{fFase}}" onChange="{{onFFase}}" style="width:100%;background:#0E141D;border:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:8px 6px">
+                <option>Preconstrucción</option>
+                <option>Construcción</option>
+                <option>Entrega a Beneficiarios</option>
+                <option>Liquidación</option>
+              </select>
+            </label>
+            <label style="display:block">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:5px">ESTADO</div>
+              <select value="{{fEstado}}" onChange="{{onFEstado}}" style="width:100%;background:#0E141D;border:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:8px 6px">
+                <option>Completado</option>
+                <option>En proceso</option>
+                <option>Pendiente</option>
+                <option>Bloqueado</option>
+              </select>
+            </label>
+          </div>
+          <label style="display:block">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:5px">NOTA</div>
+            <textarea value="{{fNota}}" onChange="{{onFNota}}" rows="3" style="width:100%;background:#0E141D;border:1px solid #2A3646;color:#DDE5EF;font-family:'IBM Plex Sans',sans-serif;font-size:12.5px;padding:8px 10px;resize:vertical"></textarea>
+          </label>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7E8CA0;margin-bottom:5px">DEPENDE DE</div>
+            <div style="font-size:10.5px;color:#5E6C80;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
+            <div style="max-height:230px;overflow:auto;border:1px solid #2A3646;background:#121A26">
+              <sc-for list="{{depOptions}}" as="o" hint-placeholder-count="4">
+                <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #1C2733;cursor:pointer;font-size:12px;color:#DDE5EF" style-hover="background:#1C2733">
+                  <input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}" style="accent-color:#5B8DEF;flex:none">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8A97A8;flex:none">{{o.id}}</span>
+                  <span style="line-height:1.3">{{o.titulo}}</span>
+                </label>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onClick="{{onListo}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#5B8DEF;color:#0E141D;border:1px solid #5B8DEF;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#4A7BDD;border-color:#4A7BDD">LISTO</button>
+            <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#D6604D;border:1px solid #D6604D;padding:10px 14px;cursor:pointer" style-hover="background:#D6604D;color:#0E141D">ELIMINAR</button>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#5E6C80">LOS CAMBIOS SE GUARDAN AUTOMÁTICAMENTE</div>
+        </div>
+      </sc-if>
+
+    </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;modoCompacto&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Grafo&quot;},
+  &quot;curvatura&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 0.5, &quot;min&quot;: 0.1, &quot;max&quot;: 1, &quot;step&quot;: 0.05, &quot;unit&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Grafo&quot;},
+  &quot;mostrarFase&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Tarjetas&quot;}
+}">
+const AREAS = ['Legal/Jurídica','IDU','Entidades de servicios','Ambiental','Social','Predial','EAAB','SDM'];
+const PREFIX = {'Legal/Jurídica':'LEG','IDU':'IDU','Entidades de servicios':'ESP','Ambiental':'AMB','Social':'SOC','Predial':'PRE','EAAB':'EAB','SDM':'SDM'};
+const SC = {'Completado':'#57C99B','En proceso':'#5B8DEF','Pendiente':'#8A97A8','Bloqueado':'#D6604D'};
+const LS_KEY = 'red-precedencia-vial-cierre-v2';
+
+const DEFAULT_NODES = [
+  // ── Entidades de servicios públicos ──
+  {id:'ESP-01',area:'Entidades de servicios',fase:'Entrega a Beneficiarios',titulo:'Recibo documental — ESP / VANTI / ETB / ENEL-Codensa / UAESP',estado:'Completado',nota:'',dependeDe:[]},
+  {id:'ESP-02',area:'Entidades de servicios',fase:'Entrega a Beneficiarios',titulo:'Paz y salvo de servicios públicos',estado:'En proceso',nota:'Pendiente paz y salvo de VANTI y ETB.',dependeDe:['ESP-01']},
+
+  // ── Ambiental ──
+  {id:'AMB-01',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Cierre de permisos — SDA / CAR / ICANH / JBB',estado:'Completado',nota:'Incluye POC y Licencia ambiental.',dependeDe:[]},
+  {id:'AMB-02',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Recibo documental ambiental',estado:'En proceso',nota:'',dependeDe:['AMB-01']},
+  {id:'AMB-03',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Recibo de obra ambiental',estado:'Pendiente',nota:'',dependeDe:['AMB-02']},
+
+  // ── Social ──
+  {id:'SOC-01',area:'Social',fase:'Entrega a Beneficiarios',titulo:'Cierre de actas de vecindad',estado:'Completado',nota:'',dependeDe:[]},
+
+  // ── Predial ──
+  {id:'PRE-01',area:'Predial',fase:'Entrega a Beneficiarios',titulo:'Acta de recorrido → Entrega IOU',estado:'En proceso',nota:'',dependeDe:[]},
+  {id:'PRE-02',area:'Predial',fase:'Entrega a Beneficiarios',titulo:'Acta de restitución a custodio (C-1-FLT)',estado:'Pendiente',nota:'',dependeDe:['PRE-01']},
+
+  // ── EAAB ──
+  {id:'EAB-01',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'No objeciones aprobadas',estado:'Completado',nota:'',dependeDe:[]},
+  {id:'EAB-02',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Recibo de obra EAAB',estado:'En proceso',nota:'',dependeDe:['EAB-01']},
+  {id:'EAB-03',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Número DITG – Obra',estado:'Pendiente',nota:'',dependeDe:['EAB-02']},
+  {id:'EAB-04',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Cierre predial EAAB',estado:'Bloqueado',nota:'A la espera de la formalización predial de dos derechos de vía.',dependeDe:['EAB-02']},
+
+  // ── SDM ──
+  {id:'SDM-01',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Recibo de obra documental',estado:'Completado',nota:'',dependeDe:[]},
+  {id:'SDM-02',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Señalización',estado:'En proceso',nota:'',dependeDe:['SDM-01']},
+  {id:'SDM-03',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Semaforización',estado:'Bloqueado',nota:'Suministro de controladores semafóricos retrasado por SDM.',dependeDe:['SDM-01']},
+
+  // ── IDU · consolidación ──
+  {id:'IDU-01',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Recibo documental IDU',estado:'Pendiente',nota:'Consolida los cierres de servicios, ambiental, social y predial.',dependeDe:['ESP-02','AMB-03','SOC-01','PRE-02']},
+  {id:'IDU-02',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Acta de recorrido final',estado:'Pendiente',nota:'',dependeDe:['IDU-01']},
+  {id:'IDU-03',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Cierre financiero',estado:'Pendiente',nota:'',dependeDe:['IDU-02']},
+
+  // ── Legal · Liquidación ──
+  {id:'LEG-01',area:'Legal/Jurídica',fase:'Liquidación',titulo:'Cierre de convenio · Acta de liquidación',estado:'Pendiente',nota:'Requiere el cierre completo de IDU, EAAB y SDM.',dependeDe:['IDU-03','EAB-03','EAB-04','SDM-02','SDM-03']}
+];
+
+// ── Sincronización con Supabase (opcional) ──
+// Si config.js no trae credenciales, cloud.enabled = false y el app funciona
+// exactamente igual que antes, usando solo localStorage.
+const RP = (typeof window !== 'undefined' && window.RP_SUPABASE) || {};
+const CLOUD_ENABLED = !!(RP.url && RP.anonKey && window.supabase);
+const BOARD_ID = RP.boardId || 'red-precedencia-vial';
+const _sb = CLOUD_ENABLED ? window.supabase.createClient(RP.url, RP.anonKey) : null;
+
+const cloud = {
+  enabled: CLOUD_ENABLED,
+  async load(){
+    if(!_sb) return null;
+    try{
+      const { data, error } = await _sb.from('boards').select('data').eq('id', BOARD_ID).maybeSingle();
+      if(error){ console.warn('[cloud] load:', error.message); return null; }
+      return (data && Array.isArray(data.data)) ? data.data : null;
+    }catch(e){ console.warn('[cloud] load ex:', e); return null; }
+  },
+  _t: null,
+  save(nodes){
+    if(!_sb) return;
+    clearTimeout(this._t);
+    this._t = setTimeout(async ()=>{
+      try{
+        const { error } = await _sb.from('boards')
+          .upsert({ id: BOARD_ID, data: nodes, updated_at: new Date().toISOString() });
+        if(error) console.warn('[cloud] save:', error.message);
+      }catch(e){ console.warn('[cloud] save ex:', e); }
+    }, 600);
+  },
+  subscribe(onChange){
+    if(!_sb) return null;
+    try{
+      return _sb.channel('boards-'+BOARD_ID)
+        .on('postgres_changes',
+          { event:'*', schema:'public', table:'boards', filter:'id=eq.'+BOARD_ID },
+          (payload)=>{ const d = payload.new && payload.new.data; if(Array.isArray(d)) onChange(d); })
+        .subscribe();
+    }catch(e){ console.warn('[cloud] sub ex:', e); return null; }
+  }
+};
+
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    let nodes = null;
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) nodes = JSON.parse(raw);
+    } catch(e) {}
+    this.state = {
+      nodes: (Array.isArray(nodes) && nodes.length) ? nodes : JSON.parse(JSON.stringify(DEFAULT_NODES)),
+      selectedId: null,
+      mode: 'none',
+      search: '',
+      hidden: {},
+      zoom: 1
+    };
+  }
+
+  setZoom(z){ this.setState({zoom: Math.min(2, Math.max(0.5, Math.round(z * 100) / 100))}); }
+
+  componentDidMount(){
+    if(!cloud.enabled) return;
+    // 1) Baja el tablero de la nube (fuente de verdad compartida)
+    cloud.load().then(remote => {
+      if(remote && remote.length){
+        this.__applyingRemote = true;
+        this.setState({nodes: remote});
+        try { localStorage.setItem(LS_KEY, JSON.stringify(remote)); } catch(e) {}
+        this.__applyingRemote = false;
+      } else {
+        // No existe tablero en la nube todavía → siembra con el estado local
+        cloud.save(this.state.nodes);
+      }
+    });
+    // 2) Suscripción en tiempo real: refleja ediciones de otros usuarios
+    this.__cloudSub = cloud.subscribe((remote) => {
+      if(JSON.stringify(remote) === JSON.stringify(this.state.nodes)) return;
+      this.__applyingRemote = true;
+      this.setState({nodes: remote});
+      try { localStorage.setItem(LS_KEY, JSON.stringify(remote)); } catch(e) {}
+      this.__applyingRemote = false;
+    });
+  }
+
+  componentWillUnmount(){
+    if(this.__cloudSub && _sb){ try { _sb.removeChannel(this.__cloudSub); } catch(e) {} }
+  }
+
+  setNodes(next){
+    this.setState({nodes: next});
+    try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch(e) {}
+    if(cloud.enabled && !this.__applyingRemote) cloud.save(next);
+  }
+
+  updateNode(id, patch){
+    this.setNodes(this.state.nodes.map(n => n.id === id ? {...n, ...patch} : n));
+  }
+
+  toggleDep(id, depId){
+    const n = this.state.nodes.find(x => x.id === id);
+    if (!n) return;
+    const deps = (n.dependeDe||[]).includes(depId)
+      ? n.dependeDe.filter(d => d !== depId)
+      : [...(n.dependeDe||[]), depId];
+    this.updateNode(id, {dependeDe: deps});
+  }
+
+  computeLevels(nodes, byId){
+    const memo = {};
+    const visit = (id, stack) => {
+      if (memo[id] != null) return memo[id];
+      if (stack.has(id)) return 0;
+      stack.add(id);
+      const deps = (byId[id].dependeDe||[]).filter(d => byId[d]);
+      const lv = deps.length ? 1 + Math.max(...deps.map(d => visit(d, stack))) : 0;
+      stack.delete(id);
+      memo[id] = lv;
+      return lv;
+    };
+    nodes.forEach(n => visit(n.id, new Set()));
+    return memo;
+  }
+
+  collectAnc(id, byId, set){
+    ((byId[id] && byId[id].dependeDe) || []).forEach(d => {
+      if (byId[d] && !set.has(d)) { set.add(d); this.collectAnc(d, byId, set); }
+    });
+  }
+
+  collectDesc(seedSet, nodes){
+    let changed = true;
+    while (changed) {
+      changed = false;
+      nodes.forEach(n => {
+        if (!seedSet.has(n.id) && (n.dependeDe||[]).some(d => seedSet.has(d))) {
+          seedSet.add(n.id);
+          changed = true;
+        }
+      });
+    }
+  }
+
+  genId(area){
+    const pfx = PREFIX[area] || 'ACT';
+    let max = 0;
+    this.state.nodes.forEach(n => {
+      if (n.id.startsWith(pfx + '-')) {
+        const num = parseInt(n.id.slice(pfx.length + 1), 10);
+        if (!isNaN(num) && num > max) max = num;
+      }
+    });
+    return pfx + '-' + String(max + 1).padStart(2, '0');
+  }
+
+  selectNode(id){ this.setState({selectedId: id, mode: 'detail'}); }
+
+  addNode(){
+    const area = 'IDU';
+    const id = this.genId(area);
+    const n = {id, area, fase:'Entrega a Beneficiarios', titulo:'Nueva actividad', estado:'Pendiente', nota:'', dependeDe:[]};
+    this.setNodes([...this.state.nodes, n]);
+    this.setState({selectedId: id, mode: 'edit'});
+  }
+
+  deleteNode(id){
+    const nodes = this.state.nodes;
+    const n = nodes.find(x => x.id === id);
+    if (!n) return;
+    const dependents = nodes.filter(x => (x.dependeDe||[]).includes(id));
+    const msg = dependents.length
+      ? dependents.length + ' actividad(es) dependen de «' + n.titulo + '» (' + dependents.map(d => d.id).join(', ') + ').\nAl eliminarla se limpiarán esas referencias. ¿Eliminar de todas formas?'
+      : '¿Eliminar «' + n.titulo + '»?';
+    if (!window.confirm(msg)) return;
+    this.setNodes(nodes.filter(x => x.id !== id).map(x => ({...x, dependeDe: (x.dependeDe||[]).filter(d => d !== id)})));
+    this.setState({selectedId: null, mode: 'none'});
+  }
+
+  resetAll(){
+    if (!window.confirm('¿Restablecer los datos originales? Se perderán todos los cambios guardados.')) return;
+    this.setNodes(JSON.parse(JSON.stringify(DEFAULT_NODES)));
+    this.setState({selectedId: null, mode: 'none', search: ''});
+  }
+
+  marker(id, color){
+    return React.createElement('marker',
+      {id, key:id, viewBox:'0 0 10 10', refX:9, refY:5, markerWidth:7, markerHeight:7, orient:'auto-start-reverse'},
+      React.createElement('path', {d:'M0,0 L10,5 L0,10 z', fill:color}));
+  }
+
+  renderVals(){
+    const compact = this.props.modoCompacto ?? false;
+    const curv = this.props.curvatura ?? 0.5;
+    const showFase = this.props.mostrarFase ?? true;
+    const NW = 216, NH = compact ? 54 : 78, CG = 110, SG = 14, LP_T = 44, LP_B = 20, LEFT = 190;
+
+    const nodes = this.state.nodes;
+    const byId = {};
+    nodes.forEach(n => byId[n.id] = n);
+    const levels = this.computeLevels(nodes, byId);
+    const hidden = this.state.hidden;
+    const visible = nodes.filter(n => !hidden[n.area]);
+    const visAreas = AREAS.filter(a => !hidden[a]);
+
+    // stacking within area+level
+    const stackCount = {}, stackIdx = {};
+    visible.forEach(n => {
+      const k = n.area + '|' + levels[n.id];
+      stackIdx[n.id] = stackCount[k] || 0;
+      stackCount[k] = (stackCount[k] || 0) + 1;
+    });
+    const laneMax = {};
+    visAreas.forEach(a => laneMax[a] = 1);
+    Object.keys(stackCount).forEach(k => {
+      const a = k.split('|')[0];
+      if (stackCount[k] > laneMax[a]) laneMax[a] = stackCount[k];
+    });
+
+    const laneY = {};
+    let yCur = 34;
+    const lanes = visAreas.map(a => {
+      const h = LP_T + laneMax[a] * (NH + SG) - SG + LP_B;
+      laneY[a] = yCur;
+      const L = {label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length, y: yCur, h, labelY: yCur + 12};
+      yCur += h;
+      return L;
+    });
+    const maxLevel = visible.length ? Math.max(...visible.map(n => levels[n.id])) : 0;
+    const canvasW = LEFT + (maxLevel + 1) * (NW + CG) + 40;
+    const canvasH = yCur + 40;
+
+    // bandas de fase (fondo por etapa del proyecto)
+    const FASE_STYLES = {
+      'Preconstrucción': {bg: 'rgba(91,141,239,0.05)', fg: '#5B8DEF'},
+      'Construcción': {bg: 'rgba(87,201,155,0.055)', fg: '#57C99B'},
+      'Entrega a Beneficiarios': {bg: 'rgba(201,162,39,0.06)', fg: '#C9A227'},
+      'Liquidación': {bg: 'rgba(180,142,240,0.06)', fg: '#B48EF0'}
+    };
+    const fasesBands = [];
+    ['Preconstrucción','Construcción','Entrega a Beneficiarios','Liquidación'].forEach(f => {
+      const ls = visible.filter(n => n.fase === f).map(n => levels[n.id]);
+      if (!ls.length) return;
+      const mn = Math.min(...ls), mx = Math.max(...ls);
+      const st = FASE_STYLES[f];
+      fasesBands.push({
+        label: f.toUpperCase(),
+        x: LEFT + mn * (NW + CG) - CG / 2,
+        w: (mx - mn + 1) * (NW + CG),
+        bg: st.bg, fg: st.fg, bd: st.fg + '55'
+      });
+    });
+
+    // selection chain
+    const selId = (this.state.selectedId && byId[this.state.selectedId]) ? this.state.selectedId : null;
+    let chain = null;
+    if (selId) {
+      const anc = new Set();
+      this.collectAnc(selId, byId, anc);
+      const desc = new Set([selId]);
+      this.collectDesc(desc, nodes);
+      chain = new Set([selId, ...anc, ...desc]);
+    }
+    const q = this.state.search.trim().toLowerCase();
+
+    // node view models
+    const pos = {};
+    const nodeVMs = visible.map(n => {
+      const x = LEFT + levels[n.id] * (NW + CG);
+      const ny = laneY[n.area] + LP_T + stackIdx[n.id] * (NH + SG);
+      pos[n.id] = {x, y: ny};
+      let op = 1;
+      if (chain && !chain.has(n.id)) op = 0.16;
+      if (q) {
+        const m = (n.titulo + ' ' + n.id + ' ' + (n.nota||'') + ' ' + n.area + ' ' + n.estado).toLowerCase().includes(q);
+        if (!m) op = Math.min(op, 0.13);
+      }
+      const sel = n.id === selId;
+      return {
+        id: n.id, titulo: n.titulo, fase: n.fase,
+        x, y: ny, w: NW, h: NH,
+        color: SC[n.estado] || '#8A97A8',
+        estadoU: n.estado.toUpperCase(),
+        opacity: op,
+        bd: sel ? (SC[n.estado] || '#8A97A8') : '#2A3646',
+        bg: sel ? '#213049' : '#1C2733',
+        metaDisplay: (compact || !showFase) ? 'none' : 'flex',
+        notaMark: n.nota ? '· nota' : '',
+        z: sel ? 3 : 2,
+        onClick: (e) => { e.stopPropagation(); this.selectNode(n.id); }
+      };
+    });
+
+    // edges
+    const paths = [];
+    visible.forEach(n => (n.dependeDe||[]).forEach(d => {
+      const s = pos[d], t = pos[n.id];
+      const sn = byId[d];
+      if (!s || !t || !sn) return;
+      const x1 = s.x + NW, y1 = s.y + NH/2, x2 = t.x, y2 = t.y + NH/2;
+      const dx = Math.max(40, (x2 - x1) * curv);
+      const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+      const cross = sn.area !== n.area;
+      const inChain = chain ? (chain.has(d) && chain.has(n.id)) : false;
+      let opacity = cross ? 0.8 : 0.55, w = 1.4;
+      if (chain) { opacity = inChain ? 1 : 0.06; w = inChain ? 2.2 : 1.2; }
+      paths.push(React.createElement('path', {
+        key: d + '>' + n.id, d: dPath, fill: 'none',
+        stroke: cross ? '#5B8DEF' : '#4A5B72',
+        strokeWidth: w, opacity,
+        markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
+      }));
+    }));
+    const edgesSvg = React.createElement('svg',
+      {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
+      React.createElement('defs', null, this.marker('arwS', '#4A5B72'), this.marker('arwC', '#5B8DEF')),
+      paths);
+
+    // stats
+    const total = nodes.length;
+    const comp = nodes.filter(n => n.estado === 'Completado').length;
+    const statProc = nodes.filter(n => n.estado === 'En proceso').length;
+    const statBloq = nodes.filter(n => n.estado === 'Bloqueado').length;
+
+    // chips
+    const chips = AREAS.map(a => {
+      const off = !!hidden[a];
+      return {
+        label: a, count: nodes.filter(n => n.area === a).length,
+        bg: off ? 'transparent' : '#1C2733',
+        fg: off ? '#5E6C80' : '#DDE5EF',
+        bd: off ? '#2A3646' : '#3D4F66',
+        bs: off ? 'dashed' : 'solid',
+        onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
+      };
+    });
+
+    // panel
+    const mode = this.state.mode;
+    const selNode = selId ? byId[selId] : null;
+    const showDetail = !!selNode && mode !== 'edit';
+    const showForm = !!selNode && mode === 'edit';
+    const mkItem = n => ({id: n.id, titulo: n.titulo, color: SC[n.estado] || '#8A97A8', onClick: () => this.selectNode(n.id)});
+    const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
+    const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
+
+    let depOptions = [];
+    if (showForm) {
+      const excl = new Set([selId]);
+      this.collectDesc(excl, nodes);
+      depOptions = nodes.filter(n => !excl.has(n.id)).map(n => ({
+        id: n.id, titulo: n.titulo,
+        checked: (selNode.dependeDe||[]).includes(n.id),
+        onToggle: () => this.toggleDep(selId, n.id)
+      }));
+    }
+
+    return {
+      canvasW, canvasH, lanes, nodeVMs, edgesSvg, chips, fasesBands,
+      statTotal: total,
+      statPct: (total ? Math.round(comp / total * 100) : 0) + '%',
+      statProc, statBloq,
+      searchVal: this.state.search,
+      onSearch: e => this.setState({search: e.target.value}),
+      onAgregar: () => this.addNode(),
+      onReset: () => this.resetAll(),
+      onCanvasClick: () => this.setState({selectedId: null, mode: 'none'}),
+      zoom: this.state.zoom,
+      zoomPct: Math.round(this.state.zoom * 100) + '%',
+      onZoomIn: (e) => { e.stopPropagation(); this.setZoom(this.state.zoom + 0.1); },
+      onZoomOut: (e) => { e.stopPropagation(); this.setZoom(this.state.zoom - 0.1); },
+      onZoomReset: (e) => { e.stopPropagation(); this.setZoom(1); },
+      panelOpen: showDetail || showForm,
+      showDetail, showForm,
+      selId: selId || '',
+      selTitulo: selNode ? selNode.titulo : '',
+      selArea: selNode ? selNode.area : '',
+      selFase: selNode ? selNode.fase : '',
+      selEstadoU: selNode ? selNode.estado.toUpperCase() : '',
+      selColor: selNode ? (SC[selNode.estado] || '#8A97A8') : '#8A97A8',
+      selHasNota: !!(selNode && selNode.nota),
+      selNota: selNode ? (selNode.nota || '') : '',
+      depCount: depList.length, depEmpty: showDetail && depList.length === 0, depList,
+      enCount: enList.length, enEmpty: showDetail && enList.length === 0, enList,
+      onEditar: () => this.setState({mode: 'edit'}),
+      onListo: () => this.setState({mode: 'detail'}),
+      onEliminar: () => this.deleteNode(selId),
+      fTitulo: selNode ? selNode.titulo : '',
+      fArea: selNode ? selNode.area : AREAS[0],
+      fFase: selNode ? selNode.fase : 'Preconstrucción',
+      fEstado: selNode ? selNode.estado : 'Pendiente',
+      fNota: selNode ? (selNode.nota || '') : '',
+      onFTitulo: e => this.updateNode(selId, {titulo: e.target.value}),
+      onFArea: e => this.updateNode(selId, {area: e.target.value}),
+      onFFase: e => this.updateNode(selId, {fase: e.target.value}),
+      onFEstado: e => this.updateNode(selId, {estado: e.target.value}),
+      onFNota: e => this.updateNode(selId, {nota: e.target.value}),
+      depOptions
+    };
+  }
+}
+</script>
+</body>
+</html>

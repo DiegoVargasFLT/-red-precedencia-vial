@@ -1,0 +1,33 @@
+/* Vigía — Elevation: radii, borders, shadows
+ * Soft, low, warm-tinted shadows (cool navy tint, low opacity) for an editorial,
+ * paper-on-desk feel. Cards favour a hairline border + a very soft shadow.
+ */
+:root {
+  /* Corner radii */
+  --radius-xs:   3px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-pill: 999px;
+
+  /* Border widths */
+  --border-hair: 1px;
+  --border-thick: 2px;
+
+  /* Shadows — navy-tinted, layered, low opacity */
+  --shadow-xs: 0 1px 2px rgba(20, 32, 70, 0.06);
+  --shadow-sm: 0 1px 2px rgba(20, 32, 70, 0.06), 0 2px 4px rgba(20, 32, 70, 0.05);
+  --shadow-md: 0 2px 4px rgba(20, 32, 70, 0.06), 0 6px 12px rgba(20, 32, 70, 0.07);
+  --shadow-lg: 0 4px 8px rgba(20, 32, 70, 0.07), 0 16px 28px rgba(20, 32, 70, 0.10);
+  --shadow-xl: 0 8px 16px rgba(20, 32, 70, 0.08), 0 28px 50px rgba(20, 32, 70, 0.14);
+
+  /* Inset (inputs, wells) */
+  --shadow-inset: inset 0 1px 2px rgba(20, 32, 70, 0.07);
+
+  /* Card recipe */
+  --card-radius: var(--radius-lg);
+  --card-border: var(--border-hair) solid var(--border-subtle);
+  --card-shadow: var(--shadow-sm);
+}
