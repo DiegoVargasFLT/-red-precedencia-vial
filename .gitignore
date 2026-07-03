@@ -9,3 +9,5 @@ Thumbs.db
 
 # Temporales
 *.tmp
+
+.vercel
