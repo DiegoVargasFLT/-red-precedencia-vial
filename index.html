@@ -89,7 +89,7 @@
           </div>
         </sc-for>
         <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-          <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:1px dashed #E7EBF2;pointer-events:none"></div>
+          <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:2px solid {{l.line}};border-left:4px solid {{l.color}};pointer-events:none"></div>
         </sc-for>
         {{edgesSvg}}
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
@@ -107,7 +107,8 @@
         </sc-for>
         <div style="position:sticky;left:0;width:214px;height:0;z-index:4;display:block">
           <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-            <div style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.92);border:1px solid #D9E1EC;border-left:3px solid #61B1E3;padding:5px 8px;max-width:208px">
+            <div style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;border-left:4px solid {{l.color}};padding:5px 8px;max-width:208px">
+              <span style="width:9px;height:9px;flex:none;background:{{l.color}}"></span>
               <div style="display:flex;flex-direction:column;gap:2px;flex:none">
                 <button onClick="{{l.onUp}}" title="Subir área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.upOpacity}}" style-hover="border-color:#61B1E3">▲</button>
                 <button onClick="{{l.onDown}}" title="Bajar área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.downOpacity}}" style-hover="border-color:#61B1E3">▼</button>
@@ -798,13 +799,18 @@ class Component extends DCLogic {
       if (stackCount[k] > laneMax[a]) laneMax[a] = stackCount[k];
     });
 
+    // Paleta de identificación por área (colores de marca, fríos primero).
+    // Cada área recibe un color estable para su línea divisoria, riel y etiqueta.
+    const AREA_PALETTE = ['#1F3B6F','#61B1E3','#025850','#332664','#74C6D3','#AD1924','#7486A6','#1F3B6F'];
     const laneY = {};
     let yCur = 34;
     const lanes = visAreas.map((a, i) => {
       const h = LP_T + laneMax[a] * (NH + SG) - SG + LP_B;
       laneY[a] = yCur;
+      const areaColor = AREA_PALETTE[i % AREA_PALETTE.length];
       const L = {
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
+        color: areaColor, line: areaColor + '80',
         y: yCur, h, labelY: yCur + 12,
         onUp: (e) => { e.stopPropagation(); this.moveArea(a, -1); },
         onDown: (e) => { e.stopPropagation(); this.moveArea(a, 1); },
