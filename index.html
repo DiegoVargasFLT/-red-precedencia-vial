@@ -14,66 +14,66 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
   <style>
-    html,body{margin:0;padding:0;background:#0A1024;}
+    html,body{margin:0;padding:0;background:#EEF3F9;}
     *{box-sizing:border-box;}
-    ::-webkit-scrollbar{width:10px;height:10px;background:#0A1024;}
-    ::-webkit-scrollbar-thumb{background:#2A3F63;border:2px solid #0A1024;}
-    ::-webkit-scrollbar-corner{background:#0A1024;}
+    ::-webkit-scrollbar{width:10px;height:10px;background:#EEF3F9;}
+    ::-webkit-scrollbar-thumb{background:#D9E1EC;border:2px solid #EEF3F9;}
+    ::-webkit-scrollbar-corner{background:#EEF3F9;}
     input:focus,select:focus,textarea:focus{outline:1px solid #61B1E3;outline-offset:1px;}
-    option{background:#12203E;color:#DBE6F7;}
+    option{background:#FFFFFF;color:#1F3B6F;}
   </style>
 </helmet>
-<div style="height:100vh;display:flex;flex-direction:column;background:#0A1024;color:#DBE6F7;font-family:'Montserrat',sans-serif;overflow:hidden">
+<div style="height:100vh;display:flex;flex-direction:column;background:#EEF3F9;color:#1F3B6F;font-family:'Montserrat',sans-serif;overflow:hidden">
 
   <div style="height:3px;flex:none;background:linear-gradient(90deg,#74C6D3 0%,#61B1E3 34%,#1F3B6F 72%,#332664 100%)"></div>
 
-  <div style="display:flex;align-items:center;gap:24px;padding:14px 20px;background:#12203E;border-bottom:1px solid #2A3F63;flex-wrap:wrap">
+  <div style="display:flex;align-items:center;gap:24px;padding:14px 20px;background:#FFFFFF;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
     <div style="min-width:230px;display:flex;align-items:center;gap:8px">
       <div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#61B1E3">{{projectSubtitle}}</div>
-        <div style="font-family:'Montserrat',sans-serif;font-size:19px;font-weight:700;color:#F3F7FF;letter-spacing:-0.01em">{{projectName}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#1F3B6F">{{projectSubtitle}}</div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:19px;font-weight:700;color:#1F3B6F;letter-spacing:-0.01em">{{projectName}}</div>
       </div>
-      <button onClick="{{onEditNombre}}" title="Editar nombre del proyecto" style="flex:none;background:transparent;border:1px solid #2A3F63;color:#7688A8;width:26px;height:26px;cursor:pointer;font-size:12px;line-height:1;padding:0" style-hover="border-color:#61B1E3;color:#DBE6F7">✎</button>
+      <button onClick="{{onEditNombre}}" title="Editar nombre del proyecto" style="flex:none;background:transparent;border:1px solid #D9E1EC;color:#7486A6;width:26px;height:26px;cursor:pointer;font-size:12px;line-height:1;padding:0" style-hover="border-color:#61B1E3;color:#1F3B6F">✎</button>
     </div>
     <div style="display:flex;gap:22px;align-items:stretch">
-      <div style="border-left:2px solid #2A3F63;padding-left:10px">
-        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#F3F7FF;line-height:1">{{statTotal}}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-top:4px">ACTIVIDADES</div>
+      <div style="border-left:2px solid #D9E1EC;padding-left:10px">
+        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#1F3B6F;line-height:1">{{statTotal}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-top:4px">ACTIVIDADES</div>
       </div>
-      <div style="border-left:2px solid #43C6B0;padding-left:10px">
-        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#43C6B0;line-height:1">{{statPct}}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-top:4px">COMPLETADO</div>
+      <div style="border-left:2px solid #025850;padding-left:10px">
+        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#025850;line-height:1">{{statPct}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-top:4px">COMPLETADO</div>
       </div>
       <div style="border-left:2px solid #61B1E3;padding-left:10px">
         <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#61B1E3;line-height:1">{{statProc}}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-top:4px">EN PROCESO</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-top:4px">EN PROCESO</div>
       </div>
-      <div style="border-left:2px solid #D93B47;padding-left:10px">
-        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#D93B47;line-height:1">{{statBloq}}</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-top:4px">BLOQUEADAS</div>
+      <div style="border-left:2px solid #AD1924;padding-left:10px">
+        <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#AD1924;line-height:1">{{statBloq}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-top:4px">BLOQUEADAS</div>
       </div>
     </div>
     <div style="flex:1"></div>
-    <input value="{{searchVal}}" onChange="{{onSearch}}" placeholder="Buscar actividad…" style="width:220px;background:#0A1024;border:1px solid #2A3F63;color:#DBE6F7;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 12px">
+    <input value="{{searchVal}}" onChange="{{onSearch}}" placeholder="Buscar actividad…" style="width:220px;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 12px">
     <div style="display:flex;gap:10px">
-      <button onClick="{{onAgregar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#61B1E3;color:#0A1024;border:1px solid #61B1E3;padding:9px 14px;cursor:pointer;font-weight:600" style-hover="background:#3E97D6;border-color:#3E97D6">+ AGREGAR ACTIVIDAD</button>
-      <button onClick="{{onReset}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#8194B4;border:1px solid #2A3F63;padding:9px 14px;cursor:pointer" style-hover="border-color:#3C568A;color:#DBE6F7">RESTABLECER</button>
+      <button onClick="{{onAgregar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:9px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">+ AGREGAR ACTIVIDAD</button>
+      <button onClick="{{onReset}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#5E7196;border:1px solid #D9E1EC;padding:9px 14px;cursor:pointer" style-hover="border-color:#61B1E3;color:#1F3B6F">RESTABLECER</button>
     </div>
   </div>
 
-  <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#0E1730;border-bottom:1px solid #2A3F63;flex-wrap:wrap">
-    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-right:4px">ÁREAS</span>
+  <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#F4F7FB;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-right:4px">ÁREAS</span>
     <sc-for list="{{chips}}" as="c" hint-placeholder-count="7">
       <button onClick="{{c.onToggle}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#61B1E3">{{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
     </sc-for>
-    <button onClick="{{onAddArea}}" title="Agregar nueva área" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#43C6B0;border:1px dashed #2C5A52" style-hover="border-color:#43C6B0">+ ÁREA</button>
-    <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#8194B4;border:1px solid #2A3F63" style-hover="border-color:#61B1E3;color:#DBE6F7">⚙ GESTIONAR</button>
+    <button onClick="{{onAddArea}}" title="Agregar nueva área" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ ÁREA</button>
+    <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">⚙ GESTIONAR</button>
     <div style="flex:1"></div>
-    <div style="display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7688A8">
+    <div style="display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">
       <sc-for list="{{legend}}" as="g" hint-placeholder-count="4">
         <span style="display:flex;gap:5px;align-items:center"><span style="width:8px;height:8px;background:{{g.color}}"></span>{{g.label}}</span>
       </sc-for>
-      <span style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:2px;background:#47608F"></span>MISMA ÁREA</span>
+      <span style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:2px;background:#B9C6D8"></span>MISMA ÁREA</span>
       <span style="display:flex;gap:5px;align-items:center"><span style="width:16px;height:2px;background:#61B1E3"></span>CRUZADA</span>
     </div>
   </div>
@@ -85,98 +85,98 @@
       <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;zoom:{{zoom}};background-image:radial-gradient(circle, rgba(97,177,227,0.10) 1px, transparent 1.4px);background-size:26px 26px">
         <sc-for list="{{fasesBands}}" as="f" hint-placeholder-count="4">
           <div style="position:absolute;left:{{f.x}}px;top:0;width:{{f.w}}px;height:{{canvasH}}px;background:{{f.bg}};border-left:1px dashed {{f.bd}};pointer-events:none;white-space:nowrap">
-            <span style="position:sticky;left:196px;display:inline-block;margin-top:8px;margin-left:12px;padding:3px 8px;background:rgba(10,16,36,0.85);border:1px solid {{f.bd}};font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;color:{{f.fg}}">{{f.label}}</span>
+            <span style="position:sticky;left:196px;display:inline-block;margin-top:8px;margin-left:12px;padding:3px 8px;background:rgba(255,255,255,0.85);border:1px solid {{f.bd}};font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;color:{{f.fg}}">{{f.label}}</span>
           </div>
         </sc-for>
         <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-          <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:1px dashed #24365F;pointer-events:none"></div>
+          <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:1px dashed #E7EBF2;pointer-events:none"></div>
         </sc-for>
         {{edgesSvg}}
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
-          <div onClick="{{n.onClick}}" title="{{n.tip}}" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease" style-hover="border-color:#3C568A">
+          <div onClick="{{n.onClick}}" title="{{n.tip}}" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease" style-hover="border-color:#61B1E3">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7688A8">{{n.id}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">{{n.id}}</span>
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;color:{{n.color}}">{{n.estadoU}}</span>
             </div>
-            <div title="{{n.tip}}" style="font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;color:#F3F7FF;line-height:1.25;overflow:hidden">{{n.titulo}}</div>
+            <div title="{{n.tip}}" style="font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;color:#1F3B6F;line-height:1.25;overflow:hidden">{{n.titulo}}</div>
             <div style="display:{{n.metaDisplay}};justify-content:space-between;gap:6px;margin-top:auto">
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:{{n.faseColor}}">{{n.fase}}</span>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#8194B4">{{n.notaMark}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#5E7196">{{n.notaMark}}</span>
             </div>
           </div>
         </sc-for>
         <div style="position:sticky;left:0;width:214px;height:0;z-index:4;display:block">
           <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-            <div style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(10,16,36,0.92);border:1px solid #2A3F63;border-left:3px solid #3C568A;padding:5px 8px;max-width:208px">
+            <div style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.92);border:1px solid #D9E1EC;border-left:3px solid #61B1E3;padding:5px 8px;max-width:208px">
               <div style="display:flex;flex-direction:column;gap:2px;flex:none">
-                <button onClick="{{l.onUp}}" title="Subir área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #2A3F63;color:#B2C2DD;font-size:8px;cursor:pointer;opacity:{{l.upOpacity}}" style-hover="border-color:#61B1E3">▲</button>
-                <button onClick="{{l.onDown}}" title="Bajar área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #2A3F63;color:#B2C2DD;font-size:8px;cursor:pointer;opacity:{{l.downOpacity}}" style-hover="border-color:#61B1E3">▼</button>
+                <button onClick="{{l.onUp}}" title="Subir área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.upOpacity}}" style-hover="border-color:#61B1E3">▲</button>
+                <button onClick="{{l.onDown}}" title="Bajar área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.downOpacity}}" style-hover="border-color:#61B1E3">▼</button>
               </div>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#B2C2DD">{{l.label}} <span style="color:#5B6E92">/ {{l.count}}</span></span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#475E89">{{l.label}} <span style="color:#94A1BA">/ {{l.count}}</span></span>
             </div>
           </sc-for>
         </div>
       </div>
      </div>
-     <div style="position:absolute;left:16px;bottom:16px;z-index:6;display:flex;align-items:stretch;background:rgba(18,32,62,0.94);border:1px solid #2A3F63">
-       <button onClick="{{onZoomOut}}" title="Alejar" style="width:34px;height:34px;background:transparent;border:none;border-right:1px solid #2A3F63;color:#DBE6F7;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#17284A">−</button>
-       <button onClick="{{onZoomReset}}" title="Restablecer zoom" style="min-width:52px;padding:0 8px;background:transparent;border:none;border-right:1px solid #2A3F63;color:#B2C2DD;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#17284A">{{zoomPct}}</button>
-       <button onClick="{{onZoomIn}}" title="Acercar" style="width:34px;height:34px;background:transparent;border:none;color:#DBE6F7;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#17284A">+</button>
+     <div style="position:absolute;left:16px;bottom:16px;z-index:6;display:flex;align-items:stretch;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC">
+       <button onClick="{{onZoomOut}}" title="Alejar" style="width:34px;height:34px;background:transparent;border:none;border-right:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#FFFFFF">−</button>
+       <button onClick="{{onZoomReset}}" title="Restablecer zoom" style="min-width:52px;padding:0 8px;background:transparent;border:none;border-right:1px solid #D9E1EC;color:#475E89;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#FFFFFF">{{zoomPct}}</button>
+       <button onClick="{{onZoomIn}}" title="Acercar" style="width:34px;height:34px;background:transparent;border:none;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#FFFFFF">+</button>
      </div>
     </div>
 
     <sc-if value="{{panelOpen}}" hint-placeholder-val="{{ false }}">
-    <div style="width:340px;flex:none;background:#12203E;border-left:1px solid #2A3F63;overflow:auto">
+    <div style="width:340px;flex:none;background:#FFFFFF;border-left:1px solid #D9E1EC;overflow:auto">
 
       <sc-if value="{{showDetail}}" hint-placeholder-val="{{ false }}">
         <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#7688A8">{{selId}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#7486A6">{{selId}}</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{selColor}};border:1px solid {{selColor}};padding:3px 8px">{{selEstadoU}}</span>
           </div>
-          <div style="font-family:'Montserrat',sans-serif;font-size:17px;font-weight:600;color:#F3F7FF;line-height:1.3">{{selTitulo}}</div>
+          <div style="font-family:'Montserrat',sans-serif;font-size:17px;font-weight:600;color:#1F3B6F;line-height:1.3">{{selTitulo}}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="border:1px solid #2A3F63;padding:8px 10px">
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7688A8;margin-bottom:4px">ÁREA</div>
-              <div style="font-size:12px;color:#DBE6F7">{{selArea}}</div>
+            <div style="border:1px solid #D9E1EC;padding:8px 10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7486A6;margin-bottom:4px">ÁREA</div>
+              <div style="font-size:12px;color:#1F3B6F">{{selArea}}</div>
             </div>
-            <div style="border:1px solid #2A3F63;padding:8px 10px">
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7688A8;margin-bottom:4px">FASE</div>
-              <div style="font-size:12px;color:#DBE6F7">{{selFase}}</div>
+            <div style="border:1px solid #D9E1EC;padding:8px 10px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7486A6;margin-bottom:4px">FASE</div>
+              <div style="font-size:12px;color:#1F3B6F">{{selFase}}</div>
             </div>
           </div>
           <sc-if value="{{selHasNota}}" hint-placeholder-val="{{ false }}">
-            <div style="border-left:2px solid #8194B4;padding:8px 12px;background:#17284A;font-size:12px;color:#B2C2DD;line-height:1.6">{{selNota}}</div>
+            <div style="border-left:2px solid #5E7196;padding:8px 12px;background:#FFFFFF;font-size:12px;color:#475E89;line-height:1.6">{{selNota}}</div>
           </sc-if>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8">DEPENDE DE ({{depCount}})</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DEPENDE DE ({{depCount}})</div>
             <sc-if value="{{depEmpty}}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:11.5px;color:#5B6E92;margin-top:8px">— Sin dependencias (nivel 0)</div>
+              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Sin dependencias (nivel 0)</div>
             </sc-if>
             <sc-for list="{{depList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#17284A;border:1px solid #2A3F63;padding:8px 10px;margin-top:6px;cursor:pointer;color:#DBE6F7" style-hover="border-color:#61B1E3">
+              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#FFFFFF;border:1px solid #D9E1EC;padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
                 <span style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8194B4;flex:none">{{d.id}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
                 <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
               </button>
             </sc-for>
           </div>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8">HABILITA ({{enCount}})</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">HABILITA ({{enCount}})</div>
             <sc-if value="{{enEmpty}}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:11.5px;color:#5B6E92;margin-top:8px">— No habilita otras actividades</div>
+              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— No habilita otras actividades</div>
             </sc-if>
             <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#17284A;border:1px solid #2A3F63;padding:8px 10px;margin-top:6px;cursor:pointer;color:#DBE6F7" style-hover="border-color:#61B1E3">
+              <button onClick="{{d.onClick}}" style="display:flex;width:100%;text-align:left;gap:8px;align-items:center;background:#FFFFFF;border:1px solid #D9E1EC;padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
                 <span style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8194B4;flex:none">{{d.id}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
                 <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
               </button>
             </sc-for>
           </div>
           <div style="display:flex;gap:10px">
-            <button onClick="{{onEditar}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#61B1E3;color:#0A1024;border:1px solid #61B1E3;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#3E97D6;border-color:#3E97D6">EDITAR</button>
-            <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#D93B47;border:1px solid #D93B47;padding:10px 14px;cursor:pointer" style-hover="background:#D93B47;color:#0A1024">ELIMINAR</button>
+            <button onClick="{{onEditar}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">EDITAR</button>
+            <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#AD1924;border:1px solid #AD1924;padding:10px 14px;cursor:pointer" style-hover="background:#AD1924;color:#EEF3F9">ELIMINAR</button>
           </div>
         </div>
       </sc-if>
@@ -185,20 +185,20 @@
         <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.14em;color:#61B1E3">EDITANDO</span>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#7688A8">{{selId}}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;color:#7486A6">{{selId}}</span>
           </div>
           <label style="display:block">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-bottom:5px">TÍTULO</div>
-            <input value="{{fTitulo}}" onChange="{{onFTitulo}}" style="width:100%;background:#0A1024;border:1px solid #2A3F63;color:#DBE6F7;font-family:'Montserrat',sans-serif;font-size:13px;padding:8px 10px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">TÍTULO</div>
+            <input value="{{fTitulo}}" onChange="{{onFTitulo}}" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:13px;padding:8px 10px">
           </label>
           <label style="display:block">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-bottom:5px">ÁREA</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">ÁREA</div>
             {{fAreaSelect}}
           </label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <label style="display:block">
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-bottom:5px">FASE</div>
-              <select value="{{fFase}}" onChange="{{onFFase}}" style="width:100%;background:#0A1024;border:1px solid #2A3F63;color:#DBE6F7;font-family:'Montserrat',sans-serif;font-size:12px;padding:8px 6px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">FASE</div>
+              <select value="{{fFase}}" onChange="{{onFFase}}" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:8px 6px">
                 <option>Preconstrucción</option>
                 <option>Construcción</option>
                 <option>Entrega a Beneficiarios</option>
@@ -206,32 +206,32 @@
               </select>
             </label>
             <label style="display:block">
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-bottom:5px">ESTADO</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">ESTADO</div>
               {{fEstadoSelect}}
             </label>
           </div>
           <label style="display:block">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-bottom:5px">NOTA</div>
-            <textarea value="{{fNota}}" onChange="{{onFNota}}" rows="3" style="width:100%;background:#0A1024;border:1px solid #2A3F63;color:#DBE6F7;font-family:'Montserrat',sans-serif;font-size:12.5px;padding:8px 10px;resize:vertical"></textarea>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">NOTA</div>
+            <textarea value="{{fNota}}" onChange="{{onFNota}}" rows="3" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12.5px;padding:8px 10px;resize:vertical"></textarea>
           </label>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8;margin-bottom:5px">DEPENDE DE</div>
-            <div style="font-size:10.5px;color:#5B6E92;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
-            <div style="max-height:230px;overflow:auto;border:1px solid #2A3F63;background:#0E1730">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">DEPENDE DE</div>
+            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
+            <div style="max-height:230px;overflow:auto;border:1px solid #D9E1EC;background:#F4F7FB">
               <sc-for list="{{depOptions}}" as="o" hint-placeholder-count="4">
-                <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #17284A;cursor:pointer;font-size:12px;color:#DBE6F7" style-hover="background:#17284A">
+                <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #FFFFFF;cursor:pointer;font-size:12px;color:#1F3B6F" style-hover="background:#FFFFFF">
                   <input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}" style="accent-color:#61B1E3;flex:none">
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8194B4;flex:none">{{o.id}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{o.id}}</span>
                   <span style="line-height:1.3">{{o.titulo}}</span>
                 </label>
               </sc-for>
             </div>
           </div>
           <div style="display:flex;gap:10px">
-            <button onClick="{{onListo}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#61B1E3;color:#0A1024;border:1px solid #61B1E3;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#3E97D6;border-color:#3E97D6">LISTO</button>
-            <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#D93B47;border:1px solid #D93B47;padding:10px 14px;cursor:pointer" style-hover="background:#D93B47;color:#0A1024">ELIMINAR</button>
+            <button onClick="{{onListo}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">LISTO</button>
+            <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#AD1924;border:1px solid #AD1924;padding:10px 14px;cursor:pointer" style-hover="background:#AD1924;color:#EEF3F9">ELIMINAR</button>
           </div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#5B6E92">LOS CAMBIOS SE GUARDAN AUTOMÁTICAMENTE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#94A1BA">LOS CAMBIOS SE GUARDAN AUTOMÁTICAMENTE</div>
         </div>
       </sc-if>
 
@@ -239,43 +239,43 @@
         <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#61B1E3">GESTIONAR ÁREAS Y ESTADOS</span>
-            <button onClick="{{onCerrarGestion}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:transparent;border:1px solid #2A3F63;color:#8194B4;padding:5px 10px;cursor:pointer" style-hover="border-color:#61B1E3;color:#DBE6F7">CERRAR</button>
+            <button onClick="{{onCerrarGestion}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:transparent;border:1px solid #D9E1EC;color:#5E7196;padding:5px 10px;cursor:pointer" style-hover="border-color:#61B1E3;color:#1F3B6F">CERRAR</button>
           </div>
 
           <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8">ÁREAS</span>
-              <button onClick="{{onAddArea}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #2C5A52;color:#43C6B0;padding:4px 8px;cursor:pointer" style-hover="border-color:#43C6B0">+ AGREGAR ÁREA</button>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">ÁREAS</span>
+              <button onClick="{{onAddArea}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="border-color:#025850">+ AGREGAR ÁREA</button>
             </div>
             <sc-for list="{{manageAreas}}" as="a" hint-placeholder-count="8">
-              <div style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #2A3F63;background:#17284A;margin-bottom:5px">
-                <span style="flex:1;font-size:12px;color:#DBE6F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{a.name}}</span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7688A8">{{a.prefix}}·{{a.count}}</span>
-                <button onClick="{{a.onRename}}" title="Renombrar área" style="background:transparent;border:1px solid #2A3F63;color:#B2C2DD;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
-                <button onClick="{{a.onPrefix}}" title="Editar prefijo de IDs" style="background:transparent;border:1px solid #2A3F63;color:#B2C2DD;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">#</button>
-                <button onClick="{{a.onDelete}}" title="Eliminar área" style="background:transparent;border:1px solid #2A3F63;color:#D93B47;width:22px;height:22px;cursor:pointer;font-size:12px;padding:0" style-hover="border-color:#D93B47">×</button>
+              <div style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
+                <span style="flex:1;font-size:12px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{a.name}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{a.prefix}}·{{a.count}}</span>
+                <button onClick="{{a.onRename}}" title="Renombrar área" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
+                <button onClick="{{a.onPrefix}}" title="Editar prefijo de IDs" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">#</button>
+                <button onClick="{{a.onDelete}}" title="Eliminar área" style="background:transparent;border:1px solid #D9E1EC;color:#AD1924;width:22px;height:22px;cursor:pointer;font-size:12px;padding:0" style-hover="border-color:#AD1924">×</button>
               </div>
             </sc-for>
           </div>
 
           <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7688A8">ESTADOS</span>
-              <button onClick="{{onAddEstado}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #2C5A52;color:#43C6B0;padding:4px 8px;cursor:pointer" style-hover="border-color:#43C6B0">+ AGREGAR ESTADO</button>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">ESTADOS</span>
+              <button onClick="{{onAddEstado}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="border-color:#025850">+ AGREGAR ESTADO</button>
             </div>
             <sc-for list="{{manageEstados}}" as="s" hint-placeholder-count="4">
-              <div style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #2A3F63;background:#17284A;margin-bottom:5px">
+              <div style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
                 <span style="width:13px;height:13px;flex:none;background:{{s.color}}"></span>
-                <span style="flex:1;font-size:12px;color:#DBE6F7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{s.name}}</span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7688A8">{{s.count}}</span>
-                <button onClick="{{s.onRename}}" title="Renombrar estado" style="background:transparent;border:1px solid #2A3F63;color:#B2C2DD;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
-                <button onClick="{{s.onColor}}" title="Cambiar color" style="background:transparent;border:1px solid #2A3F63;color:#B2C2DD;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">◑</button>
-                <button onClick="{{s.onDelete}}" title="Eliminar estado" style="background:transparent;border:1px solid #2A3F63;color:#D93B47;width:22px;height:22px;cursor:pointer;font-size:12px;padding:0" style-hover="border-color:#D93B47">×</button>
+                <span style="flex:1;font-size:12px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{s.name}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{s.count}}</span>
+                <button onClick="{{s.onRename}}" title="Renombrar estado" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
+                <button onClick="{{s.onColor}}" title="Cambiar color" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">◑</button>
+                <button onClick="{{s.onDelete}}" title="Eliminar estado" style="background:transparent;border:1px solid #D9E1EC;color:#AD1924;width:22px;height:22px;cursor:pointer;font-size:12px;padding:0" style-hover="border-color:#AD1924">×</button>
               </div>
             </sc-for>
           </div>
 
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#5B6E92;line-height:1.7">Renombrar actualiza todas las actividades afectadas. No se puede eliminar un área/estado con actividades en uso. Los cambios se guardan automáticamente.</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;line-height:1.7">Renombrar actualiza todas las actividades afectadas. No se puede eliminar un área/estado con actividades en uso. Los cambios se guardan automáticamente.</div>
         </div>
       </sc-if>
 
@@ -297,8 +297,8 @@ const DEFAULT_AREAS = [
   {name:'EAAB', prefix:'EAB'}, {name:'SDM', prefix:'SDM'}
 ];
 const DEFAULT_ESTADOS = [
-  {name:'Completado', color:'#43C6B0'}, {name:'En proceso', color:'#61B1E3'},
-  {name:'Pendiente', color:'#8194B4'}, {name:'Bloqueado', color:'#D93B47'}
+  {name:'Completado', color:'#025850'}, {name:'En proceso', color:'#61B1E3'},
+  {name:'Pendiente', color:'#5E7196'}, {name:'Bloqueado', color:'#AD1924'}
 ];
 const DEFAULT_PREFIX_MAP = {};
 DEFAULT_AREAS.forEach(a => DEFAULT_PREFIX_MAP[a.name] = a.prefix);
@@ -413,7 +413,7 @@ class Component extends DCLogic {
       areas = DEFAULT_AREAS.map(a => ({...a}));
     }
     const estados = (doc && Array.isArray(doc.estados) && doc.estados.length)
-      ? doc.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#8194B4'}))
+      ? doc.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#5E7196'}))
       : DEFAULT_ESTADOS.map(e => ({...e}));
     this.state = {
       nodes: (doc && doc.nodes && doc.nodes.length) ? doc.nodes : JSON.parse(JSON.stringify(DEFAULT_NODES)),
@@ -446,10 +446,10 @@ class Component extends DCLogic {
   // Estados reconciliados + mapa nombre→color.
   reconciledEstados(){
     const list = (Array.isArray(this.state.estados) && this.state.estados.length)
-      ? this.state.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#8194B4'}))
+      ? this.state.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#5E7196'}))
       : DEFAULT_ESTADOS.map(e => ({...e}));
     const have = new Set(list.map(e => e.name));
-    (this.state.nodes||[]).forEach(n => { if(n.estado && !have.has(n.estado)){ have.add(n.estado); list.push({name: n.estado, color: '#8194B4'}); } });
+    (this.state.nodes||[]).forEach(n => { if(n.estado && !have.has(n.estado)){ have.add(n.estado); list.push({name: n.estado, color: '#5E7196'}); } });
     return list;
   }
   scMap(){ const m = {}; this.reconciledEstados().forEach(e => m[e.name] = e.color); return m; }
@@ -488,7 +488,7 @@ class Component extends DCLogic {
       patch.areas = doc.areaOrder.map(n => ({name: n, prefix: DEFAULT_PREFIX_MAP[n] || derivePrefix(n)}));
     }
     if(Array.isArray(doc.estados) && doc.estados.length){
-      patch.estados = doc.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#8194B4'}));
+      patch.estados = doc.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#5E7196'}));
     }
     if(doc.projectName) patch.projectName = doc.projectName;
     if(doc.projectSubtitle) patch.projectSubtitle = doc.projectSubtitle;
@@ -597,7 +597,7 @@ class Component extends DCLogic {
     if(!name) return;
     const list = this.reconciledEstados();
     if(list.some(e => e.name === name)){ window.alert('Ya existe ese estado.'); return; }
-    const color = ((window.prompt('Color (hex, ej #43C6B0):', '#8194B4') || '').trim()) || '#8194B4';
+    const color = ((window.prompt('Color (hex, ej #025850):', '#5E7196') || '').trim()) || '#5E7196';
     this._setEstados(list.concat([{name, color}]));
   }
   renameEstado(oldName){
@@ -821,9 +821,9 @@ class Component extends DCLogic {
     // bandas de fase (fondo por etapa del proyecto)
     const FASE_STYLES = {
       'Preconstrucción': {bg: 'rgba(97,177,227,0.05)', fg: '#61B1E3'},
-      'Construcción': {bg: 'rgba(67,198,176,0.055)', fg: '#43C6B0'},
-      'Entrega a Beneficiarios': {bg: 'rgba(242,195,30,0.06)', fg: '#F2C31E'},
-      'Liquidación': {bg: 'rgba(142,121,214,0.06)', fg: '#8E79D6'}
+      'Construcción': {bg: 'rgba(2,88,80,0.055)', fg: '#025850'},
+      'Entrega a Beneficiarios': {bg: 'rgba(255,218,40,0.06)', fg: '#1F3B6F'},
+      'Liquidación': {bg: 'rgba(51,38,100,0.06)', fg: '#332664'}
     };
     const fasesBands = [];
     ['Preconstrucción','Construcción','Entrega a Beneficiarios','Liquidación'].forEach(f => {
@@ -867,14 +867,14 @@ class Component extends DCLogic {
       const fst = FASE_STYLES[n.fase];
       return {
         id: n.id, titulo: n.titulo, fase: n.fase,
-        faseColor: fst ? fst.fg : '#5B6E92',
+        faseColor: fst ? fst.fg : '#94A1BA',
         tip: n.titulo + (n.nota ? ' — ' + n.nota : '') + '  [' + n.area + ' · ' + n.fase + ' · ' + n.estado + ']',
         x, y: ny, w: NW, h: NH,
-        color: sc[n.estado] || '#8194B4',
+        color: sc[n.estado] || '#5E7196',
         estadoU: (n.estado||'').toUpperCase(),
         opacity: op,
-        bd: sel ? (sc[n.estado] || '#8194B4') : '#2A3F63',
-        bg: sel ? '#223A66' : '#17284A',
+        bd: sel ? (sc[n.estado] || '#5E7196') : '#D9E1EC',
+        bg: sel ? '#E4F1FB' : '#FFFFFF',
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
         notaMark: n.nota ? '· nota' : '',
         z: sel ? 3 : 2,
@@ -897,14 +897,14 @@ class Component extends DCLogic {
       if (chain) { opacity = inChain ? 1 : 0.06; w = inChain ? 2.2 : 1.2; }
       paths.push(React.createElement('path', {
         key: d + '>' + n.id, d: dPath, fill: 'none',
-        stroke: cross ? '#61B1E3' : '#47608F',
+        stroke: cross ? '#61B1E3' : '#B9C6D8',
         strokeWidth: w, opacity,
         markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
       }));
     }));
     const edgesSvg = React.createElement('svg',
       {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
-      React.createElement('defs', null, this.marker('arwS', '#47608F'), this.marker('arwC', '#61B1E3')),
+      React.createElement('defs', null, this.marker('arwS', '#B9C6D8'), this.marker('arwC', '#61B1E3')),
       paths);
 
     // stats
@@ -918,9 +918,9 @@ class Component extends DCLogic {
       const off = !!hidden[a];
       return {
         label: a, count: nodes.filter(n => n.area === a).length,
-        bg: off ? 'transparent' : '#17284A',
-        fg: off ? '#5B6E92' : '#DBE6F7',
-        bd: off ? '#2A3F63' : '#3C568A',
+        bg: off ? 'transparent' : '#FFFFFF',
+        fg: off ? '#94A1BA' : '#1F3B6F',
+        bd: off ? '#D9E1EC' : '#61B1E3',
         bs: off ? 'dashed' : 'solid',
         onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
       };
@@ -932,7 +932,7 @@ class Component extends DCLogic {
     const showManage = mode === 'manage';
     const showDetail = !!selNode && mode !== 'edit';
     const showForm = !!selNode && mode === 'edit';
-    const mkItem = n => ({id: n.id, titulo: n.titulo, color: sc[n.estado] || '#8194B4', onClick: () => this.selectNode(n.id)});
+    const mkItem = n => ({id: n.id, titulo: n.titulo, color: sc[n.estado] || '#5E7196', onClick: () => this.selectNode(n.id)});
 
     // opciones para los selects del formulario y datos de gestión
     const areaOptions = orderedAreas.map(a => ({name: a}));
@@ -961,7 +961,7 @@ class Component extends DCLogic {
 
     // Los <select> de ÁREA y ESTADO se construyen como elementos React porque
     // sc-for no genera <option> dentro de <select> en el runtime dc.
-    const _selStyle = {width:'100%', background:'#0A1024', border:'1px solid #2A3F63', color:'#DBE6F7', fontFamily:"'Montserrat',sans-serif", fontSize:'12px', padding:'8px 8px'};
+    const _selStyle = {width:'100%', background:'#EEF3F9', border:'1px solid #D9E1EC', color:'#1F3B6F', fontFamily:"'Montserrat',sans-serif", fontSize:'12px', padding:'8px 8px'};
     const mkSelect = (value, opts, onChange) => React.createElement('select',
       {value, onChange, style: _selStyle},
       opts.map(o => React.createElement('option', {key: o, value: o}, o)));
@@ -1000,7 +1000,7 @@ class Component extends DCLogic {
       selArea: selNode ? selNode.area : '',
       selFase: selNode ? selNode.fase : '',
       selEstadoU: selNode ? selNode.estado.toUpperCase() : '',
-      selColor: selNode ? (sc[selNode.estado] || '#8194B4') : '#8194B4',
+      selColor: selNode ? (sc[selNode.estado] || '#5E7196') : '#5E7196',
       selHasNota: !!(selNode && selNode.nota),
       selNota: selNode ? (selNode.nota || '') : '',
       fAreaSelect, fEstadoSelect,
