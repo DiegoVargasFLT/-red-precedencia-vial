@@ -253,40 +253,36 @@ const SC = {'Completado':'#57C99B','En proceso':'#5B8DEF','Pendiente':'#8A97A8',
 const LS_KEY = 'red-precedencia-vial-cierre-v2';
 
 const DEFAULT_NODES = [
-  // ── Entidades de servicios públicos ──
-  {id:'ESP-01',area:'Entidades de servicios',fase:'Entrega a Beneficiarios',titulo:'Recibo documental — ESP / VANTI / ETB / ENEL-Codensa / UAESP',estado:'Completado',nota:'',dependeDe:[]},
-  {id:'ESP-02',area:'Entidades de servicios',fase:'Entrega a Beneficiarios',titulo:'Paz y salvo de servicios públicos',estado:'En proceso',nota:'Pendiente paz y salvo de VANTI y ETB.',dependeDe:['ESP-01']},
-
-  // ── Ambiental ──
-  {id:'AMB-01',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Cierre de permisos — SDA / CAR / ICANH / JBB',estado:'Completado',nota:'Incluye POC y Licencia ambiental.',dependeDe:[]},
-  {id:'AMB-02',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Recibo documental ambiental',estado:'En proceso',nota:'',dependeDe:['AMB-01']},
-  {id:'AMB-03',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Recibo de obra ambiental',estado:'Pendiente',nota:'',dependeDe:['AMB-02']},
-
-  // ── Social ──
-  {id:'SOC-01',area:'Social',fase:'Entrega a Beneficiarios',titulo:'Cierre de actas de vecindad',estado:'Completado',nota:'',dependeDe:[]},
+  // ── IDU ──
+  {id:'IDU-01',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Acta de recorrido de recibo de obra',estado:'Pendiente',nota:'',dependeDe:[]},
+  {id:'IDU-02',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Entrega documental según lo estipulado en el convenio de los componentes técnico, ambiental, arqueología, social y SST',estado:'Pendiente',nota:'',dependeDe:['IDU-01']},
 
   // ── Predial ──
-  {id:'PRE-01',area:'Predial',fase:'Entrega a Beneficiarios',titulo:'Acta de recorrido → Entrega IOU',estado:'En proceso',nota:'',dependeDe:[]},
-  {id:'PRE-02',area:'Predial',fase:'Entrega a Beneficiarios',titulo:'Acta de restitución a custodio (C-1-FLT)',estado:'Pendiente',nota:'',dependeDe:['PRE-01']},
+  {id:'PRE-01',area:'Predial',fase:'Entrega a Beneficiarios',titulo:'Acta de restitución de predios del área del proyecto (Constructor - Interventoría - FLT)',estado:'Pendiente',nota:'',dependeDe:['IDU-01']},
+  {id:'PRE-02',area:'Predial',fase:'Liquidación',titulo:'Escrituración FLT al IDU',estado:'Pendiente',nota:'Podría darse luego de firmada el acta de liquidación.',dependeDe:['IDU-01']},
+
+  // ── Entidades de servicios (ESP · VANTI · ETB · ENRC · UAESP) ──
+  {id:'ESP-01',area:'Entidades de servicios',fase:'Entrega a Beneficiarios',titulo:'Recibo físico de la infraestructura · Entrega documental según lo estipulado en el Convenio',estado:'Pendiente',nota:'ESP · VANTI · ETB · ENRC · UAESP',dependeDe:[]},
+  {id:'ESP-02',area:'Entidades de servicios',fase:'Entrega a Beneficiarios',titulo:'Paz y Salvo',estado:'Pendiente',nota:'',dependeDe:['ESP-01']},
+
+  // ── Ambiental (SDA · CAR · ICANH · JBB) ──
+  {id:'AMB-01',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Entrega documental según lo estipulado en el Convenio',estado:'Pendiente',nota:'SDA · CAR · ICANH · JBB',dependeDe:[]},
+  {id:'AMB-02',area:'Ambiental',fase:'Entrega a Beneficiarios',titulo:'Cierre administrativo de permisos',estado:'Pendiente',nota:'Dependerá de los compromisos adquiridos por parte del proyecto.',dependeDe:['AMB-01']},
+
+  // ── Social ──
+  {id:'SOC-01',area:'Social',fase:'Entrega a Beneficiarios',titulo:'Paz y Salvo Plataforma Bachué (cierre de PQRs y actas de vecindad)',estado:'Pendiente',nota:'',dependeDe:[]},
 
   // ── EAAB ──
-  {id:'EAB-01',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'No objeciones aprobadas',estado:'Completado',nota:'',dependeDe:[]},
-  {id:'EAB-02',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Recibo de obra EAAB',estado:'En proceso',nota:'',dependeDe:['EAB-01']},
-  {id:'EAB-03',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Número DITG – Obra',estado:'Pendiente',nota:'',dependeDe:['EAB-02']},
-  {id:'EAB-04',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Cierre predial EAAB',estado:'Bloqueado',nota:'A la espera de la formalización predial de dos derechos de vía.',dependeDe:['EAB-02']},
+  {id:'EAB-01',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'No objeciones integrales productos EyD · Número DITG EyD',estado:'Pendiente',nota:'',dependeDe:[]},
+  {id:'EAB-02',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'No objeciones a los ajustes en Obra · Recibo físico de la infraestructura · Número DITG Obra · Recibo predial (si aplica)',estado:'Pendiente',nota:'',dependeDe:['EAB-01']},
+  {id:'EAB-03',area:'EAAB',fase:'Entrega a Beneficiarios',titulo:'Acta de Entrega y Recibo',estado:'Pendiente',nota:'',dependeDe:['EAB-02']},
 
-  // ── SDM ──
-  {id:'SDM-01',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Recibo de obra documental',estado:'Completado',nota:'',dependeDe:[]},
-  {id:'SDM-02',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Señalización',estado:'En proceso',nota:'',dependeDe:['SDM-01']},
-  {id:'SDM-03',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Semaforización',estado:'Bloqueado',nota:'Suministro de controladores semafóricos retrasado por SDM.',dependeDe:['SDM-01']},
+  // ── SDM (Señalización · Semaforización) ──
+  {id:'SDM-01',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Recibo físico de la infraestructura · Recibo documental',estado:'Pendiente',nota:'Señalización · Semaforización',dependeDe:[]},
+  {id:'SDM-02',area:'SDM',fase:'Entrega a Beneficiarios',titulo:'Acta de Entrega y Recibo',estado:'Pendiente',nota:'',dependeDe:['SDM-01']},
 
-  // ── IDU · consolidación ──
-  {id:'IDU-01',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Recibo documental IDU',estado:'Pendiente',nota:'Consolida los cierres de servicios, ambiental, social y predial.',dependeDe:['ESP-02','AMB-03','SOC-01','PRE-02']},
-  {id:'IDU-02',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Acta de recorrido final',estado:'Pendiente',nota:'',dependeDe:['IDU-01']},
-  {id:'IDU-03',area:'IDU',fase:'Entrega a Beneficiarios',titulo:'Cierre financiero',estado:'Pendiente',nota:'',dependeDe:['IDU-02']},
-
-  // ── Legal · Liquidación ──
-  {id:'LEG-01',area:'Legal/Jurídica',fase:'Liquidación',titulo:'Cierre de convenio · Acta de liquidación',estado:'Pendiente',nota:'Requiere el cierre completo de IDU, EAAB y SDM.',dependeDe:['IDU-03','EAB-03','EAB-04','SDM-02','SDM-03']}
+  // ── Cierre (Legal / Jurídica) ──
+  {id:'LEG-01',area:'Legal/Jurídica',fase:'Liquidación',titulo:'CIERRE CONVENIO · Acta de Liquidación del Convenio específico',estado:'Pendiente',nota:'',dependeDe:['IDU-02','PRE-01','PRE-02','ESP-02','AMB-01','AMB-02','SOC-01']}
 ];
 
 // ── Sincronización con Supabase (opcional) ──
