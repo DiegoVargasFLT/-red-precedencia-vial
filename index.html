@@ -874,18 +874,29 @@ class Component extends DCLogic {
     return lv;
   }
 
+  // Ancestros conscientes de la jerarquía: depender de una actividad principal
+  // equivale a depender de todo su grupo (la principal y sus subactividades).
   collectAnc(id, byId, set){
     ((byId[id] && byId[id].dependeDe) || []).forEach(d => {
-      if (byId[d] && !set.has(d)) { set.add(d); this.collectAnc(d, byId, set); }
+      const grp = [d].concat(Object.keys(byId).filter(k => byId[k].parent === d));
+      grp.forEach(g => {
+        if (byId[g] && !set.has(g)) { set.add(g); this.collectAnc(g, byId, set); }
+      });
     });
   }
 
+  // Descendientes conscientes de la jerarquía: una dependencia sobre la
+  // principal se considera activada si cualquier miembro del grupo está en el
+  // conjunto (así LEG-01 —que depende de ESP-02— entra en la cadena de ESP-02C).
   collectDesc(seedSet, nodes){
+    const kids = {};
+    nodes.forEach(n => { if(n.parent){ (kids[n.parent] = kids[n.parent] || []).push(n.id); } });
+    const covers = d => seedSet.has(d) || (kids[d] || []).some(c => seedSet.has(c));
     let changed = true;
     while (changed) {
       changed = false;
       nodes.forEach(n => {
-        if (!seedSet.has(n.id) && (n.dependeDe||[]).some(d => seedSet.has(d))) {
+        if (!seedSet.has(n.id) && (n.dependeDe||[]).some(covers)) {
           seedSet.add(n.id);
           changed = true;
         }
@@ -1069,13 +1080,14 @@ class Component extends DCLogic {
     const selId = (this.state.selectedId && byId[this.state.selectedId]) ? this.state.selectedId : null;
     let chain = null;
     if (selId) {
+      // Seleccionar una principal selecciona su grupo completo (ella + hijas).
+      const seed = new Set([selId]);
+      nodes.forEach(x => { if(x.parent === selId) seed.add(x.id); });
       const anc = new Set();
-      this.collectAnc(selId, byId, anc);
-      const desc = new Set([selId]);
+      seed.forEach(s => this.collectAnc(s, byId, anc));
+      const desc = new Set(seed);
       this.collectDesc(desc, nodes);
-      chain = new Set([selId, ...anc, ...desc]);
-      // La jerarquía también cuenta como contexto: hijas y principal.
-      nodes.forEach(x => { if(x.parent === selId) chain.add(x.id); });
+      chain = new Set([...seed, ...anc, ...desc]);
       if(byId[selId].parent) chain.add(byId[selId].parent);
     }
     const q = this.state.search.trim().toLowerCase();
