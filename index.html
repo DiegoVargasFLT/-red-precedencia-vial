@@ -115,8 +115,11 @@
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
           <div onClick="{{n.onClick}}" title="{{n.tip}}" class="node-card" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease,transform .14s ease,box-shadow .16s ease">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">{{n.id}}</span>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;color:{{n.color}}">{{n.estadoU}}</span>
+              <span style="display:flex;align-items:center;gap:5px;min-width:0">
+                <button onClick="{{n.onToggleSubs}}" title="{{n.subsTip}}" style="display:{{n.subsDisplay}};font-family:'IBM Plex Mono',monospace;font-size:8.5px;line-height:1;background:#EEF3F9;border:1px solid #C7D6E8;color:#1F3B6F;padding:2px 6px;cursor:pointer;border-radius:6px;flex:none">{{n.subsMark}}</button>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{n.idLabel}}</span>
+              </span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;color:{{n.color}};flex:none">{{n.estadoU}}</span>
             </div>
             <div title="{{n.tip}}" style="font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;color:#1F3B6F;line-height:1.25;overflow:hidden">{{n.titulo}}</div>
             <div style="display:{{n.metaDisplay}};justify-content:space-between;gap:6px;margin-top:auto">
@@ -156,6 +159,9 @@
             <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{selColor}};border:1px solid {{selColor}};padding:3px 8px">{{selEstadoU}}</span>
           </div>
           <div style="font-family:'Montserrat',sans-serif;font-size:17px;font-weight:600;color:#1F3B6F;line-height:1.3">{{selTitulo}}</div>
+          <sc-if value="{{selHasParent}}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{onGoParent}}" class="dep-item" style="width:100%;text-align:left;background:#F4F7FB;border:1px solid #D9E1EC;padding:8px 10px;cursor:pointer;font-size:11.5px;color:#475E89;line-height:1.4">{{selParentLabel}}</button>
+          </sc-if>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="soft" style="border:1px solid #D9E1EC;padding:8px 10px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7486A6;margin-bottom:4px">ÁREA</div>
@@ -186,6 +192,18 @@
               </div>
             </sc-for>
           </div>
+          <sc-if value="{{subsHas}}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">SUBACTIVIDADES ({{subsCount}})</div>
+              <sc-for list="{{subsList}}" as="d" hint-placeholder-count="3">
+                <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:#F7FAFD;border:1px solid #C7D6E8;border-left:3px solid {{d.color}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F">
+                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
+                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DEPENDE DE ({{depCount}})</div>
             <sc-if value="{{depEmpty}}" hint-placeholder-val="{{ false }}">
@@ -245,6 +263,12 @@
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">ÁREA</div>
             {{fAreaSelect}}
           </label>
+          <sc-if value="{{fParentShow}}" hint-placeholder-val="{{ false }}">
+            <label style="display:block">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">PERTENECE A (SUBACTIVIDAD DE)</div>
+              {{fParentSelect}}
+            </label>
+          </sc-if>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <label style="display:block">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">FASE</div>
@@ -272,6 +296,24 @@
             <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Pega el enlace del documento (OneDrive, SharePoint, Drive o cualquier URL) y dale un nombre descriptivo.</div>
             {{fDocsEditor}}
           </div>
+          <sc-if value="{{canSubs}}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">SUBACTIVIDADES ({{subsCount}})</span>
+                <button onClick="{{onAddSub}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="background:rgba(2,88,80,0.06)">+ SUBACTIVIDAD</button>
+              </div>
+              <sc-if value="{{subsFormEmpty}}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:10.5px;color:#94A1BA;line-height:1.5">Divide esta actividad en partes (p. ej. una por entidad) y encadénalas con sus respectivas actividades siguientes.</div>
+              </sc-if>
+              <sc-for list="{{subsList}}" as="d" hint-placeholder-count="3">
+                <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:#F7FAFD;border:1px solid #C7D6E8;border-left:3px solid {{d.color}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F">
+                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
+                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">DEPENDE DE</div>
             <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
@@ -522,7 +564,8 @@ class Component extends DCLogic {
       mode: 'none',
       search: '',
       hidden: {},
-      zoom: 1
+      zoom: 1,
+      expanded: {}   // qué actividades principales muestran sus subactividades
     };
   }
 
@@ -801,6 +844,10 @@ class Component extends DCLogic {
         const base = deps.length ? 1 + Math.max(...deps.map(d => lv[d])) : 0;
         if(base > lv[n.id]){ lv[n.id] = base; changed = true; }
       });
+      // (a2) una subactividad nunca queda antes (a la izquierda) de su principal
+      nodes.forEach(n => {
+        if(n.parent && lv[n.parent] != null && lv[n.parent] > lv[n.id]){ lv[n.id] = lv[n.parent]; changed = true; }
+      });
       // (b) piso por fase: una fase empieza después del máximo de las fases previas
       const maxByRank = {};
       nodes.forEach(n => { const r = rk(n); maxByRank[r] = Math.max(maxByRank[r] != null ? maxByRank[r] : -1, lv[n.id]); });
@@ -849,7 +896,28 @@ class Component extends DCLogic {
     return pfx + '-' + String(max + 1).padStart(2, '0');
   }
 
-  selectNode(id){ this.setState({selectedId: id, mode: 'detail'}); }
+  // ── Subactividades (jerarquía de 1 nivel: actividad principal → hijas) ──
+  childrenOf(id){ return this.state.nodes.filter(n => n.parent === id); }
+  toggleExpand(id){ this.setState(s => ({expanded: {...s.expanded, [id]: !s.expanded[id]}})); }
+  addSub(parentId){
+    const p = this.state.nodes.find(x => x.id === parentId);
+    if(!p) return;
+    let i = this.childrenOf(parentId).length, id;
+    do { id = parentId + String.fromCharCode(65 + i); i++; } while(this.state.nodes.some(x => x.id === id));
+    const estados = this.reconciledEstados();
+    const estadoDef = estados.some(e => e.name === 'Pendiente') ? 'Pendiente' : (estados[0] ? estados[0].name : 'Pendiente');
+    const n = {id, parent: parentId, area: p.area, fase: p.fase, titulo: 'Nueva subactividad', estado: estadoDef, nota: '', dependeDe: []};
+    this.setNodes([...this.state.nodes, n]);
+    this.setState({selectedId: id, mode: 'edit', expanded: {...this.state.expanded, [parentId]: true}});
+  }
+
+  // Al seleccionar una subactividad, expande a su principal para que sea visible.
+  selectNode(id){
+    const n = this.state.nodes.find(x => x.id === id);
+    const patch = {selectedId: id, mode: 'detail'};
+    if(n && n.parent) patch.expanded = {...this.state.expanded, [n.parent]: true};
+    this.setState(patch);
+  }
 
   addNode(){
     const names = this.areaNames();
@@ -866,12 +934,14 @@ class Component extends DCLogic {
     const nodes = this.state.nodes;
     const n = nodes.find(x => x.id === id);
     if (!n) return;
-    const dependents = nodes.filter(x => (x.dependeDe||[]).includes(id));
-    const msg = dependents.length
-      ? dependents.length + ' actividad(es) dependen de «' + n.titulo + '» (' + dependents.map(d => d.id).join(', ') + ').\nAl eliminarla se limpiarán esas referencias. ¿Eliminar de todas formas?'
-      : '¿Eliminar «' + n.titulo + '»?';
+    const gone = new Set([id]);
+    nodes.forEach(x => { if(x.parent === id) gone.add(x.id); });
+    const dependents = nodes.filter(x => !gone.has(x.id) && (x.dependeDe||[]).some(d => gone.has(d)));
+    let msg = '¿Eliminar «' + n.titulo + '»?';
+    if(gone.size > 1) msg = 'La actividad «' + n.titulo + '» tiene ' + (gone.size - 1) + ' subactividad(es) que también se eliminarán.\n' + msg;
+    if(dependents.length) msg = dependents.length + ' actividad(es) dependen de lo que vas a eliminar (' + dependents.map(d => d.id).join(', ') + ').\nSe limpiarán esas referencias. ' + msg;
     if (!window.confirm(msg)) return;
-    this.setNodes(nodes.filter(x => x.id !== id).map(x => ({...x, dependeDe: (x.dependeDe||[]).filter(d => d !== id)})));
+    this.setNodes(nodes.filter(x => !gone.has(x.id)).map(x => ({...x, dependeDe: (x.dependeDe||[]).filter(d => !gone.has(d))})));
     this.setState({selectedId: null, mode: 'none'});
   }
 
@@ -899,7 +969,10 @@ class Component extends DCLogic {
     nodes.forEach(n => byId[n.id] = n);
     const levels = this.computePhaseLevels(nodes, byId);
     const hidden = this.state.hidden;
-    const visible = nodes.filter(n => !hidden[n.area]);
+    const expanded = this.state.expanded;
+    // Subactividades visibles solo si su principal está expandida (colapsadas
+    // por defecto para mantener el tablero limpio). Huérfanas → visibles.
+    const visible = nodes.filter(n => !hidden[n.area] && (!n.parent || !byId[n.parent] || expanded[n.parent]));
     const orderedAreas = this.effectiveAreaOrder();
     const visAreas = orderedAreas.filter(a => !hidden[a]);
 
@@ -976,6 +1049,9 @@ class Component extends DCLogic {
       const desc = new Set([selId]);
       this.collectDesc(desc, nodes);
       chain = new Set([selId, ...anc, ...desc]);
+      // La jerarquía también cuenta como contexto: hijas y principal.
+      nodes.forEach(x => { if(x.parent === selId) chain.add(x.id); });
+      if(byId[selId].parent) chain.add(byId[selId].parent);
     }
     const q = this.state.search.trim().toLowerCase();
 
@@ -994,16 +1070,23 @@ class Component extends DCLogic {
       }
       const sel = n.id === selId;
       const fst = FASE_STYLES[n.fase];
+      const kidCount = nodes.filter(x => x.parent === n.id).length;
+      const isSub = !!n.parent;
       return {
         id: n.id, titulo: n.titulo, fase: n.fase,
+        idLabel: (isSub ? '↳ ' : '') + n.id,
+        subsDisplay: kidCount ? 'inline-block' : 'none',
+        subsMark: kidCount ? ((expanded[n.id] ? '▾' : '▸') + ' ' + kidCount) : '',
+        subsTip: expanded[n.id] ? 'Ocultar subactividades' : 'Mostrar ' + kidCount + ' subactividad(es)',
+        onToggleSubs: (e) => { e.stopPropagation(); this.toggleExpand(n.id); },
         faseColor: fst ? fst.fg : '#94A1BA',
         tip: n.titulo + (n.nota ? ' — ' + n.nota : '') + '  [' + n.area + ' · ' + n.fase + ' · ' + n.estado + ']',
         x, y: ny, w: NW, h: NH,
         color: sc[n.estado] || '#5E7196',
         estadoU: (n.estado||'').toUpperCase(),
         opacity: op,
-        bd: sel ? (sc[n.estado] || '#5E7196') : '#D9E1EC',
-        bg: sel ? '#E4F1FB' : '#FFFFFF',
+        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? '#C7D6E8' : '#D9E1EC'),
+        bg: sel ? '#E4F1FB' : (isSub ? '#F7FAFD' : '#FFFFFF'),
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
         notaMark: n.nota ? '✎ nota' : '',
         docsMark: (Array.isArray(n.docs) && n.docs.length)
@@ -1014,9 +1097,25 @@ class Component extends DCLogic {
       };
     });
 
-    // edges
+    // edges — si una subactividad está colapsada, su flecha se agrupa en la
+    // actividad principal (así la cadena sigue visible sin saturar).
+    const visSet = new Set(visible.map(n => n.id));
+    const proxyOf = id => {
+      const nd = byId[id];
+      if(!nd) return null;
+      if(visSet.has(id)) return id;
+      if(nd.parent && visSet.has(nd.parent)) return nd.parent;
+      return null;
+    };
     const paths = [];
-    visible.forEach(n => (n.dependeDe||[]).forEach(d => {
+    const seenEdges = new Set();
+    nodes.forEach(n0 => (n0.dependeDe||[]).forEach(d0 => {
+      const dp = proxyOf(d0), np = proxyOf(n0.id);
+      if(!dp || !np || dp === np) return;
+      const ek = dp + '>' + np;
+      if(seenEdges.has(ek)) return;
+      seenEdges.add(ek);
+      const d = dp, n = byId[np];
       const s = pos[d], t = pos[n.id];
       const sn = byId[d];
       if (!s || !t || !sn) return;
@@ -1091,6 +1190,10 @@ class Component extends DCLogic {
     const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
     const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
 
+    // Subactividades de la seleccionada + datos de su principal (si es hija).
+    const subsList = selNode ? nodes.filter(n => n.parent === selId).map(mkItem) : [];
+    const selParent = (selNode && selNode.parent) ? byId[selNode.parent] : null;
+
     // Documentos de la actividad seleccionada. Se listan TODOS apenas se
     // agregan (aunque aún no tengan enlace) como checklist: el checkbox marca
     // «ya se tiene». El botón ↗ solo se activa cuando hay URL.
@@ -1137,6 +1240,19 @@ class Component extends DCLogic {
       opts.map(o => React.createElement('option', {key: o, value: o}, o)));
     const fAreaSelect = showForm ? mkSelect(selNode.area, orderedAreas, e => this.updateNode(selId, {area: e.target.value})) : null;
     const fEstadoSelect = showForm ? mkSelect(selNode.estado, this.reconciledEstados().map(e => e.name), e => this.updateNode(selId, {estado: e.target.value})) : null;
+
+    // Selector «pertenece a» (solo 1 nivel: una actividad con hijas no puede
+    // volverse subactividad, y una subactividad no puede ser principal de otra).
+    let fParentSelect = null;
+    const selHasKids = selNode ? nodes.some(x => x.parent === selId) : false;
+    if (showForm && !selHasKids) {
+      const cands = nodes.filter(x => !x.parent && x.id !== selId);
+      fParentSelect = React.createElement('select',
+        {value: selNode.parent || '', onChange: e => this.updateNode(selId, {parent: e.target.value || null}), style: _selStyle},
+        [React.createElement('option', {key: '__none', value: ''}, '— Es actividad principal —')]
+          .concat(cands.map(x => React.createElement('option', {key: x.id, value: x.id},
+            x.id + ' · ' + (x.titulo.length > 42 ? x.titulo.slice(0, 42) + '…' : x.titulo)))));
+    }
 
     // Editor de documentos del formulario, construido como elementos React
     // (mismo motivo que mkSelect: control total sobre inputs dinámicos).
@@ -1198,6 +1314,16 @@ class Component extends DCLogic {
       docCountLabel: docCount ? (docDone + '/' + docCount) : '0',
       docEmpty: showDetail && docCount === 0,
       onAddDoc: () => this.addDoc(selId),
+      subsList, subsCount: subsList.length,
+      subsHas: showDetail && subsList.length > 0,
+      canSubs: showForm && !(selNode && selNode.parent),
+      onAddSub: () => this.addSub(selId),
+      subsFormEmpty: subsList.length === 0,
+      selHasParent: !!selParent,
+      selParentLabel: selParent ? ('↳ Parte de ' + selParent.id + ' · ' + selParent.titulo) : '',
+      onGoParent: () => { if(selParent) this.selectNode(selParent.id); },
+      fParentSelect,
+      fParentShow: !!fParentSelect,
       fAreaSelect, fEstadoSelect, fDocsEditor,
       depCount: depList.length, depEmpty: showDetail && depList.length === 0, depList,
       enCount: enList.length, enEmpty: enList.length === 0, enList,
