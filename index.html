@@ -17,10 +17,22 @@
     html,body{margin:0;padding:0;background:#EEF3F9;}
     *{box-sizing:border-box;}
     ::-webkit-scrollbar{width:10px;height:10px;background:#EEF3F9;}
-    ::-webkit-scrollbar-thumb{background:#D9E1EC;border:2px solid #EEF3F9;}
+    ::-webkit-scrollbar-thumb{background:#D9E1EC;border:2px solid #EEF3F9;border-radius:8px;}
     ::-webkit-scrollbar-corner{background:#EEF3F9;}
-    input:focus,select:focus,textarea:focus{outline:1px solid #61B1E3;outline-offset:1px;}
+    button{border-radius:8px;transition:background .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .12s ease;}
+    button:active{transform:scale(.97);}
+    input,select,textarea{border-radius:8px;transition:border-color .16s ease,box-shadow .16s ease;}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:#61B1E3!important;box-shadow:0 0 0 3px rgba(97,177,227,.20);}
     option{background:#FFFFFF;color:#1F3B6F;}
+    .soft{border-radius:10px;}
+    .node-card{border-radius:12px;box-shadow:0 1px 2px rgba(31,59,111,.05);}
+    .node-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(31,59,111,.15);border-color:#61B1E3!important;}
+    .dep-item{border-radius:10px;}
+    .dep-item:hover{border-color:#61B1E3!important;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
+    .doc-link{display:flex;gap:10px;align-items:center;border:1px solid #D9E1EC;border-radius:10px;padding:9px 12px;margin-top:6px;text-decoration:none;background:#FFFFFF;transition:border-color .16s ease,box-shadow .16s ease,transform .12s ease;}
+    .doc-link:hover{border-color:#61B1E3;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
+    @keyframes rpSlideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+    .side-panel{animation:rpSlideIn .20s ease;}
   </style>
 </helmet>
 <div style="height:100vh;display:flex;flex-direction:column;background:#EEF3F9;color:#1F3B6F;font-family:'Montserrat',sans-serif;overflow:hidden">
@@ -54,12 +66,14 @@
       </div>
     </div>
     <div style="flex:1"></div>
-    <input value="{{searchVal}}" onChange="{{onSearch}}" placeholder="Buscar actividad…" style="width:220px;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 12px">
+    <input value="{{searchVal}}" onChange="{{onSearch}}" placeholder="Buscar por nombre, código o área…" style="width:230px;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:9px 12px">
     <div style="display:flex;gap:10px">
       <button onClick="{{onAgregar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:9px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">+ AGREGAR ACTIVIDAD</button>
       <button onClick="{{onReset}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#5E7196;border:1px solid #D9E1EC;padding:9px 14px;cursor:pointer" style-hover="border-color:#61B1E3;color:#1F3B6F">RESTABLECER</button>
     </div>
   </div>
+
+  <div title="Avance general: {{statPct}} completado" style="height:4px;flex:none;background:#E4EAF3"><div style="height:100%;width:{{statPct}};background:linear-gradient(90deg,#025850 0%,#61B1E3 100%);transition:width .5s ease"></div></div>
 
   <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#F4F7FB;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
     <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-right:4px">ÁREAS</span>
@@ -93,7 +107,7 @@
         </sc-for>
         {{edgesSvg}}
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
-          <div onClick="{{n.onClick}}" title="{{n.tip}}" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease" style-hover="border-color:#61B1E3">
+          <div onClick="{{n.onClick}}" title="{{n.tip}}" class="node-card" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease,transform .14s ease,box-shadow .16s ease">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
               <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">{{n.id}}</span>
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;color:{{n.color}}">{{n.estadoU}}</span>
@@ -101,13 +115,13 @@
             <div title="{{n.tip}}" style="font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;color:#1F3B6F;line-height:1.25;overflow:hidden">{{n.titulo}}</div>
             <div style="display:{{n.metaDisplay}};justify-content:space-between;gap:6px;margin-top:auto">
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:{{n.faseColor}}">{{n.fase}}</span>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#5E7196">{{n.notaMark}}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#5E7196">{{n.docsMark}} {{n.notaMark}}</span>
             </div>
           </div>
         </sc-for>
         <div style="position:sticky;left:0;width:214px;height:0;z-index:4;display:block">
           <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-            <div style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;border-left:4px solid {{l.color}};padding:5px 8px;max-width:208px">
+            <div class="soft" style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;border-left:4px solid {{l.color}};padding:5px 8px;max-width:208px;box-shadow:0 2px 8px rgba(31,59,111,.06)">
               <span style="width:9px;height:9px;flex:none;background:{{l.color}}"></span>
               <div style="display:flex;flex-direction:column;gap:2px;flex:none">
                 <button onClick="{{l.onUp}}" title="Subir área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.upOpacity}}" style-hover="border-color:#61B1E3">▲</button>
@@ -119,15 +133,15 @@
         </div>
       </div>
      </div>
-     <div style="position:absolute;left:16px;bottom:16px;z-index:6;display:flex;align-items:stretch;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC">
-       <button onClick="{{onZoomOut}}" title="Alejar" style="width:34px;height:34px;background:transparent;border:none;border-right:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#FFFFFF">−</button>
-       <button onClick="{{onZoomReset}}" title="Restablecer zoom" style="min-width:52px;padding:0 8px;background:transparent;border:none;border-right:1px solid #D9E1EC;color:#475E89;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#FFFFFF">{{zoomPct}}</button>
-       <button onClick="{{onZoomIn}}" title="Acercar" style="width:34px;height:34px;background:transparent;border:none;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#FFFFFF">+</button>
+     <div class="soft" style="position:absolute;left:16px;bottom:16px;z-index:6;display:flex;align-items:stretch;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;overflow:hidden;box-shadow:0 4px 14px rgba(31,59,111,.10)">
+       <button onClick="{{onZoomOut}}" title="Alejar" style="width:34px;height:34px;border-radius:0;background:transparent;border:none;border-right:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#FFFFFF">−</button>
+       <button onClick="{{onZoomReset}}" title="Restablecer zoom" style="min-width:52px;padding:0 8px;border-radius:0;background:transparent;border:none;border-right:1px solid #D9E1EC;color:#475E89;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;cursor:pointer" style-hover="background:#FFFFFF">{{zoomPct}}</button>
+       <button onClick="{{onZoomIn}}" title="Acercar" style="width:34px;height:34px;border-radius:0;background:transparent;border:none;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:18px;cursor:pointer;line-height:1" style-hover="background:#FFFFFF">+</button>
      </div>
     </div>
 
     <sc-if value="{{panelOpen}}" hint-placeholder-val="{{ false }}">
-    <div style="width:340px;flex:none;background:#FFFFFF;border-left:1px solid #D9E1EC;overflow:auto">
+    <div class="side-panel" style="width:352px;flex:none;background:#FFFFFF;border-left:1px solid #D9E1EC;overflow:auto">
 
       <sc-if value="{{showDetail}}" hint-placeholder-val="{{ false }}">
         <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
@@ -137,25 +151,41 @@
           </div>
           <div style="font-family:'Montserrat',sans-serif;font-size:17px;font-weight:600;color:#1F3B6F;line-height:1.3">{{selTitulo}}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div style="border:1px solid #D9E1EC;padding:8px 10px">
+            <div class="soft" style="border:1px solid #D9E1EC;padding:8px 10px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7486A6;margin-bottom:4px">ÁREA</div>
               <div style="font-size:12px;color:#1F3B6F">{{selArea}}</div>
             </div>
-            <div style="border:1px solid #D9E1EC;padding:8px 10px">
+            <div class="soft" style="border:1px solid #D9E1EC;padding:8px 10px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#7486A6;margin-bottom:4px">FASE</div>
               <div style="font-size:12px;color:#1F3B6F">{{selFase}}</div>
             </div>
           </div>
           <sc-if value="{{selHasNota}}" hint-placeholder-val="{{ false }}">
-            <div style="border-left:2px solid #5E7196;padding:8px 12px;background:#FFFFFF;font-size:12px;color:#475E89;line-height:1.6">{{selNota}}</div>
+            <div class="soft" style="border-left:3px solid #61B1E3;padding:10px 12px;background:#F4F7FB;font-size:12px;color:#475E89;line-height:1.6">{{selNota}}</div>
           </sc-if>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DOCUMENTOS ({{docCount}})</div>
+            <sc-if value="{{docEmpty}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Sin documentos aún. Puedes agregarlos desde «Editar».</div>
+            </sc-if>
+            <sc-for list="{{docList}}" as="k" hint-placeholder-count="2">
+              <a href="{{k.url}}" target="_blank" rel="noopener noreferrer" class="doc-link" title="Abrir: {{k.url}}">
+                <span style="font-size:15px;flex:none">{{k.icon}}</span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                  <span style="font-size:12px;font-weight:600;color:#1F3B6F;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.name}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.host}}</span>
+                </span>
+                <span style="font-size:12px;color:#61B1E3;flex:none">↗</span>
+              </a>
+            </sc-for>
+          </div>
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DEPENDE DE ({{depCount}})</div>
             <sc-if value="{{depEmpty}}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Sin dependencias (nivel 0)</div>
+              <div style="font-size:11.5px;color:#025850;margin-top:8px">✓ Puede iniciar ya — no depende de otras actividades</div>
             </sc-if>
             <sc-for list="{{depList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
+              <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
@@ -171,10 +201,10 @@
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">HABILITA ({{enCount}})</div>
             <sc-if value="{{enEmpty}}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— No habilita otras actividades</div>
+              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Ninguna actividad espera por esta</div>
             </sc-if>
             <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
+              <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
@@ -228,9 +258,17 @@
             <textarea value="{{fNota}}" onChange="{{onFNota}}" rows="3" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12.5px;padding:8px 10px;resize:vertical"></textarea>
           </label>
           <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DOCUMENTOS Y ENLACES</span>
+              <button onClick="{{onAddDoc}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="background:rgba(2,88,80,0.06)">+ AGREGAR</button>
+            </div>
+            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Pega el enlace del documento (OneDrive, SharePoint, Drive o cualquier URL) y dale un nombre descriptivo.</div>
+            {{fDocsEditor}}
+          </div>
+          <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">DEPENDE DE</div>
             <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
-            <div style="max-height:230px;overflow:auto;border:1px solid #D9E1EC;background:#F4F7FB">
+            <div class="soft" style="max-height:230px;overflow:auto;border:1px solid #D9E1EC;background:#F4F7FB">
               <sc-for list="{{depOptions}}" as="o" hint-placeholder-count="4">
                 <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #FFFFFF;border-left:3px solid {{o.areaColor}};cursor:pointer;font-size:12px;color:#1F3B6F" style-hover="background:#FFFFFF">
                   <input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}" style="accent-color:#61B1E3;flex:none">
@@ -245,10 +283,10 @@
           <div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">HABILITA ({{enCount}})</div>
             <sc-if value="{{enEmpty}}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— No habilita otras actividades</div>
+              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Ninguna actividad espera por esta</div>
             </sc-if>
             <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">
+              <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
                   <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
@@ -265,7 +303,7 @@
             <button onClick="{{onListo}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">LISTO</button>
             <button onClick="{{onEliminar}}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#AD1924;border:1px solid #AD1924;padding:10px 14px;cursor:pointer" style-hover="background:#AD1924;color:#EEF3F9">ELIMINAR</button>
           </div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#94A1BA">LOS CAMBIOS SE GUARDAN AUTOMÁTICAMENTE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#025850">✓ GUARDADO AUTOMÁTICO — TUS CAMBIOS SE SINCRONIZAN AL INSTANTE</div>
         </div>
       </sc-if>
 
@@ -282,7 +320,7 @@
               <button onClick="{{onAddArea}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="border-color:#025850">+ AGREGAR ÁREA</button>
             </div>
             <sc-for list="{{manageAreas}}" as="a" hint-placeholder-count="8">
-              <div style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
+              <div class="soft" style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
                 <span style="flex:1;font-size:12px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{a.name}}</span>
                 <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{a.prefix}}·{{a.count}}</span>
                 <button onClick="{{a.onRename}}" title="Renombrar área" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
@@ -298,7 +336,7 @@
               <button onClick="{{onAddEstado}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="border-color:#025850">+ AGREGAR ESTADO</button>
             </div>
             <sc-for list="{{manageEstados}}" as="s" hint-placeholder-count="4">
-              <div style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
+              <div class="soft" style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
                 <span style="width:13px;height:13px;flex:none;background:{{s.color}}"></span>
                 <span style="flex:1;font-size:12px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{s.name}}</span>
                 <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{s.count}}</span>
@@ -339,6 +377,24 @@ DEFAULT_AREAS.forEach(a => DEFAULT_PREFIX_MAP[a.name] = a.prefix);
 function derivePrefix(name){
   const b = (name||'').normalize('NFD').replace(/[^A-Za-z]/g,'').toUpperCase().slice(0,3);
   return b || 'ACT';
+}
+
+// ── Documentos adjuntos (enlaces) ──
+// Normaliza la URL (agrega https:// si falta) e identifica la fuente para
+// mostrar un ícono y una etiqueta amigable en los listados.
+function docHref(url){
+  const u = (url||'').trim();
+  if(!u) return '';
+  return /^https?:\/\//i.test(u) ? u : 'https://' + u;
+}
+function docMeta(url){
+  let host = '';
+  try{ host = new URL(docHref(url)).hostname.replace(/^www\./,''); }catch(e){ host = ''; }
+  const h = host.toLowerCase();
+  if(h.includes('1drv.ms') || h.includes('onedrive')) return {icon:'☁️', host:'OneDrive'};
+  if(h.includes('sharepoint')) return {icon:'☁️', host:'SharePoint'};
+  if(h.includes('docs.google') || h.includes('drive.google')) return {icon:'📄', host:'Google Drive'};
+  return {icon:'🔗', host: host || 'enlace'};
 }
 const LS_KEY = 'red-precedencia-vial-cierre-v2';
 
@@ -532,6 +588,9 @@ class Component extends DCLogic {
   }
 
   componentDidMount(){
+    // Tecla Escape: cierra el panel lateral (detalle/edición/gestión).
+    this.__esc = (e) => { if(e.key === 'Escape' && (this.state.mode !== 'none' || this.state.selectedId)) this.setState({selectedId: null, mode: 'none'}); };
+    window.addEventListener('keydown', this.__esc);
     if(!cloud.enabled) return;
     // 1) Baja el tablero de la nube (fuente de verdad compartida)
     cloud.load().then(raw => {
@@ -564,6 +623,7 @@ class Component extends DCLogic {
   }
 
   componentWillUnmount(){
+    if(this.__esc){ window.removeEventListener('keydown', this.__esc); }
     if(this.__cloudSub && _sb){ try { _sb.removeChannel(this.__cloudSub); } catch(e) {} }
   }
 
@@ -682,6 +742,24 @@ class Component extends DCLogic {
       ? n.dependeDe.filter(d => d !== depId)
       : [...(n.dependeDe||[]), depId];
     this.updateNode(id, {dependeDe: deps});
+  }
+
+  // ── Documentos por actividad (lista de enlaces {name, url}) ──
+  docsOf(n){ return (n && Array.isArray(n.docs)) ? n.docs : []; }
+  addDoc(id){
+    const n = this.state.nodes.find(x => x.id === id);
+    if(!n) return;
+    this.updateNode(id, {docs: this.docsOf(n).concat([{name:'', url:''}])});
+  }
+  updateDocAt(id, idx, patch){
+    const n = this.state.nodes.find(x => x.id === id);
+    if(!n) return;
+    this.updateNode(id, {docs: this.docsOf(n).map((d, i) => i === idx ? {...d, ...patch} : d)});
+  }
+  removeDocAt(id, idx){
+    const n = this.state.nodes.find(x => x.id === id);
+    if(!n) return;
+    this.updateNode(id, {docs: this.docsOf(n).filter((_, i) => i !== idx)});
   }
 
   computeLevels(nodes, byId){
@@ -903,7 +981,8 @@ class Component extends DCLogic {
       let op = 1;
       if (chain && !chain.has(n.id)) op = 0.16;
       if (q) {
-        const m = (n.titulo + ' ' + n.id + ' ' + (n.nota||'') + ' ' + n.area + ' ' + n.estado).toLowerCase().includes(q);
+        const docNames = (Array.isArray(n.docs) ? n.docs : []).map(d => d.name || '').join(' ');
+        const m = (n.titulo + ' ' + n.id + ' ' + (n.nota||'') + ' ' + n.area + ' ' + n.estado + ' ' + docNames).toLowerCase().includes(q);
         if (!m) op = Math.min(op, 0.13);
       }
       const sel = n.id === selId;
@@ -919,7 +998,8 @@ class Component extends DCLogic {
         bd: sel ? (sc[n.estado] || '#5E7196') : '#D9E1EC',
         bg: sel ? '#E4F1FB' : '#FFFFFF',
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
-        notaMark: n.nota ? '· nota' : '',
+        notaMark: n.nota ? '✎ nota' : '',
+        docsMark: (Array.isArray(n.docs) && n.docs.length) ? ('📎' + n.docs.length) : '',
         z: sel ? 3 : 2,
         onClick: (e) => { e.stopPropagation(); this.selectNode(n.id); }
       };
@@ -1002,6 +1082,19 @@ class Component extends DCLogic {
     const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
     const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
 
+    // Documentos de la actividad seleccionada (vista de detalle: solo los que tienen algo)
+    const docList = selNode ? this.docsOf(selNode)
+      .filter(d => d && ((d.url||'').trim() || (d.name||'').trim()))
+      .map(d => {
+        const m = docMeta(d.url);
+        return {
+          name: (d.name||'').trim() || (d.url||'').trim() || 'Documento',
+          url: docHref(d.url) || '#',
+          icon: m.icon, host: m.host
+        };
+      }) : [];
+    const docCount = docList.length;
+
     let depOptions = [];
     if (showForm) {
       const excl = new Set([selId]);
@@ -1023,6 +1116,24 @@ class Component extends DCLogic {
       opts.map(o => React.createElement('option', {key: o, value: o}, o)));
     const fAreaSelect = showForm ? mkSelect(selNode.area, orderedAreas, e => this.updateNode(selId, {area: e.target.value})) : null;
     const fEstadoSelect = showForm ? mkSelect(selNode.estado, this.reconciledEstados().map(e => e.name), e => this.updateNode(selId, {estado: e.target.value})) : null;
+
+    // Editor de documentos del formulario, construido como elementos React
+    // (mismo motivo que mkSelect: control total sobre inputs dinámicos).
+    let fDocsEditor = null;
+    if (showForm) {
+      const docs = this.docsOf(selNode);
+      const _in = {flex:1, minWidth:0, background:'#FFFFFF', border:'1px solid #D9E1EC', borderRadius:'8px', color:'#1F3B6F', fontFamily:"'Montserrat',sans-serif", fontSize:'12px', padding:'7px 9px'};
+      const rows = docs.map((d, i) => React.createElement('div',
+        {key:'doc'+i, style:{display:'flex', flexDirection:'column', gap:'5px', border:'1px solid #D9E1EC', borderRadius:'10px', padding:'8px', marginBottom:'6px', background:'#F4F7FB'}},
+        React.createElement('div', {style:{display:'flex', gap:'6px', alignItems:'center'}},
+          React.createElement('span', {style:{fontSize:'13px', flex:'none'}}, docMeta(d.url).icon),
+          React.createElement('input', {value:d.name||'', placeholder:'Nombre del documento', onChange:e=>this.updateDocAt(selId, i, {name:e.target.value}), style:_in}),
+          React.createElement('button', {title:'Quitar este documento', onClick:()=>this.removeDocAt(selId, i), style:{flex:'none', width:'27px', height:'27px', background:'transparent', border:'1px solid #D9E1EC', borderRadius:'8px', color:'#AD1924', cursor:'pointer', fontSize:'13px', padding:0}}, '×')),
+        React.createElement('input', {value:d.url||'', placeholder:'https://…  (OneDrive, SharePoint, Drive…)', onChange:e=>this.updateDocAt(selId, i, {url:e.target.value}), style:{..._in, fontFamily:"'IBM Plex Mono',monospace", fontSize:'11px'}})
+      ));
+      fDocsEditor = React.createElement('div', null,
+        rows.length ? rows : React.createElement('div', {style:{fontSize:'11.5px', color:'#94A1BA', margin:'2px 0 4px'}}, 'Aún no hay documentos. Usa «+ AGREGAR» para incluir el primero.'));
+    }
 
     return {
       canvasW, canvasH, lanes, nodeVMs, edgesSvg, chips, fasesBands,
@@ -1059,7 +1170,9 @@ class Component extends DCLogic {
       selColor: selNode ? (sc[selNode.estado] || '#5E7196') : '#5E7196',
       selHasNota: !!(selNode && selNode.nota),
       selNota: selNode ? (selNode.nota || '') : '',
-      fAreaSelect, fEstadoSelect,
+      docList, docCount, docEmpty: showDetail && docCount === 0,
+      onAddDoc: () => this.addDoc(selId),
+      fAreaSelect, fEstadoSelect, fDocsEditor,
       depCount: depList.length, depEmpty: showDetail && depList.length === 0, depList,
       enCount: enList.length, enEmpty: enList.length === 0, enList,
       onEditar: () => this.setState({mode: 'edit'}),
