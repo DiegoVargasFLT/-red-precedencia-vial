@@ -29,8 +29,10 @@
     .node-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(31,59,111,.15);border-color:#61B1E3!important;}
     .dep-item{border-radius:10px;}
     .dep-item:hover{border-color:#61B1E3!important;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
-    .doc-link{display:flex;gap:10px;align-items:center;border:1px solid #D9E1EC;border-radius:10px;padding:9px 12px;margin-top:6px;text-decoration:none;background:#FFFFFF;transition:border-color .16s ease,box-shadow .16s ease,transform .12s ease;}
-    .doc-link:hover{border-color:#61B1E3;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
+    .doc-row{display:flex;gap:9px;align-items:center;border:1px solid #D9E1EC;border-radius:10px;padding:9px 10px;margin-top:6px;transition:box-shadow .16s ease,background .16s ease;}
+    .doc-row:hover{box-shadow:0 3px 10px rgba(31,59,111,.08);}
+    .doc-open{flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid #D9E1EC;border-radius:8px;color:#61B1E3;text-decoration:none;font-size:12px;transition:border-color .16s ease,background .16s ease;}
+    .doc-open:hover{border-color:#61B1E3;background:#E4F1FB;}
     @keyframes rpSlideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
     .side-panel{animation:rpSlideIn .20s ease;}
   </style>
@@ -164,19 +166,20 @@
             <div class="soft" style="border-left:3px solid #61B1E3;padding:10px 12px;background:#F4F7FB;font-size:12px;color:#475E89;line-height:1.6">{{selNota}}</div>
           </sc-if>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DOCUMENTOS ({{docCount}})</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">DOCUMENTOS ({{docCountLabel}})</div>
             <sc-if value="{{docEmpty}}" hint-placeholder-val="{{ false }}">
               <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Sin documentos aún. Puedes agregarlos desde «Editar».</div>
             </sc-if>
             <sc-for list="{{docList}}" as="k" hint-placeholder-count="2">
-              <a href="{{k.url}}" target="_blank" rel="noopener noreferrer" class="doc-link" title="Abrir: {{k.url}}">
+              <div class="doc-row" style="background:{{k.rowBg}};border-color:{{k.rowBd}}">
+                <input type="checkbox" checked="{{k.done}}" onChange="{{k.onToggle}}" title="Marcar si ya se tiene este documento" style="accent-color:#025850;width:15px;height:15px;flex:none;cursor:pointer;margin:0">
                 <span style="font-size:15px;flex:none">{{k.icon}}</span>
                 <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-                  <span style="font-size:12px;font-weight:600;color:#1F3B6F;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.name}}</span>
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.host}}</span>
+                  <span style="font-size:12px;font-weight:600;color:{{k.nameColor}};line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.name}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.sub}}</span>
                 </span>
-                <span style="font-size:12px;color:#61B1E3;flex:none">↗</span>
-              </a>
+                <a href="{{k.url}}" target="_blank" rel="noopener noreferrer" class="doc-open" title="{{k.linkTip}}" style="pointer-events:{{k.linkPe}};opacity:{{k.linkOp}}">↗</a>
+              </div>
             </sc-for>
           </div>
           <div>
@@ -999,7 +1002,9 @@ class Component extends DCLogic {
         bg: sel ? '#E4F1FB' : '#FFFFFF',
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
         notaMark: n.nota ? '✎ nota' : '',
-        docsMark: (Array.isArray(n.docs) && n.docs.length) ? ('📎' + n.docs.length) : '',
+        docsMark: (Array.isArray(n.docs) && n.docs.length)
+          ? ('📎' + n.docs.filter(d => d && d.done).length + '/' + n.docs.length)
+          : '',
         z: sel ? 3 : 2,
         onClick: (e) => { e.stopPropagation(); this.selectNode(n.id); }
       };
@@ -1082,18 +1087,30 @@ class Component extends DCLogic {
     const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
     const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
 
-    // Documentos de la actividad seleccionada (vista de detalle: solo los que tienen algo)
-    const docList = selNode ? this.docsOf(selNode)
-      .filter(d => d && ((d.url||'').trim() || (d.name||'').trim()))
-      .map(d => {
-        const m = docMeta(d.url);
-        return {
-          name: (d.name||'').trim() || (d.url||'').trim() || 'Documento',
-          url: docHref(d.url) || '#',
-          icon: m.icon, host: m.host
-        };
-      }) : [];
+    // Documentos de la actividad seleccionada. Se listan TODOS apenas se
+    // agregan (aunque aún no tengan enlace) como checklist: el checkbox marca
+    // «ya se tiene». El botón ↗ solo se activa cuando hay URL.
+    const docList = selNode ? this.docsOf(selNode).map((d, i) => {
+      const hasUrl = !!((d && d.url) || '').trim();
+      const m = docMeta(d.url);
+      const done = !!(d && d.done);
+      return {
+        name: ((d && d.name) || '').trim() || (hasUrl ? d.url.trim() : 'Documento sin título'),
+        url: hasUrl ? docHref(d.url) : '#',
+        icon: hasUrl ? m.icon : '📄',
+        sub: (hasUrl ? m.host : 'sin enlace todavía') + (done ? ' · ✓ ya se tiene' : ''),
+        done,
+        nameColor: done ? '#025850' : '#1F3B6F',
+        rowBg: done ? 'rgba(2,88,80,0.06)' : '#FFFFFF',
+        rowBd: done ? 'rgba(2,88,80,0.35)' : '#D9E1EC',
+        linkPe: hasUrl ? 'auto' : 'none',
+        linkOp: hasUrl ? 1 : 0.3,
+        linkTip: hasUrl ? 'Abrir enlace' : 'Sin enlace aún',
+        onToggle: () => this.updateDocAt(selId, i, {done: !done})
+      };
+    }) : [];
     const docCount = docList.length;
+    const docDone = docList.filter(d => d.done).length;
 
     let depOptions = [];
     if (showForm) {
@@ -1129,7 +1146,10 @@ class Component extends DCLogic {
           React.createElement('span', {style:{fontSize:'13px', flex:'none'}}, docMeta(d.url).icon),
           React.createElement('input', {value:d.name||'', placeholder:'Nombre del documento', onChange:e=>this.updateDocAt(selId, i, {name:e.target.value}), style:_in}),
           React.createElement('button', {title:'Quitar este documento', onClick:()=>this.removeDocAt(selId, i), style:{flex:'none', width:'27px', height:'27px', background:'transparent', border:'1px solid #D9E1EC', borderRadius:'8px', color:'#AD1924', cursor:'pointer', fontSize:'13px', padding:0}}, '×')),
-        React.createElement('input', {value:d.url||'', placeholder:'https://…  (OneDrive, SharePoint, Drive…)', onChange:e=>this.updateDocAt(selId, i, {url:e.target.value}), style:{..._in, fontFamily:"'IBM Plex Mono',monospace", fontSize:'11px'}})
+        React.createElement('input', {value:d.url||'', placeholder:'https://…  (OneDrive, SharePoint, Drive…)', onChange:e=>this.updateDocAt(selId, i, {url:e.target.value}), style:{..._in, fontFamily:"'IBM Plex Mono',monospace", fontSize:'11px'}}),
+        React.createElement('label', {style:{display:'flex', gap:'6px', alignItems:'center', fontSize:'11px', color: d.done ? '#025850' : '#5E7196', cursor:'pointer', userSelect:'none'}},
+          React.createElement('input', {type:'checkbox', checked:!!d.done, onChange:e=>this.updateDocAt(selId, i, {done:e.target.checked}), style:{accentColor:'#025850', width:'14px', height:'14px', margin:0, cursor:'pointer'}}),
+          d.done ? '✓ Ya se tiene este documento' : 'Marcar cuando ya se tenga')
       ));
       fDocsEditor = React.createElement('div', null,
         rows.length ? rows : React.createElement('div', {style:{fontSize:'11.5px', color:'#94A1BA', margin:'2px 0 4px'}}, 'Aún no hay documentos. Usa «+ AGREGAR» para incluir el primero.'));
@@ -1170,7 +1190,9 @@ class Component extends DCLogic {
       selColor: selNode ? (sc[selNode.estado] || '#5E7196') : '#5E7196',
       selHasNota: !!(selNode && selNode.nota),
       selNota: selNode ? (selNode.nota || '') : '',
-      docList, docCount, docEmpty: showDetail && docCount === 0,
+      docList, docCount,
+      docCountLabel: docCount ? (docDone + '/' + docCount) : '0',
+      docEmpty: showDetail && docCount === 0,
       onAddDoc: () => this.addDoc(selId),
       fAreaSelect, fEstadoSelect, fDocsEditor,
       depCount: depList.length, depEmpty: showDetail && depList.length === 0, depList,
