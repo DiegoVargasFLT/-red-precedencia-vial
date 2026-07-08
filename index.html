@@ -31,6 +31,8 @@
     .soft{border-radius:10px;}
     .node-card{border-radius:12px;box-shadow:0 1px 2px rgba(31,59,111,.05);}
     .node-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(31,59,111,.15);border-color:#61B1E3!important;}
+    .group-title{border-radius:8px;transition:box-shadow .16s ease,opacity 140ms ease;}
+    .group-title:hover{box-shadow:0 4px 12px rgba(31,59,111,.12);}
     .dep-item{border-radius:10px;}
     .dep-item:hover{border-color:#61B1E3!important;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
     .doc-row{display:flex;gap:9px;align-items:center;border:1px solid #D9E1EC;border-radius:10px;padding:9px 10px;margin-top:6px;transition:box-shadow .16s ease,background .16s ease;}
@@ -126,6 +128,13 @@
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:{{n.faseColor}}">{{n.fase}}</span>
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:#5E7196">{{n.docsMark}} {{n.notaMark}}</span>
             </div>
+          </div>
+        </sc-for>
+        <sc-for list="{{groupTitles}}" as="g" hint-placeholder-count="2">
+          <div onClick="{{g.onClick}}" title="{{g.tip}}" class="group-title" style="position:absolute;left:{{g.x}}px;top:{{g.y}}px;width:{{g.w}}px;height:{{g.h}}px;opacity:{{g.opacity}};z-index:2;display:flex;align-items:center;gap:7px;padding:0 9px;background:{{g.bg}};border:1px dashed {{g.bd}};border-left:3px solid {{g.color}};cursor:pointer;overflow:hidden">
+            <button onClick="{{g.onCollapse}}" title="Ocultar subactividades" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;line-height:1;background:#FFFFFF;border:1px solid #C7D6E8;color:#1F3B6F;padding:2px 6px;cursor:pointer;border-radius:6px;flex:none">▾ {{g.count}}</button>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6;flex:none">{{g.id}}</span>
+            <span style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:#1F3B6F;letter-spacing:0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">{{g.titulo}}</span>
           </div>
         </sc-for>
         <div style="position:sticky;left:0;width:214px;height:0;z-index:4;display:block">
@@ -976,18 +985,34 @@ class Component extends DCLogic {
     const orderedAreas = this.effectiveAreaOrder();
     const visAreas = orderedAreas.filter(a => !hidden[a]);
 
-    // stacking within area+level
-    const stackCount = {}, stackIdx = {};
-    visible.forEach(n => {
-      const k = n.area + '|' + levels[n.id];
-      stackIdx[n.id] = stackCount[k] || 0;
-      stackCount[k] = (stackCount[k] || 0) + 1;
+    // Apilado por área+columna con alturas variables: una principal expandida
+    // deja de ser tarjeta y se dibuja como un TÍTULO compacto (GH) encima de
+    // sus subactividades; el resto conserva la altura normal (NH).
+    const GH = 30;
+    const kidsOf = {};
+    nodes.forEach(n => { if(n.parent){ (kidsOf[n.parent] = kidsOf[n.parent] || []).push(n.id); } });
+    const isExpTitle = n => !!(n && expanded[n.id] && kidsOf[n.id] && kidsOf[n.id].length);
+    const hOf = n => isExpTitle(n) ? GH : NH;
+    // Orden de apilado: cada principal seguida de sus hijas.
+    const orderIdx = {};
+    nodes.forEach((x, i) => orderIdx[x.id] = i);
+    const vSorted = visible.slice().sort((a, b) => {
+      const ka = (a.parent && orderIdx[a.parent] != null) ? orderIdx[a.parent] * 2 + 1 : orderIdx[a.id] * 2;
+      const kb = (b.parent && orderIdx[b.parent] != null) ? orderIdx[b.parent] * 2 + 1 : orderIdx[b.id] * 2;
+      return (ka - kb) || (orderIdx[a.id] - orderIdx[b.id]);
     });
-    const laneMax = {};
-    visAreas.forEach(a => laneMax[a] = 1);
-    Object.keys(stackCount).forEach(k => {
+    const yOff = {}, colH = {};
+    vSorted.forEach(n => {
+      const k = n.area + '|' + levels[n.id];
+      yOff[n.id] = colH[k] || 0;
+      colH[k] = yOff[n.id] + hOf(n) + SG;
+    });
+    const laneMax = {}; // altura ocupada, en píxeles
+    visAreas.forEach(a => laneMax[a] = NH);
+    Object.keys(colH).forEach(k => {
       const a = k.split('|')[0];
-      if (stackCount[k] > laneMax[a]) laneMax[a] = stackCount[k];
+      const h = colH[k] - SG;
+      if (h > laneMax[a]) laneMax[a] = h;
     });
 
     // Paleta de identificación por área (colores de marca, fríos primero).
@@ -1000,7 +1025,7 @@ class Component extends DCLogic {
     const laneY = {};
     let yCur = 34;
     const lanes = visAreas.map((a, i) => {
-      const h = LP_T + laneMax[a] * (NH + SG) - SG + LP_B;
+      const h = LP_T + laneMax[a] + LP_B;
       laneY[a] = yCur;
       const areaColor = AREA_PALETTE[i % AREA_PALETTE.length];
       const L = {
@@ -1055,11 +1080,13 @@ class Component extends DCLogic {
     }
     const q = this.state.search.trim().toLowerCase();
 
-    // node view models
+    // node view models — las principales expandidas se dibujan aparte, como títulos
     const pos = {};
-    const nodeVMs = visible.map(n => {
+    const cardNodes = vSorted.filter(n => !isExpTitle(n));
+    const titleNodes = vSorted.filter(n => isExpTitle(n));
+    const nodeVMs = cardNodes.map(n => {
       const x = LEFT + levels[n.id] * (NW + CG);
-      const ny = laneY[n.area] + LP_T + stackIdx[n.id] * (NH + SG);
+      const ny = laneY[n.area] + LP_T + yOff[n.id];
       pos[n.id] = {x, y: ny};
       let op = 1;
       if (chain && !chain.has(n.id)) op = 0.16;
@@ -1097,42 +1124,86 @@ class Component extends DCLogic {
       };
     });
 
-    // edges — si una subactividad está colapsada, su flecha se agrupa en la
-    // actividad principal (así la cadena sigue visible sin saturar).
+    // Títulos de grupo (principales expandidas): compactos, sin conexiones propias.
+    const groupTitles = titleNodes.map(n => {
+      const x = LEFT + levels[n.id] * (NW + CG);
+      const ny = laneY[n.area] + LP_T + yOff[n.id];
+      let op = 1;
+      if (chain && !chain.has(n.id)) op = 0.16;
+      if (q) {
+        const m = (n.titulo + ' ' + n.id + ' ' + (n.nota||'') + ' ' + n.area + ' ' + n.estado).toLowerCase().includes(q);
+        if (!m) op = Math.min(op, 0.13);
+      }
+      const sel = n.id === selId;
+      return {
+        id: n.id, titulo: n.titulo,
+        x, y: ny, w: NW, h: GH,
+        color: areaColorMap[n.area] || '#94A1BA',
+        bd: sel ? '#61B1E3' : ((areaColorMap[n.area] || '#94A1BA') + '66'),
+        bg: sel ? '#E4F1FB' : 'rgba(244,247,251,0.92)',
+        opacity: op,
+        count: (kidsOf[n.id] || []).length,
+        tip: n.titulo + '  [grupo de ' + (kidsOf[n.id] || []).length + ' subactividades — clic para ver detalle]',
+        onClick: (e) => { e.stopPropagation(); this.selectNode(n.id); },
+        onCollapse: (e) => { e.stopPropagation(); this.toggleExpand(n.id); }
+      };
+    });
+
+    // edges — reglas de conexión con jerarquía:
+    //  · hija oculta (principal colapsada) → su flecha se agrupa en la principal,
+    //    así la principal muestra TODAS las conexiones de sus subactividades.
+    //  · principal expandida (solo título) → no recibe flechas: sus conexiones
+    //    pasan a las hijas, salvo que ya existan conexiones específicas entre
+    //    esos dos grupos (evita flechas redundantes).
     const visSet = new Set(visible.map(n => n.id));
-    const proxyOf = id => {
+    const endpointsOf = id => {
       const nd = byId[id];
-      if(!nd) return null;
-      if(visSet.has(id)) return id;
-      if(nd.parent && visSet.has(nd.parent)) return nd.parent;
-      return null;
+      if(!nd) return [];
+      if(nd.parent && !visSet.has(id)) return visSet.has(nd.parent) ? [nd.parent] : [];
+      if(isExpTitle(nd)) return (kidsOf[nd.id]||[]).filter(c => visSet.has(c));
+      return visSet.has(id) ? [id] : [];
     };
+    const groupOf = id => { const nd = byId[id]; return (nd && nd.parent && byId[nd.parent]) ? nd.parent : id; };
+    const seenEdges = new Set(), specificGroups = new Set(), edgeDefs = [];
+    const collectEdges = (fanPass) => {
+      nodes.forEach(n0 => (n0.dependeDe||[]).forEach(d0 => {
+        const sN = byId[d0];
+        if(!sN) return;
+        const isFan = isExpTitle(sN) || isExpTitle(n0);
+        if(isFan !== fanPass) return;
+        endpointsOf(d0).forEach(a => endpointsOf(n0.id).forEach(b => {
+          if(!a || !b || a === b) return;
+          const gk = groupOf(a) + '>' + groupOf(b);
+          if(fanPass && specificGroups.has(gk)) return;
+          const ek = a + '>' + b;
+          if(seenEdges.has(ek)) return;
+          seenEdges.add(ek);
+          if(!fanPass) specificGroups.add(gk);
+          edgeDefs.push([a, b]);
+        }));
+      }));
+    };
+    collectEdges(false);
+    collectEdges(true);
     const paths = [];
-    const seenEdges = new Set();
-    nodes.forEach(n0 => (n0.dependeDe||[]).forEach(d0 => {
-      const dp = proxyOf(d0), np = proxyOf(n0.id);
-      if(!dp || !np || dp === np) return;
-      const ek = dp + '>' + np;
-      if(seenEdges.has(ek)) return;
-      seenEdges.add(ek);
-      const d = dp, n = byId[np];
-      const s = pos[d], t = pos[n.id];
-      const sn = byId[d];
-      if (!s || !t || !sn) return;
+    edgeDefs.forEach(([a, b]) => {
+      const s = pos[a], t = pos[b];
+      const sn = byId[a], n = byId[b];
+      if (!s || !t || !sn || !n) return;
       const x1 = s.x + NW, y1 = s.y + NH/2, x2 = t.x, y2 = t.y + NH/2;
       const dx = Math.max(40, (x2 - x1) * curv);
       const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
       const cross = sn.area !== n.area;
-      const inChain = chain ? (chain.has(d) && chain.has(n.id)) : false;
+      const inChain = chain ? (chain.has(a) && chain.has(b)) : false;
       let opacity = cross ? 0.8 : 0.55, w = 1.4;
       if (chain) { opacity = inChain ? 1 : 0.06; w = inChain ? 2.2 : 1.2; }
       paths.push(React.createElement('path', {
-        key: d + '>' + n.id, d: dPath, fill: 'none',
+        key: a + '>' + b, d: dPath, fill: 'none',
         stroke: cross ? '#61B1E3' : '#B9C6D8',
         strokeWidth: w, opacity,
         markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
       }));
-    }));
+    });
     const edgesSvg = React.createElement('svg',
       {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
       React.createElement('defs', null, this.marker('arwS', '#B9C6D8'), this.marker('arwC', '#61B1E3')),
@@ -1276,7 +1347,7 @@ class Component extends DCLogic {
     }
 
     return {
-      canvasW, canvasH, lanes, nodeVMs, edgesSvg, chips, fasesBands,
+      canvasW, canvasH, lanes, nodeVMs, groupTitles, edgesSvg, chips, fasesBands,
       projectName: this.state.projectName,
       projectSubtitle: this.state.projectSubtitle,
       onEditNombre: () => this.editProjectName(),
