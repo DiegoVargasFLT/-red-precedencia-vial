@@ -35,7 +35,7 @@
     .group-title:hover{box-shadow:0 4px 12px rgba(31,59,111,.12);}
     .dep-item{border-radius:10px;}
     .dep-item:hover{border-color:#61B1E3!important;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
-    .doc-row{display:flex;gap:9px;align-items:center;border:1px solid #D9E1EC;border-radius:10px;padding:9px 10px;margin-top:6px;transition:box-shadow .16s ease,background .16s ease;}
+    .doc-row{display:flex;gap:9px;align-items:flex-start;border:1px solid #D9E1EC;border-radius:10px;padding:9px 10px;margin-top:6px;transition:box-shadow .16s ease,background .16s ease;}
     .doc-row:hover{box-shadow:0 3px 10px rgba(31,59,111,.08);}
     .doc-open{flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid #D9E1EC;border-radius:8px;color:#61B1E3;text-decoration:none;font-size:12px;transition:border-color .16s ease,background .16s ease;}
     .doc-open:hover{border-color:#61B1E3;background:#E4F1FB;}
@@ -120,6 +120,7 @@
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
               <span style="display:flex;align-items:center;gap:5px;min-width:0">
                 <button onClick="{{n.onToggleSubs}}" title="{{n.subsTip}}" style="display:{{n.subsDisplay}};font-family:'IBM Plex Mono',monospace;font-size:8.5px;line-height:1;background:#EEF3F9;border:1px solid #C7D6E8;color:#1F3B6F;padding:2px 6px;cursor:pointer;border-radius:6px;flex:none">{{n.subsMark}}</button>
+                <span style="display:{{n.depthDotShow}};width:6px;height:6px;border-radius:50%;background:{{n.depthDot}};flex:none"></span>
                 <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{n.idLabel}}</span>
               </span>
               <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;color:{{n.color}};flex:none">{{n.estadoU}}</span>
@@ -192,13 +193,13 @@
             </sc-if>
             <sc-for list="{{docList}}" as="k" hint-placeholder-count="2">
               <div class="doc-row" style="background:{{k.rowBg}};border-color:{{k.rowBd}}">
-                <input type="checkbox" checked="{{k.done}}" onChange="{{k.onToggle}}" title="Marcar si ya se tiene este documento" style="accent-color:#025850;width:15px;height:15px;flex:none;cursor:pointer;margin:0">
-                <span style="font-size:15px;flex:none">{{k.icon}}</span>
+                <input type="checkbox" checked="{{k.done}}" onChange="{{k.onToggle}}" title="Marcar si ya se tiene este documento" style="accent-color:#025850;width:15px;height:15px;flex:none;cursor:pointer;margin:2px 0 0">
+                <span style="font-size:15px;flex:none;margin-top:1px">{{k.icon}}</span>
                 <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-                  <span style="font-size:12px;font-weight:600;color:{{k.nameColor}};line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.name}}</span>
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{k.sub}}</span>
+                  <span style="font-size:12px;font-weight:600;color:{{k.nameColor}};line-height:1.35;overflow-wrap:break-word;word-break:break-word;white-space:normal">{{k.name}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6;overflow-wrap:break-word;word-break:break-word;white-space:normal">{{k.sub}}</span>
                 </span>
-                <a href="{{k.url}}" target="_blank" rel="noopener noreferrer" class="doc-open" title="{{k.linkTip}}" style="pointer-events:{{k.linkPe}};opacity:{{k.linkOp}}">↗</a>
+                <a href="{{k.url}}" target="_blank" rel="noopener noreferrer" class="doc-open" title="{{k.linkTip}}" style="pointer-events:{{k.linkPe}};opacity:{{k.linkOp}};margin-top:1px">↗</a>
               </div>
             </sc-for>
           </div>
@@ -1160,14 +1161,26 @@ class Component extends DCLogic {
     }
     const q = this.state.search.trim().toLowerCase();
 
+    // Jerarquía visual: cada nivel de profundidad se corre a la derecha (como
+    // un árbol/outline) y recibe un color de acento propio, para que un
+    // vistazo baste para saber que una tarjeta "cuelga" de otra.
+    const DEPTH_COLORS = ['#61B1E3', '#0E9384', '#D97706', '#8B5CF6', '#DB2777'];
+    const INDENT_STEP = 20, MAX_INDENT_LV = 5, MIN_W = 130;
+    const depthOf = id => { let dd = 0, nd = byId[id]; while(nd && nd.parent && byId[nd.parent]){ dd++; nd = byId[nd.parent]; } return dd; };
+    const indentOf = dd => Math.min(dd, MAX_INDENT_LV) * INDENT_STEP;
+    const depthColor = dd => DEPTH_COLORS[(dd - 1 + DEPTH_COLORS.length) % DEPTH_COLORS.length];
+
     // node view models — las principales expandidas se dibujan aparte, como títulos
     const pos = {};
     const cardNodes = vSorted.filter(n => !isExpTitle(n));
     const titleNodes = vSorted.filter(n => isExpTitle(n));
     const nodeVMs = cardNodes.map(n => {
-      const x = LEFT + levels[n.id] * (NW + CG);
+      const depth = depthOf(n.id);
+      const indent = indentOf(depth);
+      const x = LEFT + levels[n.id] * (NW + CG) + indent;
+      const w = Math.max(MIN_W, NW - indent);
       const ny = laneY[n.area] + LP_T + yOff[n.id];
-      pos[n.id] = {x, y: ny};
+      pos[n.id] = {x, y: ny, w, indent, depth};
       let op = 1;
       if (chain && !chain.has(n.id)) op = 0.16;
       if (q) {
@@ -1179,6 +1192,7 @@ class Component extends DCLogic {
       const fst = FASE_STYLES[n.fase];
       const kidCount = nodes.filter(x => x.parent === n.id).length;
       const isSub = !!n.parent;
+      const dColor = isSub ? depthColor(depth) : null;
       return {
         id: n.id, titulo: n.titulo, fase: n.fase,
         idLabel: (isSub ? '↳ ' : '') + n.id,
@@ -1188,12 +1202,14 @@ class Component extends DCLogic {
         onToggleSubs: (e) => { e.stopPropagation(); this.toggleExpand(n.id); },
         faseColor: fst ? fst.fg : '#94A1BA',
         tip: n.titulo + (n.nota ? ' — ' + n.nota : '') + '  [' + n.area + ' · ' + n.fase + ' · ' + n.estado + ']',
-        x, y: ny, w: NW, h: NH,
+        x, y: ny, w, h: NH,
         color: sc[n.estado] || '#5E7196',
         estadoU: (n.estado||'').toUpperCase(),
         opacity: op,
-        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? '#C7D6E8' : '#D9E1EC'),
-        bg: sel ? '#E4F1FB' : (isSub ? '#F7FAFD' : '#FFFFFF'),
+        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? dColor + '80' : '#D9E1EC'),
+        bg: sel ? '#E4F1FB' : (isSub ? dColor + '0E' : '#FFFFFF'),
+        depthDot: isSub ? dColor : 'transparent',
+        depthDotShow: isSub ? 'inline-block' : 'none',
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
         notaMark: n.nota ? '✎ nota' : '',
         docsMark: (Array.isArray(n.docs) && n.docs.length)
@@ -1206,7 +1222,10 @@ class Component extends DCLogic {
 
     // Títulos de grupo (principales expandidas): compactos, sin conexiones propias.
     const groupTitles = titleNodes.map(n => {
-      const x = LEFT + levels[n.id] * (NW + CG);
+      const depth = depthOf(n.id);
+      const indent = indentOf(depth);
+      const x = LEFT + levels[n.id] * (NW + CG) + indent;
+      const w = Math.max(MIN_W, NW - indent);
       const ny = laneY[n.area] + LP_T + yOff[n.id];
       let op = 1;
       if (chain && !chain.has(n.id)) op = 0.16;
@@ -1215,13 +1234,15 @@ class Component extends DCLogic {
         if (!m) op = Math.min(op, 0.13);
       }
       const sel = n.id === selId;
-      pos[n.id] = {x, y: ny};   // ancla propia, para que las conexiones de grupo tengan dónde llegar
+      const isSub = !!n.parent;
+      const dColor = isSub ? depthColor(depth) : (areaColorMap[n.area] || '#94A1BA');
+      pos[n.id] = {x, y: ny, w, indent, depth};   // ancla propia, para que las conexiones de grupo tengan dónde llegar
       return {
         id: n.id, titulo: n.titulo,
-        x, y: ny, w: NW, h: GH,
-        color: areaColorMap[n.area] || '#94A1BA',
-        bd: sel ? '#61B1E3' : ((areaColorMap[n.area] || '#94A1BA') + '66'),
-        bg: sel ? '#E4F1FB' : 'rgba(244,247,251,0.92)',
+        x, y: ny, w, h: GH,
+        color: dColor,
+        bd: sel ? '#61B1E3' : (dColor + '80'),
+        bg: sel ? '#E4F1FB' : (isSub ? dColor + '12' : 'rgba(244,247,251,0.92)'),
         opacity: op,
         count: (kidsOf[n.id] || []).length,
         tip: n.titulo + '  [grupo de ' + (kidsOf[n.id] || []).length + ' subactividades — clic para ver detalle]',
@@ -1284,7 +1305,7 @@ class Component extends DCLogic {
       const s = pos[a], t = pos[b];
       const sn = byId[a], n = byId[b];
       if (!s || !t || !sn || !n) return;
-      const x1 = s.x + NW, y1 = s.y + hOf(sn)/2, x2 = t.x, y2 = t.y + hOf(n)/2;
+      const x1 = s.x + (s.w != null ? s.w : NW), y1 = s.y + hOf(sn)/2, x2 = t.x, y2 = t.y + hOf(n)/2;
       const dx = Math.max(40, (x2 - x1) * curv);
       const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
       const cross = sn.area !== n.area;
@@ -1298,9 +1319,35 @@ class Component extends DCLogic {
         markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
       }));
     });
+    // Guías de jerarquía: conector en L (punteado, color del nivel) desde cada
+    // título hacia sus hijas visibles — refuerza la sangría y el color con una
+    // línea explícita de "esto pertenece a aquello".
+    const guidePaths = [];
+    titleNodes.forEach(n => {
+      const kids = (kidsOf[n.id] || []).filter(cId => visSet.has(cId) && pos[cId]);
+      const pn = pos[n.id];
+      if (!kids.length || !pn) return;
+      const gx = pn.x + 9;
+      const yTop = pn.y + GH;
+      const color = depthColor(depthOf(kids[0]));
+      const kidY = cId => pos[cId].y + (isExpTitle(byId[cId]) ? GH : NH) / 2;
+      const yBottom = Math.max(...kids.map(kidY));
+      guidePaths.push(React.createElement('path', {
+        key: 'gv-' + n.id, d: 'M ' + gx + ' ' + yTop + ' L ' + gx + ' ' + yBottom,
+        fill: 'none', stroke: color, strokeWidth: 1.4, strokeDasharray: '2,3', opacity: 0.5
+      }));
+      kids.forEach(cId => {
+        const cy = kidY(cId);
+        guidePaths.push(React.createElement('path', {
+          key: 'gh-' + cId, d: 'M ' + gx + ' ' + cy + ' L ' + pos[cId].x + ' ' + cy,
+          fill: 'none', stroke: color, strokeWidth: 1.4, strokeDasharray: '2,3', opacity: 0.5
+        }));
+      });
+    });
     const edgesSvg = React.createElement('svg',
       {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
       React.createElement('defs', null, this.marker('arwS', '#B9C6D8'), this.marker('arwC', '#61B1E3')),
+      guidePaths,
       paths);
 
     // stats
