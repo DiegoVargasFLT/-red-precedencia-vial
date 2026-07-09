@@ -876,11 +876,17 @@ class Component extends DCLogic {
     return lv;
   }
 
+  // Todos los descendientes (hijos, nietos, ...) de un nodo — jerarquía de N niveles.
+  allDescendants(id, byId){
+    const kids = Object.keys(byId).filter(k => byId[k].parent === id);
+    return kids.concat(...kids.map(k => this.allDescendants(k, byId)));
+  }
+
   // Ancestros conscientes de la jerarquía: depender de una actividad principal
-  // equivale a depender de todo su grupo (la principal y sus subactividades).
+  // equivale a depender de todo su grupo (la principal y TODOS sus descendientes).
   collectAnc(id, byId, set){
     ((byId[id] && byId[id].dependeDe) || []).forEach(d => {
-      const grp = [d].concat(Object.keys(byId).filter(k => byId[k].parent === d));
+      const grp = [d].concat(this.allDescendants(d, byId));
       grp.forEach(g => {
         if (byId[g] && !set.has(g)) { set.add(g); this.collectAnc(g, byId, set); }
       });
@@ -888,12 +894,15 @@ class Component extends DCLogic {
   }
 
   // Descendientes conscientes de la jerarquía: una dependencia sobre la
-  // principal se considera activada si cualquier miembro del grupo está en el
-  // conjunto (así LEG-01 —que depende de ESP-02— entra en la cadena de ESP-02C).
+  // principal se considera activada si cualquier miembro del grupo (a
+  // cualquier profundidad) está en el conjunto (así LEG-01 —que depende de
+  // ESP-02— entra en la cadena de ESP-02C, o de un nieto de ESP-02).
   collectDesc(seedSet, nodes){
-    const kids = {};
-    nodes.forEach(n => { if(n.parent){ (kids[n.parent] = kids[n.parent] || []).push(n.id); } });
-    const covers = d => seedSet.has(d) || (kids[d] || []).some(c => seedSet.has(c));
+    const byId = {};
+    nodes.forEach(n => byId[n.id] = n);
+    const descCache = {};
+    const descOf = id => descCache[id] || (descCache[id] = this.allDescendants(id, byId));
+    const covers = d => seedSet.has(d) || descOf(d).some(c => seedSet.has(c));
     let changed = true;
     while (changed) {
       changed = false;
@@ -918,26 +927,41 @@ class Component extends DCLogic {
     return pfx + '-' + String(max + 1).padStart(2, '0');
   }
 
-  // ── Subactividades (jerarquía de 1 nivel: actividad principal → hijas) ──
+  // ── Subactividades (jerarquía de N niveles: componente → subcomponente → …) ──
   childrenOf(id){ return this.state.nodes.filter(n => n.parent === id); }
   toggleExpand(id){ this.setState(s => ({expanded: {...s.expanded, [id]: !s.expanded[id]}})); }
   addSub(parentId){
-    const p = this.state.nodes.find(x => x.id === parentId);
+    const nodes = this.state.nodes;
+    const byId = {}; nodes.forEach(x => byId[x.id] = x);
+    const p = byId[parentId];
     if(!p) return;
     let i = this.childrenOf(parentId).length, id;
-    do { id = parentId + String.fromCharCode(65 + i); i++; } while(this.state.nodes.some(x => x.id === id));
+    do { id = parentId + String.fromCharCode(65 + i); i++; } while(nodes.some(x => x.id === id));
     const estados = this.reconciledEstados();
     const estadoDef = estados.some(e => e.name === 'Pendiente') ? 'Pendiente' : (estados[0] ? estados[0].name : 'Pendiente');
     const n = {id, parent: parentId, area: p.area, fase: p.fase, titulo: 'Nueva subactividad', estado: estadoDef, nota: '', dependeDe: []};
-    this.setNodes([...this.state.nodes, n]);
-    this.setState({selectedId: id, mode: 'edit', expanded: {...this.state.expanded, [parentId]: true}, openCombo: null, comboQ: '', depFilter: '', enFilter: ''});
+    // Expande toda la cadena de ancestros del padre (además del propio padre)
+    // para que la nueva subactividad quede visible aunque esté varios niveles abajo.
+    const expanded = {...this.state.expanded, [parentId]: true};
+    let cur = p.parent;
+    while(cur && byId[cur]){ expanded[cur] = true; cur = byId[cur].parent; }
+    this.setNodes([...nodes, n]);
+    this.setState({selectedId: id, mode: 'edit', expanded, openCombo: null, comboQ: '', depFilter: '', enFilter: ''});
   }
 
-  // Al seleccionar una subactividad, expande a su principal para que sea visible.
+  // Al seleccionar una subactividad, expande TODA la cadena de ancestros
+  // (jerarquía de N niveles) para que quede visible en el grafo.
   selectNode(id){
-    const n = this.state.nodes.find(x => x.id === id);
+    const nodes = this.state.nodes;
+    const byId = {}; nodes.forEach(x => byId[x.id] = x);
+    const n = byId[id];
     const patch = {selectedId: id, mode: 'detail', depFilter: '', enFilter: '', openCombo: null, comboQ: ''};
-    if(n && n.parent) patch.expanded = {...this.state.expanded, [n.parent]: true};
+    if(n && n.parent){
+      const expanded = {...this.state.expanded};
+      let cur = n.parent;
+      while(cur && byId[cur]){ expanded[cur] = true; cur = byId[cur].parent; }
+      patch.expanded = expanded;
+    }
     this.setState(patch);
   }
 
@@ -982,8 +1006,13 @@ class Component extends DCLogic {
     const nodes = this.state.nodes;
     const n = nodes.find(x => x.id === id);
     if (!n) return;
+    // Cascada recursiva: elimina también nietos, bisnietos, etc. (jerarquía de N niveles).
     const gone = new Set([id]);
-    nodes.forEach(x => { if(x.parent === id) gone.add(x.id); });
+    let changed = true;
+    while(changed){
+      changed = false;
+      nodes.forEach(x => { if(x.parent && gone.has(x.parent) && !gone.has(x.id)){ gone.add(x.id); changed = true; } });
+    }
     const dependents = nodes.filter(x => !gone.has(x.id) && (x.dependeDe||[]).some(d => gone.has(d)));
     let msg = '¿Eliminar «' + n.titulo + '»?';
     if(gone.size > 1) msg = 'La actividad «' + n.titulo + '» tiene ' + (gone.size - 1) + ' subactividad(es) que también se eliminarán.\n' + msg;
@@ -1018,9 +1047,19 @@ class Component extends DCLogic {
     const levels = this.computePhaseLevels(nodes, byId);
     const hidden = this.state.hidden;
     const expanded = this.state.expanded;
-    // Subactividades visibles solo si su principal está expandida (colapsadas
-    // por defecto para mantener el tablero limpio). Huérfanas → visibles.
-    const visible = nodes.filter(n => !hidden[n.area] && (!n.parent || !byId[n.parent] || expanded[n.parent]));
+    // Jerarquía de N niveles: un nodo es visible solo si TODOS sus ancestros
+    // están expandidos (no solo el padre inmediato). Colapsado por defecto.
+    const isNodeVisible = (n) => {
+      let cur = n;
+      while (cur && cur.parent) {
+        const p = byId[cur.parent];
+        if (!p) break;
+        if (!expanded[p.id]) return false;
+        cur = p;
+      }
+      return true;
+    };
+    const visible = nodes.filter(n => !hidden[n.area] && isNodeVisible(n));
     const orderedAreas = this.effectiveAreaOrder();
     const visAreas = orderedAreas.filter(a => !hidden[a]);
 
@@ -1032,14 +1071,15 @@ class Component extends DCLogic {
     nodes.forEach(n => { if(n.parent){ (kidsOf[n.parent] = kidsOf[n.parent] || []).push(n.id); } });
     const isExpTitle = n => !!(n && expanded[n.id] && kidsOf[n.id] && kidsOf[n.id].length);
     const hOf = n => isExpTitle(n) ? GH : NH;
-    // Orden de apilado: cada principal seguida de sus hijas.
+    // Orden de apilado: recorrido en profundidad (DFS) del árbol completo, para
+    // que cada nodo quede seguido de TODOS sus descendientes (jerarquía de N niveles).
+    const dfsOrder = [];
+    (function walk(parentId){
+      nodes.forEach(x => { if((x.parent || null) === parentId){ dfsOrder.push(x.id); walk(x.id); } });
+    })(null);
     const orderIdx = {};
-    nodes.forEach((x, i) => orderIdx[x.id] = i);
-    const vSorted = visible.slice().sort((a, b) => {
-      const ka = (a.parent && orderIdx[a.parent] != null) ? orderIdx[a.parent] * 2 + 1 : orderIdx[a.id] * 2;
-      const kb = (b.parent && orderIdx[b.parent] != null) ? orderIdx[b.parent] * 2 + 1 : orderIdx[b.id] * 2;
-      return (ka - kb) || (orderIdx[a.id] - orderIdx[b.id]);
-    });
+    dfsOrder.forEach((id, i) => orderIdx[id] = i);
+    const vSorted = visible.slice().sort((a, b) => orderIdx[a.id] - orderIdx[b.id]);
     const yOff = {}, colH = {};
     vSorted.forEach(n => {
       const k = n.area + '|' + levels[n.id];
@@ -1199,13 +1239,25 @@ class Component extends DCLogic {
     //    tienen asignada individualmente. Solo se ven líneas por subactividad
     //    cuando esa subactividad tiene su propia dependencia explícita.
     const visSet = new Set(visible.map(n => n.id));
+    // Jerarquía de N niveles: si el nodo está oculto, sube por la cadena de
+    // ancestros hasta encontrar el primero visible (puede ser varios niveles
+    // arriba si hay varios colapsados en cascada).
     const endpointsOf = id => {
-      const nd = byId[id];
-      if(!nd) return [];
-      if(nd.parent && !visSet.has(id)) return visSet.has(nd.parent) ? [nd.parent] : [];
-      return visSet.has(id) ? [id] : [];
+      let cur = id;
+      while (cur) {
+        if (visSet.has(cur)) return [cur];
+        const nd = byId[cur];
+        cur = nd && nd.parent;
+      }
+      return [];
     };
-    const groupOf = id => { const nd = byId[id]; return (nd && nd.parent && byId[nd.parent]) ? nd.parent : id; };
+    // Para el dedup (evitar redibujar a nivel de grupo lo que ya existe a nivel
+    // específico) se usa la RAÍZ del árbol completo, no solo el padre inmediato.
+    const groupOf = id => {
+      let cur = id, nd = byId[cur];
+      while (nd && nd.parent && byId[nd.parent]) { cur = nd.parent; nd = byId[cur]; }
+      return cur;
+    };
     const seenEdges = new Set(), specificGroups = new Set(), edgeDefs = [];
     const collectEdges = (fanPass) => {
       nodes.forEach(n0 => (n0.dependeDe||[]).forEach(d0 => {
@@ -1303,9 +1355,11 @@ class Component extends DCLogic {
     const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
     const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
 
-    // Subactividades de la seleccionada + datos de su principal (si es hija).
+    // Subactividades de la seleccionada + cadena completa de ancestros (si es hija).
     const subsList = selNode ? nodes.filter(n => n.parent === selId).map(mkItem) : [];
     const selParent = (selNode && selNode.parent) ? byId[selNode.parent] : null;
+    const ancestorChain = [];
+    { let cur = selParent; while (cur) { ancestorChain.unshift(cur); cur = cur.parent ? byId[cur.parent] : null; } }
 
     // Documentos de la actividad seleccionada. Se listan TODOS apenas se
     // agregan (aunque aún no tengan enlace) como checklist: el checkbox marca
@@ -1381,13 +1435,14 @@ class Component extends DCLogic {
       onPick: v => this.updateNode(selId, {estado: v})
     }) : null;
 
-    // «Pertenece a» (solo 1 nivel: una actividad con hijas no puede volverse
-    // subactividad, y una subactividad no puede ser principal de otra).
+    // «Pertenece a» (jerarquía de N niveles): cualquier actividad puede ser
+    // subactividad de otra, incluso si ya tiene sus propias hijas. Solo se
+    // excluyen ella misma y sus descendientes, para no crear ciclos.
     let fParentSelect = null;
-    const selHasKids = selNode ? nodes.some(x => x.parent === selId) : false;
-    if (showForm && !selHasKids) {
-      const NONE = '— Es actividad principal —';
-      const cands = nodes.filter(x => !x.parent && x.id !== selId);
+    if (showForm) {
+      const NONE = '— Es actividad de nivel superior —';
+      const selfAndDesc = new Set([selId, ...this.allDescendants(selId, byId)]);
+      const cands = nodes.filter(x => !selfAndDesc.has(x.id));
       fParentSelect = this.mkCombo('parent', {
         valueLabel: selNode.parent ? (selNode.parent + ' · ' + (byId[selNode.parent] ? byId[selNode.parent].titulo : '')) : NONE,
         options: [{value: '', label: NONE}].concat(cands.map(x => ({value: x.id, label: x.id + ' · ' + x.titulo}))),
@@ -1461,7 +1516,7 @@ class Component extends DCLogic {
       onAddSub: () => this.addSub(selId),
       subsFormEmpty: subsList.length === 0,
       selHasParent: !!selParent,
-      selParentLabel: selParent ? ('↳ Parte de ' + selParent.id + ' · ' + selParent.titulo) : '',
+      selParentLabel: selParent ? ('↳ ' + ancestorChain.map(a => a.titulo).join(' › ')) : '',
       onGoParent: () => { if(selParent) this.selectNode(selParent.id); },
       fParentSelect,
       fParentShow: !!fParentSelect,
