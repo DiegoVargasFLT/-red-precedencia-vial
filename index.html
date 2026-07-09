@@ -56,6 +56,11 @@
       </div>
       <button onClick="{{onEditNombre}}" title="Editar nombre del proyecto" style="flex:none;background:transparent;border:1px solid #D9E1EC;color:#7486A6;width:26px;height:26px;cursor:pointer;font-size:12px;line-height:1;padding:0" style-hover="border-color:#61B1E3;color:#1F3B6F">✎</button>
     </div>
+    <div style="display:flex;gap:4px;background:#EEF3F9;border-radius:9px;padding:3px;flex:none">
+      <button onClick="{{onViewDiagrama}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:7px 12px;cursor:pointer;background:{{tabDiagramaBg}};color:{{tabDiagramaFg}};border:none;border-radius:7px;font-weight:600" style-hover="color:#1F3B6F">◆ DIAGRAMA</button>
+      <button onClick="{{onViewDashboard}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:7px 12px;cursor:pointer;background:{{tabDashboardBg}};color:{{tabDashboardFg}};border:none;border-radius:7px;font-weight:600" style-hover="color:#1F3B6F">▤ DASHBOARD</button>
+      <button onClick="{{onViewDocumentos}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:7px 12px;cursor:pointer;background:{{tabDocumentosBg}};color:{{tabDocumentosFg}};border:none;border-radius:7px;font-weight:600" style-hover="color:#1F3B6F">▦ DOCUMENTOS</button>
+    </div>
     <div style="display:flex;gap:22px;align-items:stretch">
       <div style="border-left:2px solid #D9E1EC;padding-left:10px">
         <div style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#1F3B6F;line-height:1">{{statTotal}}</div>
@@ -84,6 +89,7 @@
 
   <div title="Avance general: {{statPct}} completado" style="height:4px;flex:none;background:#E4EAF3"><div style="height:100%;width:{{statPct}};background:linear-gradient(90deg,#025850 0%,#61B1E3 100%);transition:width .5s ease"></div></div>
 
+  <sc-if value="{{viewDiagrama}}" hint-placeholder-val="{{ true }}">
   <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#F4F7FB;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
     <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-right:4px">ÁREAS</span>
     <sc-for list="{{chips}}" as="c" hint-placeholder-count="7">
@@ -445,6 +451,140 @@
 
     </div>
   </div>
+  </sc-if>
+
+  <sc-if value="{{viewDashboard}}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;overflow:auto;padding:24px 28px;background:#EEF3F9">
+    <div style="max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+        <sc-for list="{{dashKpis}}" as="k" hint-placeholder-count="4">
+          <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;border-left:4px solid {{k.color}};padding:16px 18px">
+            <div style="font-family:'Montserrat',sans-serif;font-size:26px;font-weight:700;color:{{k.color}};line-height:1">{{k.value}}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#7486A6;margin-top:6px">{{k.label}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;padding:20px 22px">
+        <div style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#1F3B6F;margin-bottom:2px">Avance por área</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;margin-bottom:16px">Porcentaje de avance fraccionario (actividades completadas + documentos marcados) por área</div>
+        <sc-for list="{{areaBars}}" as="b" hint-placeholder-count="6">
+          <div title="{{b.tip}}" style="display:flex;align-items:center;gap:12px;margin-bottom:11px">
+            <div style="width:150px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{b.label}}</div>
+            <div style="flex:1;height:16px;background:#EEF3F9;border-radius:8px;overflow:hidden;position:relative">
+              <div style="height:100%;width:{{b.pct}};background:{{b.color}};border-radius:8px;transition:width .5s ease"></div>
+            </div>
+            <div style="width:44px;flex:none;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:{{b.color}}">{{b.pctLabel}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start">
+        <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;padding:20px 22px">
+          <div style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#1F3B6F;margin-bottom:2px">Distribución de estados</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;margin-bottom:16px">{{statTotal}} actividades en total, todas las áreas</div>
+          <div style="display:flex;height:28px;border-radius:8px;overflow:hidden">
+            <sc-for list="{{statusSegments}}" as="s" hint-placeholder-count="4">
+              <div title="{{s.tip}}" style="width:{{s.pct}};background:{{s.color}};display:flex;align-items:center;justify-content:center;min-width:2px;transition:width .5s ease">
+                <span style="display:{{s.labelShow}};font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;color:#FFFFFF">{{s.count}}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px">
+            <sc-for list="{{statusSegments}}" as="s" hint-placeholder-count="4">
+              <span style="display:flex;gap:6px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.06em;color:#475E89"><span style="width:9px;height:9px;border-radius:2px;background:{{s.color}}"></span>{{s.label}} · {{s.count}}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;padding:20px 22px">
+          <div style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#1F3B6F;margin-bottom:2px">Documentos por área</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;margin-bottom:16px">Marcados vs. total, {{boardDocsLabel}} en todo el proyecto</div>
+          <sc-for list="{{docAreaBars}}" as="b" hint-placeholder-count="6">
+            <div title="{{b.tip}}" style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="width:110px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{b.label}}</div>
+              <div style="flex:1;height:13px;background:#EEF3F9;border-radius:7px;overflow:hidden">
+                <div style="height:100%;width:{{b.pct}};background:{{b.color}};border-radius:7px;transition:width .5s ease"></div>
+              </div>
+              <div style="width:38px;flex:none;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#7486A6">{{b.countLabel}}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{docAreaEmpty}}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:11.5px;color:#94A1BA">Aún no hay documentos cargados.</div>
+          </sc-if>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{viewDocumentos}}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 20px;background:#F4F7FB;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
+      <input value="{{docSearchVal}}" onChange="{{onDocSearch}}" placeholder="Buscar documento por nombre…" style="width:240px;background:#FFFFFF;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 12px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#7486A6;margin-left:6px">ÁREA</span>
+      <select value="{{docAreaFilter}}" onChange="{{onDocAreaFilter}}" style="background:#FFFFFF;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:7px 8px">
+        <option value="">Todas</option>
+        <sc-for list="{{docAreaOptions}}" as="a" hint-placeholder-count="6">
+          <option value="{{a}}">{{a}}</option>
+        </sc-for>
+      </select>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#7486A6;margin-left:6px">FASE</span>
+      <select value="{{docFaseFilter}}" onChange="{{onDocFaseFilter}}" style="background:#FFFFFF;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:7px 8px">
+        <option value="">Todas</option>
+        <option value="Preconstrucción">Preconstrucción</option>
+        <option value="Construcción">Construcción</option>
+        <option value="Entrega a Beneficiarios">Entrega a Beneficiarios</option>
+        <option value="Liquidación">Liquidación</option>
+      </select>
+      <button onClick="{{onDocEstadoAll}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{docEstadoAllBg}};color:{{docEstadoAllFg}};border:1px solid #D9E1EC;margin-left:6px">TODOS</button>
+      <button onClick="{{onDocEstadoDone}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{docEstadoDoneBg}};color:{{docEstadoDoneFg}};border:1px solid #D9E1EC">✓ MARCADOS</button>
+      <button onClick="{{onDocEstadoPending}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{docEstadoPendingBg}};color:{{docEstadoPendingFg}};border:1px solid #D9E1EC">PENDIENTES</button>
+      <div style="flex:1"></div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;color:#7486A6">{{docRowsCountLabel}}</span>
+    </div>
+    <div style="flex:1;overflow:auto;padding:0 20px 20px">
+      <table style="width:100%;border-collapse:collapse;margin-top:14px">
+        <thead>
+          <tr style="text-align:left;border-bottom:2px solid #D9E1EC">
+            <th style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">DOCUMENTO</th>
+            <th style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">ÁREA(S)</th>
+            <th style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">FASE(S)</th>
+            <th style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">ACTIVIDADES</th>
+            <th style="padding:8px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">MARCADOS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <sc-for list="{{docRows}}" as="r" hint-placeholder-count="8">
+            <tr style="border-bottom:1px solid #EEF3F9" style-hover="background:#F7FAFD">
+              <td style="padding:10px;vertical-align:top">
+                <div style="font-size:12.5px;font-weight:600;color:#1F3B6F;line-height:1.35">{{r.name}}</div>
+              </td>
+              <td style="padding:10px;vertical-align:top;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#475E89">{{r.areasLabel}}</td>
+              <td style="padding:10px;vertical-align:top;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7486A6">{{r.fasesLabel}}</td>
+              <td style="padding:10px;vertical-align:top">
+                <button onClick="{{r.onToggleExpand}}" title="Ver actividades" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;padding:4px 8px;cursor:pointer;border-radius:6px">{{r.expandMark}} {{r.count}}</button>
+                <sc-if value="{{r.expanded}}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;max-width:340px">
+                    <sc-for list="{{r.holders}}" as="h" hint-placeholder-count="3">
+                      <button onClick="{{h.onClick}}" style="text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{h.color}};padding:5px 8px;cursor:pointer;color:#1F3B6F" style-hover="border-color:#61B1E3">{{h.id}} · {{h.titulo}}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </td>
+              <td style="padding:10px;vertical-align:top;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:{{r.doneColor}}">{{r.doneLabel}}</td>
+            </tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <sc-if value="{{docRowsEmpty}}" hint-placeholder-val="{{ false }}">
+        <div style="padding:40px 0;text-align:center;font-size:12.5px;color:#94A1BA">Sin documentos que coincidan con el filtro.</div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{
@@ -609,7 +749,10 @@ class Component extends DCLogic {
       zoom: 1,
       expanded: {},  // qué actividades principales muestran sus subactividades
       openCombo: null, comboQ: '',   // combo con búsqueda actualmente abierto
-      depFilter: '', enFilter: ''    // filtros de las listas de predecesoras/sucesoras
+      depFilter: '', enFilter: '',   // filtros de las listas de predecesoras/sucesoras
+      view: 'diagrama',              // 'diagrama' | 'dashboard' | 'documentos'
+      docSearch: '', docAreaFilter: '', docFaseFilter: '', docEstadoFilter: 'all',
+      docExpanded: {}
     };
   }
 
@@ -975,6 +1118,11 @@ class Component extends DCLogic {
   // ── Subactividades (jerarquía de N niveles: componente → subcomponente → …) ──
   childrenOf(id){ return this.state.nodes.filter(n => n.parent === id); }
   toggleExpand(id){ this.setState(s => ({expanded: {...s.expanded, [id]: !s.expanded[id]}})); }
+
+  // ── Vistas (Diagrama / Dashboard / Documentos) ──
+  setView(view){ this.setState({view}); }
+  toggleDocExpand(key){ this.setState(s => ({docExpanded: {...s.docExpanded, [key]: !s.docExpanded[key]}})); }
+  goToNodeFromDocs(id){ this.setState({view: 'diagrama'}); this.selectNode(id); }
 
   nodeDepth(id, byId){
     let d = 0, nd = byId[id];
@@ -1614,6 +1762,108 @@ class Component extends DCLogic {
         rows.length ? rows : React.createElement('div', {style:{fontSize:'11.5px', color:'#94A1BA', margin:'2px 0 4px'}}, 'Aún no hay documentos. Usa «+ AGREGAR» para incluir el primero.'));
     }
 
+    // ── Vistas: tabs, Dashboard y Documentos ──
+    const view = this.state.view;
+    const viewDiagrama = view === 'diagrama', viewDashboard = view === 'dashboard', viewDocumentos = view === 'documentos';
+    const tabStyle = active => ({ bg: active ? '#1F3B6F' : 'transparent', fg: active ? '#FFFFFF' : '#5E7196' });
+    const tD = tabStyle(viewDiagrama), tB = tabStyle(viewDashboard), tR = tabStyle(viewDocumentos);
+
+    // Paleta categórica validada (derivada de marca) para gráficas — reservada
+    // para RELLENOS grandes; los acentos finos del diagrama siguen usando
+    // AREA_PALETTE. Mismo orden que las áreas para que "qué color = qué área"
+    // sea consistente entre el diagrama y el dashboard.
+    const CAT_PALETTE = ['#2F5FA8','#1AABC2','#0EA383','#8B5CF6','#E24C5B','#D97706','#A9673B','#C2478A'];
+    const catColorMap = {};
+    orderedAreas.forEach((a, i) => { catColorMap[a] = CAT_PALETTE[i % CAT_PALETTE.length]; });
+
+    // Avance fraccionario por área (misma fórmula que el % global, acotado al área)
+    const areaBars = orderedAreas.map(a => {
+      const ns = nodes.filter(n => n.area === a);
+      const sum = ns.reduce((s, n) => {
+        if (n.estado === 'Completado') return s + 1;
+        const docs = n.docs || [];
+        return s + (docs.length ? docs.filter(d => d && d.done).length / docs.length : 0);
+      }, 0);
+      const pct = ns.length ? Math.round(sum / ns.length * 100) : 0;
+      return { label: a, pct: pct + '%', pctLabel: pct + '%', color: catColorMap[a] || '#7486A6', tip: a + ': ' + pct + '% de avance (' + ns.length + ' actividades)' };
+    });
+
+    // Distribución de estados (mismos colores que el resto de la app)
+    const ESTADO_STAT_COLORS = { 'Completado': '#025850', 'En proceso': '#61B1E3', 'Pendiente': '#5E7196', 'Bloqueado': '#AD1924' };
+    const statusOrder = ['Completado', 'En proceso', 'Pendiente', 'Bloqueado'];
+    const statusSegments = statusOrder.map(name => {
+      const count = nodes.filter(n => n.estado === name).length;
+      const pct = total ? (count / total * 100) : 0;
+      return { label: name.toUpperCase(), count, pct: pct + '%', color: ESTADO_STAT_COLORS[name] || '#7486A6', labelShow: pct >= 8 ? 'block' : 'none', tip: name + ': ' + count + ' (' + Math.round(pct) + '%)' };
+    });
+
+    // Documentos marcados vs total, por área
+    const docAreaBars = orderedAreas.map(a => {
+      const ns = nodes.filter(n => n.area === a);
+      const dTotal = ns.reduce((s, n) => s + (n.docs ? n.docs.length : 0), 0);
+      const dDone = ns.reduce((s, n) => s + (n.docs ? n.docs.filter(d => d && d.done).length : 0), 0);
+      const pct = dTotal ? Math.round(dDone / dTotal * 100) : 0;
+      return { label: a, pct: pct + '%', color: catColorMap[a] || '#7486A6', countLabel: dDone + '/' + dTotal, tip: a + ': ' + dDone + ' de ' + dTotal + ' documentos marcados' };
+    });
+
+    const dashKpis = [
+      { label: 'ACTIVIDADES', value: total, color: '#1F3B6F' },
+      { label: 'AVANCE GENERAL', value: (total ? Math.round(avanceSum / total * 100) : 0) + '%', color: '#025850' },
+      { label: 'DOCUMENTOS MARCADOS', value: boardDocsTotal ? (boardDocsDone + '/' + boardDocsTotal) : '0', color: '#61B1E3' },
+      { label: 'ÁREAS ACTIVAS', value: orderedAreas.length, color: '#332664' },
+    ];
+
+    // Documentos: agrupados por nombre exacto (un documento con el mismo
+    // nombre en varias actividades/subactividades cuenta como UNA fila, con
+    // el conteo de cuántas lo tienen — así no se satura repitiendo la misma
+    // fila una vez por cada actividad que lo requiere).
+    const docGroupsMap = {};
+    nodes.forEach(n => {
+      (n.docs || []).forEach(d => {
+        if (!d || !d.name) return;
+        const key = d.name.trim();
+        if (!key) return;
+        const g = docGroupsMap[key] || (docGroupsMap[key] = { name: key, areas: new Set(), fases: new Set(), holders: [], done: 0, total: 0 });
+        g.areas.add(n.area);
+        g.fases.add(n.fase);
+        g.total += 1;
+        if (d.done) g.done += 1;
+        g.holders.push({ id: n.id, titulo: n.titulo, area: n.area, done: !!d.done });
+      });
+    });
+    const df = (this.state.docSearch || '').trim().toLowerCase();
+    const docAreaF = this.state.docAreaFilter, docFaseF = this.state.docFaseFilter, docEstF = this.state.docEstadoFilter;
+    let docRows = Object.values(docGroupsMap)
+      .filter(g => !df || g.name.toLowerCase().includes(df))
+      .filter(g => !docAreaF || g.areas.has(docAreaF))
+      .filter(g => !docFaseF || g.fases.has(docFaseF))
+      .filter(g => docEstF === 'all' || (docEstF === 'done' ? (g.done === g.total && g.total > 0) : g.done < g.total))
+      .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
+      .map(g => {
+        const key = g.name;
+        const expanded = !!this.state.docExpanded[key];
+        const areasArr = [...g.areas];
+        const fasesArr = [...g.fases];
+        return {
+          name: g.name,
+          areasLabel: areasArr.length > 2 ? (areasArr.length + ' áreas') : areasArr.join(', '),
+          fasesLabel: fasesArr.length > 1 ? (fasesArr.length + ' fases') : fasesArr.join(', '),
+          count: g.total,
+          expanded, expandMark: expanded ? '▾' : '▸',
+          onToggleExpand: () => this.toggleDocExpand(key),
+          holders: expanded ? g.holders.map(h => ({
+            id: h.id, titulo: h.titulo.length > 46 ? h.titulo.slice(0, 46) + '…' : h.titulo,
+            color: areaColorMap[h.area] || '#94A1BA',
+            onClick: () => this.goToNodeFromDocs(h.id)
+          })) : [],
+          doneLabel: g.done + '/' + g.total,
+          doneColor: (g.done === g.total) ? '#025850' : (g.done > 0 ? '#61B1E3' : '#94A1BA')
+        };
+      });
+    const docAreaOptions = orderedAreas;
+    const docRowsEmpty = docRows.length === 0;
+    const docRowsCountLabel = docRows.length + ' documento(s) · ' + docRows.reduce((s, r) => s + r.count, 0) + ' referencia(s)';
+
     return {
       canvasW, canvasH, lanes, nodeVMs, groupTitles, edgesSvg, chips, fasesBands,
       projectName: this.state.projectName,
@@ -1645,6 +1895,35 @@ class Component extends DCLogic {
       panelOpen: showDetail || showForm || showManage,
       showEmpty: !(showDetail || showForm || showManage),
       boardDocsLabel: boardDocsTotal ? (boardDocsDone + '/' + boardDocsTotal) : '0',
+
+      // Tabs de vista
+      viewDiagrama, viewDashboard, viewDocumentos,
+      onViewDiagrama: () => this.setView('diagrama'),
+      onViewDashboard: () => this.setView('dashboard'),
+      onViewDocumentos: () => this.setView('documentos'),
+      tabDiagramaBg: tD.bg, tabDiagramaFg: tD.fg,
+      tabDashboardBg: tB.bg, tabDashboardFg: tB.fg,
+      tabDocumentosBg: tR.bg, tabDocumentosFg: tR.fg,
+
+      // Dashboard
+      dashKpis, areaBars, statusSegments, docAreaBars,
+      docAreaEmpty: docAreaBars.every(b => b.countLabel === '0/0'),
+
+      // Documentos
+      docSearchVal: this.state.docSearch, onDocSearch: e => this.setState({docSearch: e.target.value}),
+      docAreaFilter: this.state.docAreaFilter, onDocAreaFilter: e => this.setState({docAreaFilter: e.target.value}),
+      docFaseFilter: this.state.docFaseFilter, onDocFaseFilter: e => this.setState({docFaseFilter: e.target.value}),
+      docAreaOptions,
+      onDocEstadoAll: () => this.setState({docEstadoFilter: 'all'}),
+      onDocEstadoDone: () => this.setState({docEstadoFilter: 'done'}),
+      onDocEstadoPending: () => this.setState({docEstadoFilter: 'pending'}),
+      docEstadoAllBg: this.state.docEstadoFilter === 'all' ? '#1F3B6F' : 'transparent',
+      docEstadoAllFg: this.state.docEstadoFilter === 'all' ? '#FFFFFF' : '#5E7196',
+      docEstadoDoneBg: this.state.docEstadoFilter === 'done' ? '#025850' : 'transparent',
+      docEstadoDoneFg: this.state.docEstadoFilter === 'done' ? '#FFFFFF' : '#5E7196',
+      docEstadoPendingBg: this.state.docEstadoFilter === 'pending' ? '#5E7196' : 'transparent',
+      docEstadoPendingFg: this.state.docEstadoFilter === 'pending' ? '#FFFFFF' : '#5E7196',
+      docRows, docRowsEmpty, docRowsCountLabel,
       showDetail, showForm,
       selId: selId || '',
       selTitulo: selNode ? selNode.titulo : '',
