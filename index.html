@@ -39,6 +39,7 @@
     .doc-row:hover{box-shadow:0 3px 10px rgba(31,59,111,.08);}
     .doc-open{flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid #D9E1EC;border-radius:8px;color:#61B1E3;text-decoration:none;font-size:12px;transition:border-color .16s ease,background .16s ease;}
     .doc-open:hover{border-color:#61B1E3;background:#E4F1FB;}
+    .combo-item:hover{background:#F4F7FB!important;}
     @keyframes rpSlideIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
     .side-panel{animation:rpSlideIn .20s ease;}
   </style>
@@ -281,12 +282,7 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <label style="display:block">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">FASE</div>
-              <select value="{{fFase}}" onChange="{{onFFase}}" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:8px 6px">
-                <option>Preconstrucción</option>
-                <option>Construcción</option>
-                <option>Entrega a Beneficiarios</option>
-                <option>Liquidación</option>
-              </select>
+              {{fFaseSelect}}
             </label>
             <label style="display:block">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">ESTADO</div>
@@ -324,9 +320,13 @@
             </div>
           </sc-if>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">DEPENDE DE</div>
-            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Se excluyen esta actividad y todas sus descendientes para evitar dependencias circulares.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">DEPENDE DE — PREDECESORAS ({{depSelCount}})</div>
+            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Marca todas las que apliquen. Se excluyen esta actividad y sus descendientes para evitar ciclos.</div>
+            <input value="{{depFilterVal}}" onChange="{{onDepFilter}}" placeholder="Escribe para filtrar (nombre, código o área)…" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:7px 9px;margin-bottom:6px">
             <div class="soft" style="max-height:230px;overflow:auto;border:1px solid #D9E1EC;background:#F4F7FB">
+              <sc-if value="{{depNoResults}}" hint-placeholder-val="{{ false }}">
+                <div style="padding:10px;font-size:11.5px;color:#94A1BA">Sin coincidencias con el filtro.</div>
+              </sc-if>
               <sc-for list="{{depOptions}}" as="o" hint-placeholder-count="4">
                 <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #FFFFFF;border-left:3px solid {{o.areaColor}};cursor:pointer;font-size:12px;color:#1F3B6F" style-hover="background:#FFFFFF">
                   <input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}" style="accent-color:#61B1E3;flex:none">
@@ -339,23 +339,23 @@
             </div>
           </div>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">HABILITA ({{enCount}})</div>
-            <sc-if value="{{enEmpty}}" hint-placeholder-val="{{ false }}">
-              <div style="font-size:11.5px;color:#94A1BA;margin-top:8px">— Ninguna actividad espera por esta</div>
-            </sc-if>
-            <sc-for list="{{enList}}" as="d" hint-placeholder-count="2">
-              <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-top:6px;cursor:pointer;color:#1F3B6F">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
-                </div>
-                <div style="display:flex;gap:8px;align-items:center">
-                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
-                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
-                </div>
-              </button>
-            </sc-for>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">HABILITA — SUCESORAS ({{enSelCount}})</div>
+            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Marca las actividades que solo pueden iniciar cuando esta termine. Se excluyen sus antecesoras para evitar ciclos.</div>
+            <input value="{{enFilterVal}}" onChange="{{onEnFilter}}" placeholder="Escribe para filtrar (nombre, código o área)…" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:7px 9px;margin-bottom:6px">
+            <div class="soft" style="max-height:230px;overflow:auto;border:1px solid #D9E1EC;background:#F4F7FB">
+              <sc-if value="{{enNoResults}}" hint-placeholder-val="{{ false }}">
+                <div style="padding:10px;font-size:11.5px;color:#94A1BA">Sin coincidencias con el filtro.</div>
+              </sc-if>
+              <sc-for list="{{enOptions}}" as="o" hint-placeholder-count="4">
+                <label style="display:flex;gap:8px;align-items:center;padding:7px 10px;border-bottom:1px solid #FFFFFF;border-left:3px solid {{o.areaColor}};cursor:pointer;font-size:12px;color:#1F3B6F" style-hover="background:#FFFFFF">
+                  <input type="checkbox" checked="{{o.checked}}" onChange="{{o.onToggle}}" style="accent-color:#61B1E3;flex:none">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:{{o.areaColor}};flex:none;min-width:32px">{{o.areaAbbr}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{o.id}}</span>
+                  <span style="line-height:1.3;flex:1">{{o.titulo}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.1em;color:{{o.faseColor}};flex:none">{{o.faseCode}}</span>
+                </label>
+              </sc-for>
+            </div>
           </div>
           <div style="display:flex;gap:10px">
             <button onClick="{{onListo}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:#1F3B6F;color:#FFFFFF;border:1px solid #1F3B6F;padding:10px 14px;cursor:pointer;font-weight:600" style-hover="background:#16345E;border-color:#16345E">LISTO</button>
@@ -574,7 +574,9 @@ class Component extends DCLogic {
       search: '',
       hidden: {},
       zoom: 1,
-      expanded: {}   // qué actividades principales muestran sus subactividades
+      expanded: {},  // qué actividades principales muestran sus subactividades
+      openCombo: null, comboQ: '',   // combo con búsqueda actualmente abierto
+      depFilter: '', enFilter: ''    // filtros de las listas de predecesoras/sucesoras
     };
   }
 
@@ -928,15 +930,41 @@ class Component extends DCLogic {
     const estadoDef = estados.some(e => e.name === 'Pendiente') ? 'Pendiente' : (estados[0] ? estados[0].name : 'Pendiente');
     const n = {id, parent: parentId, area: p.area, fase: p.fase, titulo: 'Nueva subactividad', estado: estadoDef, nota: '', dependeDe: []};
     this.setNodes([...this.state.nodes, n]);
-    this.setState({selectedId: id, mode: 'edit', expanded: {...this.state.expanded, [parentId]: true}});
+    this.setState({selectedId: id, mode: 'edit', expanded: {...this.state.expanded, [parentId]: true}, openCombo: null, comboQ: '', depFilter: '', enFilter: ''});
   }
 
   // Al seleccionar una subactividad, expande a su principal para que sea visible.
   selectNode(id){
     const n = this.state.nodes.find(x => x.id === id);
-    const patch = {selectedId: id, mode: 'detail'};
+    const patch = {selectedId: id, mode: 'detail', depFilter: '', enFilter: '', openCombo: null, comboQ: ''};
     if(n && n.parent) patch.expanded = {...this.state.expanded, [n.parent]: true};
     this.setState(patch);
+  }
+
+  // Combo con búsqueda: input que filtra las opciones al escribir.
+  mkCombo(key, cfg){
+    const open = this.state.openCombo === key;
+    const q = (this.state.comboQ || '').toLowerCase();
+    const shown = open ? cfg.options.filter(o => o.label.toLowerCase().includes(q)) : [];
+    const _in = {width:'100%', background:'#EEF3F9', border:'1px solid #D9E1EC', borderRadius:'8px', color:'#1F3B6F', fontFamily:"'Montserrat',sans-serif", fontSize:'12px', padding:'8px 26px 8px 8px'};
+    return React.createElement('div', {style:{position:'relative'}},
+      React.createElement('input', {
+        value: open ? (this.state.comboQ || '') : (cfg.valueLabel || ''),
+        placeholder: open ? 'Escribe para buscar…' : (cfg.placeholder || ''),
+        onFocus: () => this.setState({openCombo: key, comboQ: ''}),
+        onChange: e => this.setState({comboQ: e.target.value}),
+        onBlur: () => setTimeout(() => { if(this.state.openCombo === key) this.setState({openCombo: null, comboQ: ''}); }, 140),
+        style: _in
+      }),
+      React.createElement('span', {style:{position:'absolute', right:'10px', top:'9px', fontSize:'9px', color:'#7486A6', pointerEvents:'none'}}, open ? '▴' : '▾'),
+      open ? React.createElement('div', {style:{position:'absolute', left:0, right:0, top:'calc(100% + 3px)', zIndex:30, background:'#FFFFFF', border:'1px solid #C7D6E8', borderRadius:'10px', boxShadow:'0 8px 22px rgba(31,59,111,.16)', maxHeight:'190px', overflow:'auto', padding:'4px'}},
+        shown.length ? shown.map(o => React.createElement('button', {
+          key: String(o.value), className: 'combo-item',
+          onMouseDown: (e) => { e.preventDefault(); cfg.onPick(o.value); this.setState({openCombo: null, comboQ: ''}); },
+          style: {display:'block', width:'100%', textAlign:'left', background: (o.label === cfg.valueLabel) ? '#E4F1FB' : 'transparent', border:'none', borderRadius:'7px', padding:'7px 9px', fontSize:'12px', color:'#1F3B6F', cursor:'pointer', fontFamily:"'Montserrat',sans-serif"}
+        }, o.label))
+        : React.createElement('div', {style:{padding:'8px 9px', fontSize:'11.5px', color:'#94A1BA'}}, 'Sin coincidencias')) : null
+    );
   }
 
   addNode(){
@@ -947,7 +975,7 @@ class Component extends DCLogic {
     const id = this.genId(area);
     const n = {id, area, fase:'Entrega a Beneficiarios', titulo:'Nueva actividad', estado: estadoDef, nota:'', dependeDe:[]};
     this.setNodes([...this.state.nodes, n]);
-    this.setState({selectedId: id, mode: 'edit'});
+    this.setState({selectedId: id, mode: 'edit', openCombo: null, comboQ: '', depFilter: '', enFilter: ''});
   }
 
   deleteNode(id){
@@ -1302,43 +1330,71 @@ class Component extends DCLogic {
     const docCount = docList.length;
     const docDone = docList.filter(d => d.done).length;
 
-    let depOptions = [];
+    let depOptions = [], enOptions = [], depSelCount = 0, enSelCount = 0;
     if (showForm) {
-      const excl = new Set([selId]);
-      this.collectDesc(excl, nodes);
-      depOptions = nodes.filter(n => !excl.has(n.id)).map(n => ({
+      const mkOpt = (n, checked, onToggle) => ({
         id: n.id, titulo: n.titulo, area: n.area,
         areaAbbr: this.prefixFor(n.area), areaColor: areaColorMap[n.area] || '#94A1BA',
         faseCode: faseCodeFor(n.fase), faseColor: faseColorFor(n.fase),
-        checked: (selNode.dependeDe||[]).includes(n.id),
-        onToggle: () => this.toggleDep(selId, n.id)
-      })).sort((a, b) => a.area.localeCompare(b.area) || a.id.localeCompare(b.id));
+        checked, onToggle
+      });
+      const byAreaId = (a, b) => a.area.localeCompare(b.area) || a.id.localeCompare(b.id);
+      const matches = (o, f) => !f || (o.titulo + ' ' + o.id + ' ' + o.area).toLowerCase().includes(f);
+
+      // Predecesoras: se excluyen la actividad y sus descendientes (ciclos).
+      const exclDown = new Set([selId]);
+      this.collectDesc(exclDown, nodes);
+      depOptions = nodes.filter(n => !exclDown.has(n.id))
+        .map(n => mkOpt(n, (selNode.dependeDe||[]).includes(n.id), () => this.toggleDep(selId, n.id)))
+        .sort(byAreaId);
+      depSelCount = depOptions.filter(o => o.checked).length;
+      const df = (this.state.depFilter||'').trim().toLowerCase();
+      depOptions = depOptions.filter(o => o.checked || matches(o, df));
+
+      // Sucesoras: se excluyen la actividad y sus ancestros (ciclos).
+      const exclUp = new Set([selId]);
+      this.collectAnc(selId, byId, exclUp);
+      exclUp.add(selId);
+      enOptions = nodes.filter(n => !exclUp.has(n.id))
+        .map(n => mkOpt(n, (n.dependeDe||[]).includes(selId), () => this.toggleDep(n.id, selId)))
+        .sort(byAreaId);
+      enSelCount = enOptions.filter(o => o.checked).length;
+      const ef = (this.state.enFilter||'').trim().toLowerCase();
+      enOptions = enOptions.filter(o => o.checked || matches(o, ef));
     }
 
-    // Los <select> de ÁREA y ESTADO se construyen como elementos React porque
-    // sc-for no genera <option> dentro de <select> en el runtime dc.
-    const _selStyle = {width:'100%', background:'#EEF3F9', border:'1px solid #D9E1EC', color:'#1F3B6F', fontFamily:"'Montserrat',sans-serif", fontSize:'12px', padding:'8px 8px'};
-    const mkSelect = (value, opts, onChange) => React.createElement('select',
-      {value, onChange, style: _selStyle},
-      opts.map(o => React.createElement('option', {key: o, value: o}, o)));
-    const fAreaSelect = showForm ? mkSelect(selNode.area, orderedAreas, e => this.updateNode(selId, {area: e.target.value})) : null;
-    const fEstadoSelect = showForm ? mkSelect(selNode.estado, this.reconciledEstados().map(e => e.name), e => this.updateNode(selId, {estado: e.target.value})) : null;
+    // Selectores con búsqueda (mkCombo): área, fase, estado y «pertenece a».
+    const FASES = ['Preconstrucción','Construcción','Entrega a Beneficiarios','Liquidación'];
+    const asOpts = arr => arr.map(v => ({value: v, label: v}));
+    const fAreaSelect = showForm ? this.mkCombo('area', {
+      valueLabel: selNode.area, options: asOpts(orderedAreas),
+      onPick: v => this.updateNode(selId, {area: v})
+    }) : null;
+    const fFaseSelect = showForm ? this.mkCombo('fase', {
+      valueLabel: selNode.fase, options: asOpts(FASES),
+      onPick: v => this.updateNode(selId, {fase: v})
+    }) : null;
+    const fEstadoSelect = showForm ? this.mkCombo('estado', {
+      valueLabel: selNode.estado, options: asOpts(this.reconciledEstados().map(e => e.name)),
+      onPick: v => this.updateNode(selId, {estado: v})
+    }) : null;
 
-    // Selector «pertenece a» (solo 1 nivel: una actividad con hijas no puede
-    // volverse subactividad, y una subactividad no puede ser principal de otra).
+    // «Pertenece a» (solo 1 nivel: una actividad con hijas no puede volverse
+    // subactividad, y una subactividad no puede ser principal de otra).
     let fParentSelect = null;
     const selHasKids = selNode ? nodes.some(x => x.parent === selId) : false;
     if (showForm && !selHasKids) {
+      const NONE = '— Es actividad principal —';
       const cands = nodes.filter(x => !x.parent && x.id !== selId);
-      fParentSelect = React.createElement('select',
-        {value: selNode.parent || '', onChange: e => this.updateNode(selId, {parent: e.target.value || null}), style: _selStyle},
-        [React.createElement('option', {key: '__none', value: ''}, '— Es actividad principal —')]
-          .concat(cands.map(x => React.createElement('option', {key: x.id, value: x.id},
-            x.id + ' · ' + (x.titulo.length > 42 ? x.titulo.slice(0, 42) + '…' : x.titulo)))));
+      fParentSelect = this.mkCombo('parent', {
+        valueLabel: selNode.parent ? (selNode.parent + ' · ' + (byId[selNode.parent] ? byId[selNode.parent].titulo : '')) : NONE,
+        options: [{value: '', label: NONE}].concat(cands.map(x => ({value: x.id, label: x.id + ' · ' + x.titulo}))),
+        onPick: v => this.updateNode(selId, {parent: v || null})
+      });
     }
 
     // Editor de documentos del formulario, construido como elementos React
-    // (mismo motivo que mkSelect: control total sobre inputs dinámicos).
+    // (elementos React directos: control total sobre inputs dinámicos).
     let fDocsEditor = null;
     if (showForm) {
       const docs = this.docsOf(selNode);
@@ -1407,23 +1463,21 @@ class Component extends DCLogic {
       onGoParent: () => { if(selParent) this.selectNode(selParent.id); },
       fParentSelect,
       fParentShow: !!fParentSelect,
-      fAreaSelect, fEstadoSelect, fDocsEditor,
+      fAreaSelect, fFaseSelect, fEstadoSelect, fDocsEditor,
+      depOptions, enOptions, depSelCount, enSelCount,
+      depFilterVal: this.state.depFilter, onDepFilter: e => this.setState({depFilter: e.target.value}),
+      enFilterVal: this.state.enFilter, onEnFilter: e => this.setState({enFilter: e.target.value}),
+      depNoResults: showForm && depOptions.length === 0,
+      enNoResults: showForm && enOptions.length === 0,
       depCount: depList.length, depEmpty: showDetail && depList.length === 0, depList,
       enCount: enList.length, enEmpty: enList.length === 0, enList,
-      onEditar: () => this.setState({mode: 'edit'}),
-      onListo: () => this.setState({mode: 'detail'}),
+      onEditar: () => this.setState({mode: 'edit', openCombo: null, comboQ: '', depFilter: '', enFilter: ''}),
+      onListo: () => this.setState({mode: 'detail', openCombo: null, comboQ: ''}),
       onEliminar: () => this.deleteNode(selId),
       fTitulo: selNode ? selNode.titulo : '',
-      fArea: selNode ? selNode.area : (orderedAreas[0] || ''),
-      fFase: selNode ? selNode.fase : 'Preconstrucción',
-      fEstado: selNode ? selNode.estado : 'Pendiente',
       fNota: selNode ? (selNode.nota || '') : '',
       onFTitulo: e => this.updateNode(selId, {titulo: e.target.value}),
-      onFArea: e => this.updateNode(selId, {area: e.target.value}),
-      onFFase: e => this.updateNode(selId, {fase: e.target.value}),
-      onFEstado: e => this.updateNode(selId, {estado: e.target.value}),
-      onFNota: e => this.updateNode(selId, {nota: e.target.value}),
-      depOptions
+      onFNota: e => this.updateNode(selId, {nota: e.target.value})
     };
   }
 }
