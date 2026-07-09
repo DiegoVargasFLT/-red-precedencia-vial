@@ -56,6 +56,10 @@
       </div>
       <button onClick="{{onEditNombre}}" title="Editar nombre del proyecto" style="flex:none;background:transparent;border:1px solid #D9E1EC;color:#7486A6;width:26px;height:26px;cursor:pointer;font-size:12px;line-height:1;padding:0" style-hover="border-color:#61B1E3;color:#1F3B6F">✎</button>
     </div>
+    <div style="display:flex;align-items:center;gap:6px;flex:none">
+      <div style="position:relative;width:190px">{{projectSelect}}</div>
+      <button onClick="{{onCreateProject}}" title="Crear nuevo proyecto (desde cero o copiando el actual)" style="flex:none;background:transparent;border:1px dashed #025850;color:#025850;width:30px;height:30px;cursor:pointer;font-size:15px;line-height:1;padding:0" style-hover="background:rgba(2,88,80,0.06)">+</button>
+    </div>
     <div style="display:flex;gap:4px;background:#EEF3F9;border-radius:9px;padding:3px;flex:none">
       <button onClick="{{onViewDiagrama}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:7px 12px;cursor:pointer;background:{{tabDiagramaBg}};color:{{tabDiagramaFg}};border:none;border-radius:7px;font-weight:600" style-hover="color:#1F3B6F">◆ DIAGRAMA</button>
       <button onClick="{{onViewDashboard}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:7px 12px;cursor:pointer;background:{{tabDashboardBg}};color:{{tabDashboardFg}};border:none;border-radius:7px;font-weight:600" style-hover="color:#1F3B6F">▤ DASHBOARD</button>
@@ -542,6 +546,16 @@
       <button onClick="{{onDocEstadoAll}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{docEstadoAllBg}};color:{{docEstadoAllFg}};border:1px solid #D9E1EC;margin-left:6px">TODOS</button>
       <button onClick="{{onDocEstadoDone}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{docEstadoDoneBg}};color:{{docEstadoDoneFg}};border:1px solid #D9E1EC">✓ MARCADOS</button>
       <button onClick="{{onDocEstadoPending}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{docEstadoPendingBg}};color:{{docEstadoPendingFg}};border:1px solid #D9E1EC">PENDIENTES</button>
+      <div style="width:1px;align-self:stretch;background:#D9E1EC;margin:0 2px"></div>
+      <button onClick="{{onToggleDocsAllProjects}}" title="Ver documentos de todos los proyectos (se cargan una vez y quedan en caché)" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:7px 10px;cursor:pointer;background:{{toggleAllBg}};color:{{toggleAllFg}};border:1px solid #D9E1EC">{{allProjectsLoadingMark}}TODOS LOS PROYECTOS</button>
+      <sc-if value="{{docProjectShow}}" hint-placeholder-val="{{ false }}">
+        <select value="{{docsProjectFilter}}" onChange="{{onDocsProjectFilter}}" style="background:#FFFFFF;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12px;padding:7px 8px">
+          <option value="">Todos los proyectos</option>
+          <sc-for list="{{docProjectOptions}}" as="p" hint-placeholder-count="3">
+            <option value="{{p}}">{{p}}</option>
+          </sc-for>
+        </select>
+      </sc-if>
       <div style="flex:1"></div>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;color:#7486A6">{{docRowsCountLabel}}</span>
     </div>
@@ -561,6 +575,7 @@
             <tr style="border-bottom:1px solid #EEF3F9" style-hover="background:#F7FAFD">
               <td style="padding:10px;vertical-align:top">
                 <div style="font-size:12.5px;font-weight:600;color:#1F3B6F;line-height:1.35">{{r.name}}</div>
+                <div style="display:{{r.projShow}};font-family:'IBM Plex Mono',monospace;font-size:9px;color:#61B1E3;margin-top:2px">{{r.projLabel}}</div>
               </td>
               <td style="padding:10px;vertical-align:top;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#475E89">{{r.areasLabel}}</td>
               <td style="padding:10px;vertical-align:top;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#7486A6">{{r.fasesLabel}}</td>
@@ -627,7 +642,8 @@ function docMeta(url){
   if(h.includes('docs.google') || h.includes('drive.google')) return {icon:'📄', host:'Google Drive'};
   return {icon:'🔗', host: host || 'enlace'};
 }
-const LS_KEY = 'red-precedencia-vial-cierre-v2';
+const LS_KEY_BASE = 'red-precedencia-vial-cierre-v2';
+const lsKeyFor = id => (id && id !== 'red-precedencia-vial') ? (LS_KEY_BASE + ':' + id) : LS_KEY_BASE;
 
 const DEFAULT_NODES = [
   // ── IDU ──
@@ -667,37 +683,61 @@ const DEFAULT_NODES = [
 // exactamente igual que antes, usando solo localStorage.
 const RP = (typeof window !== 'undefined' && window.RP_SUPABASE) || {};
 const CLOUD_ENABLED = !!(RP.url && RP.anonKey && window.supabase);
-const BOARD_ID = RP.boardId || 'red-precedencia-vial';
+const DEFAULT_BOARD_ID = RP.boardId || 'red-precedencia-vial';
 const _sb = CLOUD_ENABLED ? window.supabase.createClient(RP.url, RP.anonKey) : null;
 
+// Multi-proyecto: cada proyecto es una fila de `boards` (id = slug del
+// proyecto, data = el documento completo). Todos los métodos reciben el id
+// como parámetro — no hay un tablero "fijo" a nivel de módulo.
 const cloud = {
   enabled: CLOUD_ENABLED,
-  async load(){
+  async load(boardId){
     if(!_sb) return null;
     try{
-      const { data, error } = await _sb.from('boards').select('data').eq('id', BOARD_ID).maybeSingle();
+      const { data, error } = await _sb.from('boards').select('data').eq('id', boardId).maybeSingle();
       if(error){ console.warn('[cloud] load:', error.message); return null; }
       return data ? data.data : null;   // puede ser array (formato viejo) u objeto documento
     }catch(e){ console.warn('[cloud] load ex:', e); return null; }
   },
-  _t: null,
-  save(doc){
+  // Todos los proyectos conocidos (para el selector y la vista Documentos
+  // en modo "todos los proyectos"). Trae la fila completa; con pocos
+  // proyectos esto es simple y suficientemente rápido.
+  async loadAll(){
+    if(!_sb) return [];
+    try{
+      const { data, error } = await _sb.from('boards').select('id,data').order('id');
+      if(error){ console.warn('[cloud] loadAll:', error.message); return []; }
+      return data || [];
+    }catch(e){ console.warn('[cloud] loadAll ex:', e); return []; }
+  },
+  _timers: {},
+  save(doc, boardId){
     if(!_sb) return;
-    clearTimeout(this._t);
-    this._t = setTimeout(async ()=>{
+    clearTimeout(this._timers[boardId]);
+    this._timers[boardId] = setTimeout(async ()=>{
       try{
         const { error } = await _sb.from('boards')
-          .upsert({ id: BOARD_ID, data: doc, updated_at: new Date().toISOString() });
+          .upsert({ id: boardId, data: doc, updated_at: new Date().toISOString() });
         if(error) console.warn('[cloud] save:', error.message);
       }catch(e){ console.warn('[cloud] save ex:', e); }
     }, 600);
   },
-  subscribe(onChange){
+  // Crea un proyecto nuevo. Usa insert (no upsert) para no pisar uno
+  // existente si por algún motivo el id ya estuviera tomado.
+  async insertBoard(boardId, doc){
+    if(!_sb) return { error: 'sin conexión a la nube' };
+    try{
+      const { error } = await _sb.from('boards').insert({ id: boardId, data: doc, updated_at: new Date().toISOString() });
+      if(error) return { error: error.message };
+      return { error: null };
+    }catch(e){ return { error: String(e) }; }
+  },
+  subscribe(boardId, onChange){
     if(!_sb) return null;
     try{
-      return _sb.channel('boards-'+BOARD_ID)
+      return _sb.channel('boards-'+boardId)
         .on('postgres_changes',
-          { event:'*', schema:'public', table:'boards', filter:'id=eq.'+BOARD_ID },
+          { event:'*', schema:'public', table:'boards', filter:'id=eq.'+boardId },
           (payload)=>{ const d = payload.new && payload.new.data; if(d) onChange(d); })
         .subscribe();
     }catch(e){ console.warn('[cloud] sub ex:', e); return null; }
@@ -719,9 +759,10 @@ function toDoc(raw){
 class Component extends DCLogic {
   constructor(props){
     super(props);
+    const projectId = (typeof window !== 'undefined' && localStorage.getItem('red-precedencia-vial-last-project')) || DEFAULT_BOARD_ID;
     let doc = null;
     try {
-      const raw = localStorage.getItem(LS_KEY);
+      const raw = localStorage.getItem(lsKeyFor(projectId));
       if (raw) doc = toDoc(JSON.parse(raw));
     } catch(e) {}
     // Migración de áreas: doc.areas (nuevo) → doc.areaOrder (v3, solo nombres) → default.
@@ -752,7 +793,12 @@ class Component extends DCLogic {
       depFilter: '', enFilter: '',   // filtros de las listas de predecesoras/sucesoras
       view: 'diagrama',              // 'diagrama' | 'dashboard' | 'documentos'
       docSearch: '', docAreaFilter: '', docFaseFilter: '', docEstadoFilter: 'all',
-      docExpanded: {}
+      docExpanded: {},
+      // Multi-proyecto
+      projectId,
+      projectsList: [{id: projectId, name: (doc && doc.projectName) || DEFAULT_PROJECT_NAME}],
+      projectCombo: false, projectComboQ: '',
+      docsAllProjects: false, docsProjectFilter: '', allProjectsCache: null, allProjectsLoading: false
     };
   }
 
@@ -798,11 +844,12 @@ class Component extends DCLogic {
     };
   }
 
-  // Único punto de guardado: localStorage + nube.
+  // Único punto de guardado: localStorage + nube. Siempre contra el proyecto
+  // actualmente abierto (this.state.projectId).
   persist(over){
     const doc = this.buildDoc(over);
-    try { localStorage.setItem(LS_KEY, JSON.stringify(doc)); } catch(e) {}
-    if(cloud.enabled && !this.__applyingRemote) cloud.save(doc);
+    try { localStorage.setItem(lsKeyFor(this.state.projectId), JSON.stringify(doc)); } catch(e) {}
+    if(cloud.enabled && !this.__applyingRemote) cloud.save(doc, this.state.projectId);
   }
 
   // Aplica un documento remoto/cargado al estado (sin re-guardar en la nube).
@@ -820,7 +867,7 @@ class Component extends DCLogic {
     if(doc.projectName) patch.projectName = doc.projectName;
     if(doc.projectSubtitle) patch.projectSubtitle = doc.projectSubtitle;
     this.setState(patch);
-    try { localStorage.setItem(LS_KEY, JSON.stringify(this.buildDoc(patch))); } catch(e) {}
+    try { localStorage.setItem(lsKeyFor(this.state.projectId), JSON.stringify(this.buildDoc(patch))); } catch(e) {}
     this.__applyingRemote = false;
   }
 
@@ -828,21 +875,37 @@ class Component extends DCLogic {
     // Tecla Escape: cierra el panel lateral (detalle/edición/gestión).
     this.__esc = (e) => { if(e.key === 'Escape' && (this.state.mode !== 'none' || this.state.selectedId)) this.setState({selectedId: null, mode: 'none'}); };
     window.addEventListener('keydown', this.__esc);
+    this.loadProjectsList();
     if(!cloud.enabled) return;
-    // 1) Baja el tablero de la nube (fuente de verdad compartida)
-    cloud.load().then(raw => {
+    this.connectProject(this.state.projectId, /*seedFromLocal*/true);
+  }
+
+  componentWillUnmount(){
+    if(this.__esc){ window.removeEventListener('keydown', this.__esc); }
+    this.disconnectProject();
+  }
+
+  disconnectProject(){
+    if(this.__cloudSub && _sb){ try { _sb.removeChannel(this.__cloudSub); } catch(e) {} this.__cloudSub = null; }
+  }
+
+  // Baja el tablero `boardId` de la nube y se suscribe a sus cambios en vivo.
+  // `seedFromLocal`: si la nube no tiene ese proyecto todavía, lo siembra con
+  // el estado local actual (solo tiene sentido en el arranque inicial).
+  connectProject(boardId, seedFromLocal){
+    if(!cloud.enabled) return;
+    cloud.load(boardId).then(raw => {
+      if(boardId !== this.state.projectId) return; // el usuario ya cambió de proyecto
       const doc = toDoc(raw);
       if(doc && doc.nodes && doc.nodes.length){
         this.applyDoc(doc);
-        // Si venía en formato viejo (array), lo re-guarda como documento.
         if(Array.isArray(raw)) this.persist({});
-      } else {
-        // No existe tablero en la nube todavía → siembra con el estado local
+      } else if(seedFromLocal){
         this.persist({});
       }
     });
-    // 2) Suscripción en tiempo real: refleja ediciones de otros usuarios
-    this.__cloudSub = cloud.subscribe((raw) => {
+    this.__cloudSub = cloud.subscribe(boardId, (raw) => {
+      if(boardId !== this.state.projectId) return;
       const doc = toDoc(raw);
       if(!doc) return;
       const cur = this.buildDoc({});
@@ -859,9 +922,83 @@ class Component extends DCLogic {
     });
   }
 
-  componentWillUnmount(){
-    if(this.__esc){ window.removeEventListener('keydown', this.__esc); }
-    if(this.__cloudSub && _sb){ try { _sb.removeChannel(this.__cloudSub); } catch(e) {} }
+  // ── Multi-proyecto ──
+  async loadProjectsList(){
+    if(!cloud.enabled) return;
+    const rows = await cloud.loadAll();
+    if(!rows.length) return;
+    const list = rows.map(r => {
+      const d = toDoc(r.data) || {};
+      return { id: r.id, name: d.projectName || r.id, subtitle: d.projectSubtitle || '' };
+    });
+    // Asegura que el proyecto actual siempre aparezca, aunque aún no exista en la nube.
+    if(!list.some(p => p.id === this.state.projectId)){
+      list.unshift({ id: this.state.projectId, name: this.state.projectName, subtitle: this.state.projectSubtitle });
+    }
+    this.setState({projectsList: list});
+  }
+
+  switchProject(id){
+    if(!id || id === this.state.projectId) { this.setState({projectCombo: false, projectComboQ: ''}); return; }
+    this.disconnectProject();
+    try { localStorage.setItem('red-precedencia-vial-last-project', id); } catch(e) {}
+    let doc = null;
+    try { const raw = localStorage.getItem(lsKeyFor(id)); if(raw) doc = toDoc(JSON.parse(raw)); } catch(e) {}
+    const areas = (doc && Array.isArray(doc.areas) && doc.areas.length)
+      ? doc.areas.filter(a => a && a.name).map(a => ({name: a.name, prefix: a.prefix || derivePrefix(a.name)}))
+      : DEFAULT_AREAS.map(a => ({...a}));
+    const estados = (doc && Array.isArray(doc.estados) && doc.estados.length)
+      ? doc.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#5E7196'}))
+      : DEFAULT_ESTADOS.map(e => ({...e}));
+    this.setState({
+      projectId: id,
+      nodes: (doc && doc.nodes) ? doc.nodes : [],
+      areas, estados,
+      projectName: (doc && doc.projectName) || id,
+      projectSubtitle: (doc && doc.projectSubtitle) || '',
+      selectedId: null, mode: 'none', search: '', hidden: {}, expanded: {}, zoom: 1,
+      projectCombo: false, projectComboQ: ''
+    });
+    this.connectProject(id, false);
+  }
+
+  // Documentos: alterna entre ver solo el proyecto actual o todos los
+  // proyectos conocidos (carga bajo demanda, una sola vez, y cachea).
+  async toggleDocsAllProjects(){
+    const next = !this.state.docsAllProjects;
+    if(next && !this.state.allProjectsCache && cloud.enabled){
+      this.setState({allProjectsLoading: true});
+      const rows = await cloud.loadAll();
+      const cache = rows.map(r => {
+        const d = toDoc(r.data) || {};
+        return { id: r.id, name: d.projectName || r.id, nodes: d.nodes || [] };
+      });
+      this.setState({allProjectsCache: cache, allProjectsLoading: false, docsAllProjects: true});
+      return;
+    }
+    this.setState({docsAllProjects: next});
+  }
+
+  // Crea un proyecto nuevo (desde cero o copiando el actual) y cambia a él.
+  async createProject(){
+    if(!cloud.enabled){ window.alert('La creación de proyectos requiere conexión a la nube (Supabase configurado).'); return; }
+    const name = (window.prompt('Nombre del nuevo proyecto:', '') || '').trim();
+    if(!name) return;
+    const fromExisting = window.confirm('¿Partir del proyecto actual («' + this.state.projectName + '»)?\n\nAceptar = copiar el proyecto actual (áreas, actividades y documentos).\nCancelar = empezar completamente vacío.');
+    let base = name.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'proyecto';
+    const known = new Set(this.state.projectsList.map(p => p.id));
+    let id = base, i = 1;
+    while(known.has(id)) { id = base + '-' + (++i); }
+    const doc = fromExisting
+      ? { ...this.buildDoc({}), projectName: name, projectSubtitle: this.state.projectSubtitle }
+      : { v: 4, nodes: [], areas: DEFAULT_AREAS.map(a => ({...a})), estados: DEFAULT_ESTADOS.map(e => ({...e})), areaOrder: DEFAULT_AREAS.map(a => a.name), projectName: name, projectSubtitle: 'RED DE PRECEDENCIA' };
+    const { error } = await cloud.insertBoard(id, doc);
+    if(error){ window.alert('No se pudo crear el proyecto: ' + error); return; }
+    try { localStorage.setItem(lsKeyFor(id), JSON.stringify(doc)); } catch(e) {}
+    this.setState(s => ({ projectsList: s.projectsList.concat([{id, name, subtitle: doc.projectSubtitle}]) }));
+    this.switchProject(id);
   }
 
   setNodes(next){
@@ -1762,6 +1899,14 @@ class Component extends DCLogic {
         rows.length ? rows : React.createElement('div', {style:{fontSize:'11.5px', color:'#94A1BA', margin:'2px 0 4px'}}, 'Aún no hay documentos. Usa «+ AGREGAR» para incluir el primero.'));
     }
 
+    // Selector de proyecto (combo con búsqueda, mismo patrón que ÁREA/ESTADO)
+    const projectSelect = this.mkCombo('project', {
+      valueLabel: this.state.projectName,
+      placeholder: this.state.projectName,
+      options: this.state.projectsList.map(p => ({value: p.id, label: p.name})),
+      onPick: id => this.switchProject(id)
+    });
+
     // ── Vistas: tabs, Dashboard y Documentos ──
     const view = this.state.view;
     const viewDiagrama = view === 'diagrama', viewDashboard = view === 'dashboard', viewDocumentos = view === 'documentos';
@@ -1816,27 +1961,41 @@ class Component extends DCLogic {
     // Documentos: agrupados por nombre exacto (un documento con el mismo
     // nombre en varias actividades/subactividades cuenta como UNA fila, con
     // el conteo de cuántas lo tienen — así no se satura repitiendo la misma
-    // fila una vez por cada actividad que lo requiere).
+    // fila una vez por cada actividad que lo requiere). En modo "todos los
+    // proyectos" se recorren los nodos de TODOS los proyectos cacheados,
+    // cada uno etiquetado con su proyecto de origen.
+    const crossMode = this.state.docsAllProjects && this.state.allProjectsCache;
+    const docProjFilterVal = this.state.docsProjectFilter;
+    let docSourceNodes = crossMode
+      ? this.state.allProjectsCache.flatMap(p => (p.nodes || []).map(n => ({ ...n, __proj: p.id, __projName: p.name })))
+      : nodes.map(n => ({ ...n, __proj: this.state.projectId, __projName: this.state.projectName }));
+    // El filtro de proyecto acota los NODOS antes de agrupar (no solo decide
+    // si el documento aparece) — así el conteo de actividades refleja
+    // únicamente el proyecto elegido, no la suma de todos.
+    if (crossMode && docProjFilterVal) docSourceNodes = docSourceNodes.filter(n => n.__projName === docProjFilterVal);
     const docGroupsMap = {};
-    nodes.forEach(n => {
+    docSourceNodes.forEach(n => {
       (n.docs || []).forEach(d => {
         if (!d || !d.name) return;
         const key = d.name.trim();
         if (!key) return;
-        const g = docGroupsMap[key] || (docGroupsMap[key] = { name: key, areas: new Set(), fases: new Set(), holders: [], done: 0, total: 0 });
+        const g = docGroupsMap[key] || (docGroupsMap[key] = { name: key, areas: new Set(), fases: new Set(), projects: new Set(), holders: [], done: 0, total: 0 });
         g.areas.add(n.area);
         g.fases.add(n.fase);
+        g.projects.add(n.__projName);
         g.total += 1;
         if (d.done) g.done += 1;
-        g.holders.push({ id: n.id, titulo: n.titulo, area: n.area, done: !!d.done });
+        g.holders.push({ id: n.id, titulo: n.titulo, area: n.area, done: !!d.done, proj: n.__proj, projName: n.__projName });
       });
     });
     const df = (this.state.docSearch || '').trim().toLowerCase();
     const docAreaF = this.state.docAreaFilter, docFaseF = this.state.docFaseFilter, docEstF = this.state.docEstadoFilter;
+    const docProjF = this.state.docsProjectFilter;
     let docRows = Object.values(docGroupsMap)
       .filter(g => !df || g.name.toLowerCase().includes(df))
       .filter(g => !docAreaF || g.areas.has(docAreaF))
       .filter(g => !docFaseF || g.fases.has(docFaseF))
+      .filter(g => !crossMode || !docProjF || g.projects.has(docProjF))
       .filter(g => docEstF === 'all' || (docEstF === 'done' ? (g.done === g.total && g.total > 0) : g.done < g.total))
       .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
       .map(g => {
@@ -1844,25 +2003,30 @@ class Component extends DCLogic {
         const expanded = !!this.state.docExpanded[key];
         const areasArr = [...g.areas];
         const fasesArr = [...g.fases];
+        const projArr = [...g.projects];
         return {
           name: g.name,
+          projLabel: crossMode ? (projArr.length > 1 ? (projArr.length + ' proyectos') : projArr.join(', ')) : '',
+          projShow: crossMode ? 'block' : 'none',
           areasLabel: areasArr.length > 2 ? (areasArr.length + ' áreas') : areasArr.join(', '),
           fasesLabel: fasesArr.length > 1 ? (fasesArr.length + ' fases') : fasesArr.join(', '),
           count: g.total,
           expanded, expandMark: expanded ? '▾' : '▸',
           onToggleExpand: () => this.toggleDocExpand(key),
           holders: expanded ? g.holders.map(h => ({
-            id: h.id, titulo: h.titulo.length > 46 ? h.titulo.slice(0, 46) + '…' : h.titulo,
+            id: h.id,
+            titulo: (crossMode ? '[' + h.projName + '] ' : '') + (h.titulo.length > 40 ? h.titulo.slice(0, 40) + '…' : h.titulo),
             color: areaColorMap[h.area] || '#94A1BA',
-            onClick: () => this.goToNodeFromDocs(h.id)
+            onClick: () => (h.proj === this.state.projectId) ? this.goToNodeFromDocs(h.id) : this.switchProject(h.proj)
           })) : [],
           doneLabel: g.done + '/' + g.total,
           doneColor: (g.done === g.total) ? '#025850' : (g.done > 0 ? '#61B1E3' : '#94A1BA')
         };
       });
     const docAreaOptions = orderedAreas;
+    const docProjectOptions = crossMode ? this.state.allProjectsCache.map(p => p.name) : [];
     const docRowsEmpty = docRows.length === 0;
-    const docRowsCountLabel = docRows.length + ' documento(s) · ' + docRows.reduce((s, r) => s + r.count, 0) + ' referencia(s)';
+    const docRowsCountLabel = docRows.length + ' documento(s) · ' + docRows.reduce((s, r) => s + r.count, 0) + ' referencia(s)' + (crossMode ? ' · todos los proyectos' : '');
 
     return {
       canvasW, canvasH, lanes, nodeVMs, groupTitles, edgesSvg, chips, fasesBands,
@@ -1896,6 +2060,10 @@ class Component extends DCLogic {
       showEmpty: !(showDetail || showForm || showManage),
       boardDocsLabel: boardDocsTotal ? (boardDocsDone + '/' + boardDocsTotal) : '0',
 
+      // Multi-proyecto
+      projectSelect,
+      onCreateProject: () => this.createProject(),
+
       // Tabs de vista
       viewDiagrama, viewDashboard, viewDocumentos,
       onViewDiagrama: () => this.setView('diagrama'),
@@ -1924,6 +2092,14 @@ class Component extends DCLogic {
       docEstadoPendingBg: this.state.docEstadoFilter === 'pending' ? '#5E7196' : 'transparent',
       docEstadoPendingFg: this.state.docEstadoFilter === 'pending' ? '#FFFFFF' : '#5E7196',
       docRows, docRowsEmpty, docRowsCountLabel,
+      docsAllProjects: this.state.docsAllProjects,
+      onToggleDocsAllProjects: () => this.toggleDocsAllProjects(),
+      allProjectsLoadingMark: this.state.allProjectsLoading ? '⏳ ' : '',
+      docProjectOptions, docProjectShow: crossMode,
+      docsProjectFilter: this.state.docsProjectFilter,
+      onDocsProjectFilter: e => this.setState({docsProjectFilter: e.target.value}),
+      toggleAllBg: this.state.docsAllProjects ? '#1F3B6F' : 'transparent',
+      toggleAllFg: this.state.docsAllProjects ? '#FFFFFF' : '#5E7196',
       showDetail, showForm,
       selId: selId || '',
       selTitulo: selNode ? selNode.titulo : '',
