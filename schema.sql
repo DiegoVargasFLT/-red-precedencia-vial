@@ -38,6 +38,13 @@ create policy "boards_update_anon"
   using (true)
   with check (true);
 
+-- Permite eliminar proyectos (usado por el botón 🗑 del selector de proyecto).
+drop policy if exists "boards_delete_anon" on public.boards;
+create policy "boards_delete_anon"
+  on public.boards for delete
+  to anon
+  using (true);
+
 -- 4) (Opcional) Tiempo real: permite que las ediciones de un usuario
 --    aparezcan en vivo en las pantallas de los demás.
 --    Si da error "already member", ignóralo (ya estaba habilitado).
