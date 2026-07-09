@@ -42,6 +42,8 @@
     .combo-item:hover{background:#F4F7FB!important;}
     .doc-tr:hover td{background:#F7FAFD!important;}
     .doc-tr td{transition:background .14s ease;}
+    .sidebar-resizer{transition:background .14s ease;}
+    .sidebar-resizer:hover{background:#61B1E3!important;}
     @keyframes rpSlideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
     .side-panel{animation:rpSlideIn .20s ease;}
   </style>
@@ -53,7 +55,7 @@
 
   <div style="display:flex;flex:1;min-height:0">
 
-    <div class="side-panel" style="width:300px;flex:none;background:#FFFFFF;border-right:1px solid #D9E1EC;display:flex;flex-direction:column;overflow:hidden">
+    <div class="side-panel" style="width:{{sidebarWidth}}px;flex:none;background:#FFFFFF;border-right:1px solid #D9E1EC;display:flex;flex-direction:column;overflow:hidden">
       <div style="flex:none;padding:18px 18px 16px;background:linear-gradient(160deg,#22417A 0%,#182F58 100%);color:#EEF3F9">
         <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
           <span style="flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.22)"><img src="./favicon.png" alt="" style="width:29px;height:29px"></span>
@@ -377,6 +379,8 @@
 
       </div>
     </div>
+
+    <div onMouseDown="{{onStartResize}}" class="sidebar-resizer" title="Arrastra para cambiar el ancho del panel" style="flex:none;width:6px;cursor:col-resize;background:#E4EAF3;position:relative;z-index:7"></div>
 
     <div style="flex:1;display:flex;flex-direction:column;min-width:0">
   <sc-if value="{{viewDiagrama}}" hint-placeholder-val="{{ true }}">
@@ -848,8 +852,31 @@ class Component extends DCLogic {
       projectId,
       projectsList: [{id: projectId, name: (doc && doc.projectName) || DEFAULT_PROJECT_NAME}],
       projectCombo: false, projectComboQ: '',
-      docsAllProjects: false, docsProjectFilter: '', allProjectsCache: null, allProjectsLoading: false
+      docsAllProjects: false, docsProjectFilter: '', allProjectsCache: null, allProjectsLoading: false,
+      // Ancho de la barra lateral (arrastrable). Se recuerda entre sesiones.
+      sidebarWidth: (() => { const w = parseInt(localStorage.getItem('rp-sidebar-width'), 10); return (w && w >= 220 && w <= 620) ? w : 300; })()
     };
+  }
+
+  // Arrastre para redimensionar la barra lateral izquierda.
+  startSidebarResize(e){
+    e.preventDefault();
+    const startX = e.clientX, startW = this.state.sidebarWidth || 300;
+    const onMove = (ev) => {
+      const w = Math.min(620, Math.max(220, startW + (ev.clientX - startX)));
+      this.setState({sidebarWidth: w});
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      try { localStorage.setItem('rp-sidebar-width', String(this.state.sidebarWidth)); } catch(err) {}
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
   }
 
   // Áreas reconciliadas: la lista guardada + cualquier área usada por un nodo
@@ -2161,6 +2188,8 @@ class Component extends DCLogic {
       onZoomReset: (e) => { e.stopPropagation(); this.setZoom(1); },
       panelOpen: showDetail || showForm || showManage,
       showEmpty: !(showDetail || showForm || showManage),
+      sidebarWidth: this.state.sidebarWidth,
+      onStartResize: (e) => this.startSidebarResize(e),
       // El sidebar persiste en todas las vistas: detalle/form/gestión solo en
       // Diagrama; en Dashboard/Documentos siempre muestra el home (stats).
       sidebarDetail: viewDiagrama && showDetail,
