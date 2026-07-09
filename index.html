@@ -825,7 +825,19 @@ class Component extends DCLogic {
   updateDocAt(id, idx, patch){
     const n = this.state.nodes.find(x => x.id === id);
     if(!n) return;
-    this.updateNode(id, {docs: this.docsOf(n).map((d, i) => i === idx ? {...d, ...patch} : d)});
+    const docs = this.docsOf(n).map((d, i) => i === idx ? {...d, ...patch} : d);
+    const nodePatch = {docs};
+    // Autocompletar: si al marcar/desmarcar un documento la actividad queda
+    // con TODOS sus documentos marcados, pasa a "Completado"; si deja de
+    // estar completa, vuelve a "En proceso". Solo se activa al tocar el
+    // chulo «done» (no al editar nombre/URL), y no toca Bloqueado/Pendiente
+    // fijados a mano en otro momento.
+    if ('done' in patch && docs.length){
+      const allDone = docs.every(d => d.done);
+      if (allDone && n.estado !== 'Completado') nodePatch.estado = 'Completado';
+      else if (!allDone && n.estado === 'Completado') nodePatch.estado = 'En proceso';
+    }
+    this.updateNode(id, nodePatch);
   }
   removeDocAt(id, idx){
     const n = this.state.nodes.find(x => x.id === id);
@@ -1402,9 +1414,16 @@ class Component extends DCLogic {
       guidePaths,
       paths);
 
-    // stats
+    // stats — el % de avance es fraccionario: una actividad Completada suma 1,
+    // una con documentos suma (marcados/total) aunque no estén todos, y sin
+    // documentos suma 0 si no está Completada. Así el % sube con cada chulo,
+    // no solo cuando una actividad llega al 100%.
     const total = nodes.length;
-    const comp = nodes.filter(n => n.estado === 'Completado').length;
+    const avanceSum = nodes.reduce((s, n) => {
+      if (n.estado === 'Completado') return s + 1;
+      const docs = n.docs || [];
+      return s + (docs.length ? docs.filter(d => d && d.done).length / docs.length : 0);
+    }, 0);
     const statProc = nodes.filter(n => n.estado === 'En proceso').length;
     const statBloq = nodes.filter(n => n.estado === 'Bloqueado').length;
 
@@ -1576,7 +1595,7 @@ class Component extends DCLogic {
       projectSubtitle: this.state.projectSubtitle,
       onEditNombre: () => this.editProjectName(),
       statTotal: total,
-      statPct: (total ? Math.round(comp / total * 100) : 0) + '%',
+      statPct: (total ? Math.round(avanceSum / total * 100) : 0) + '%',
       statProc, statBloq,
       searchVal: this.state.search,
       onSearch: e => this.setState({search: e.target.value}),
