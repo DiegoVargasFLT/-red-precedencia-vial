@@ -1175,6 +1175,7 @@ class Component extends DCLogic {
         if (!m) op = Math.min(op, 0.13);
       }
       const sel = n.id === selId;
+      pos[n.id] = {x, y: ny};   // ancla propia, para que las conexiones de grupo tengan dónde llegar
       return {
         id: n.id, titulo: n.titulo,
         x, y: ny, w: NW, h: GH,
@@ -1192,15 +1193,16 @@ class Component extends DCLogic {
     // edges — reglas de conexión con jerarquía:
     //  · hija oculta (principal colapsada) → su flecha se agrupa en la principal,
     //    así la principal muestra TODAS las conexiones de sus subactividades.
-    //  · principal expandida (solo título) → no recibe flechas: sus conexiones
-    //    pasan a las hijas, salvo que ya existan conexiones específicas entre
-    //    esos dos grupos (evita flechas redundantes).
+    //  · principal expandida (solo título) → una dependencia registrada al nivel
+    //    del grupo (no de una subactividad concreta) se dibuja como UNA sola
+    //    línea desde el título — nunca se reparte a subactividades que no la
+    //    tienen asignada individualmente. Solo se ven líneas por subactividad
+    //    cuando esa subactividad tiene su propia dependencia explícita.
     const visSet = new Set(visible.map(n => n.id));
     const endpointsOf = id => {
       const nd = byId[id];
       if(!nd) return [];
       if(nd.parent && !visSet.has(id)) return visSet.has(nd.parent) ? [nd.parent] : [];
-      if(isExpTitle(nd)) return (kidsOf[nd.id]||[]).filter(c => visSet.has(c));
       return visSet.has(id) ? [id] : [];
     };
     const groupOf = id => { const nd = byId[id]; return (nd && nd.parent && byId[nd.parent]) ? nd.parent : id; };
@@ -1230,7 +1232,7 @@ class Component extends DCLogic {
       const s = pos[a], t = pos[b];
       const sn = byId[a], n = byId[b];
       if (!s || !t || !sn || !n) return;
-      const x1 = s.x + NW, y1 = s.y + NH/2, x2 = t.x, y2 = t.y + NH/2;
+      const x1 = s.x + NW, y1 = s.y + hOf(sn)/2, x2 = t.x, y2 = t.y + hOf(n)/2;
       const dx = Math.max(40, (x2 - x1) * curv);
       const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
       const cross = sn.area !== n.area;
