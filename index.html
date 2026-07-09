@@ -469,15 +469,21 @@
             <span style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:#1F3B6F;letter-spacing:0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">{{g.titulo}}</span>
           </div>
         </sc-for>
-        <div style="position:sticky;left:0;width:214px;height:0;z-index:4;display:block">
+        <div style="position:sticky;left:0;width:236px;height:0;z-index:4;display:block">
+          <sc-for list="{{groupBands}}" as="b" hint-placeholder-count="2">
+            <div title="{{b.label}}" style="position:absolute;left:{{b.x}}px;top:{{b.top}}px;height:{{b.height}}px;width:6px;background:{{b.color}};border-radius:4px;opacity:0.9;box-shadow:0 1px 4px rgba(31,59,111,.15)"></div>
+          </sc-for>
           <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-            <div class="soft" style="position:absolute;left:0;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;border-left:4px solid {{l.color}};padding:5px 8px;max-width:208px;box-shadow:0 2px 8px rgba(31,59,111,.06)">
+            <div class="soft" style="position:absolute;left:26px;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;border-left:4px solid {{l.color}};padding:5px 8px;max-width:206px;box-shadow:0 2px 8px rgba(31,59,111,.06)">
               <span style="width:9px;height:9px;flex:none;background:{{l.color}}"></span>
               <div style="display:flex;flex-direction:column;gap:2px;flex:none">
                 <button onClick="{{l.onUp}}" title="Subir área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.upOpacity}}" style-hover="border-color:#61B1E3">▲</button>
                 <button onClick="{{l.onDown}}" title="Bajar área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.downOpacity}}" style-hover="border-color:#61B1E3">▼</button>
               </div>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#475E89">{{l.label}} <span style="color:#94A1BA">/ {{l.count}}</span></span>
+              <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                <span style="display:{{l.groupShow}};font-family:'IBM Plex Mono',monospace;font-size:7.5px;font-weight:600;letter-spacing:0.08em;color:{{l.color}};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{l.groupLabel}}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#475E89;white-space:nowrap">{{l.label}} <span style="color:#94A1BA">/ {{l.count}}</span></span>
+              </div>
             </div>
           </sc-for>
         </div>
@@ -857,6 +863,10 @@ class Component extends DCLogic {
       estados,
       projectName: (doc && doc.projectName) ? doc.projectName : DEFAULT_PROJECT_NAME,
       projectSubtitle: (doc && doc.projectSubtitle) ? doc.projectSubtitle : DEFAULT_PROJECT_SUBTITLE,
+      // Grupos (macro-áreas): [{name, color, parent, areas:[...nombres de área]}].
+      // Opcional y retrocompatible: si un proyecto no tiene grupos, las áreas se
+      // muestran sin agrupar y con la paleta por defecto (comportamiento previo).
+      grupos: (doc && Array.isArray(doc.grupos)) ? doc.grupos : [],
       selectedId: null,
       mode: 'none',
       search: '',
@@ -910,8 +920,47 @@ class Component extends DCLogic {
     return list;
   }
   areaNames(){ return this.reconciledAreas().map(a => a.name); }
-  effectiveAreaOrder(){ return this.areaNames(); }
   prefixFor(area){ const a = this.reconciledAreas().find(x => x.name === area); return a ? a.prefix : derivePrefix(area); }
+
+  // ── Grupos (macro-áreas) ──────────────────────────────────────────────
+  grupos(){ return Array.isArray(this.state.grupos) ? this.state.grupos : []; }
+  // Grupo (objeto) que contiene un área, o null.
+  grupoOf(areaName){ return this.grupos().find(g => Array.isArray(g.areas) && g.areas.includes(areaName)) || null; }
+  // Color identificador de un área = color de su grupo (subiendo al padre si el
+  // subgrupo no define color). null si el área no pertenece a ningún grupo.
+  groupColorFor(areaName){
+    const gs = this.grupos();
+    let g = this.grupoOf(areaName);
+    while(g && !g.color && g.parent){ g = gs.find(x => x.name === g.parent) || null; }
+    return g ? (g.color || null) : null;
+  }
+  // Etiqueta jerárquica de un área: "GRUPO › SUBGRUPO" (o "" si no está agrupada).
+  groupPathFor(areaName){
+    const gs = this.grupos();
+    let g = this.grupoOf(areaName);
+    if(!g) return '';
+    const chain = [];
+    while(g){ chain.unshift(g.name); g = g.parent ? gs.find(x => x.name === g.parent) : null; }
+    return chain.join(' › ');
+  }
+  // Orden de áreas AGRUPADO: los grupos de nivel superior en su orden; dentro de
+  // cada uno primero sus subgrupos (con sus áreas) y luego sus áreas directas;
+  // las áreas sin grupo van al final. Garantiza que los miembros de un grupo
+  // queden contiguos (necesario para las llaves/bandas).
+  groupedAreaOrder(){
+    const areas = this.areaNames();
+    const gs = this.grupos();
+    if(!gs.length) return areas;
+    const out = [], seen = new Set();
+    const push = a => { if(areas.includes(a) && !seen.has(a)){ seen.add(a); out.push(a); } };
+    gs.filter(g => !g.parent).forEach(top => {
+      gs.filter(s => s.parent === top.name).forEach(sub => (sub.areas||[]).forEach(push));
+      (top.areas||[]).forEach(push);
+    });
+    areas.forEach(push);
+    return out;
+  }
+  effectiveAreaOrder(){ return this.groupedAreaOrder(); }
 
   // Estados reconciliados + mapa nombre→color.
   reconciledEstados(){
@@ -935,6 +984,7 @@ class Component extends DCLogic {
       nodes: over.nodes || this.state.nodes,
       areas,
       estados: over.estados || this.reconciledEstados(),
+      grupos: over.grupos || this.state.grupos || [],
       areaOrder: areas.map(a => a.name), // compat con lectores del formato v3
       projectName: (over.projectName != null) ? over.projectName : this.state.projectName,
       projectSubtitle: (over.projectSubtitle != null) ? over.projectSubtitle : this.state.projectSubtitle
@@ -961,6 +1011,7 @@ class Component extends DCLogic {
     if(Array.isArray(doc.estados) && doc.estados.length){
       patch.estados = doc.estados.filter(e => e && e.name).map(e => ({name: e.name, color: e.color || '#5E7196'}));
     }
+    patch.grupos = Array.isArray(doc.grupos) ? doc.grupos : [];
     if(doc.projectName) patch.projectName = doc.projectName;
     if(doc.projectSubtitle) patch.projectSubtitle = doc.projectSubtitle;
     this.setState(patch);
@@ -1006,11 +1057,12 @@ class Component extends DCLogic {
       const doc = toDoc(raw);
       if(!doc) return;
       const cur = this.buildDoc({});
-      const pick = d => JSON.stringify([d.nodes, d.areas || d.areaOrder, d.estados, d.projectName, d.projectSubtitle]);
+      const pick = d => JSON.stringify([d.nodes, d.areas || d.areaOrder, d.estados, d.grupos, d.projectName, d.projectSubtitle]);
       const merged = Object.assign({}, cur, {
         nodes: doc.nodes,
         areas: (Array.isArray(doc.areas) && doc.areas.length) ? doc.areas : cur.areas,
         estados: (Array.isArray(doc.estados) && doc.estados.length) ? doc.estados : cur.estados,
+        grupos: Array.isArray(doc.grupos) ? doc.grupos : cur.grupos,
         projectName: doc.projectName || cur.projectName,
         projectSubtitle: doc.projectSubtitle || cur.projectSubtitle
       });
@@ -1051,6 +1103,7 @@ class Component extends DCLogic {
       projectId: id,
       nodes: (doc && doc.nodes) ? doc.nodes : [],
       areas, estados,
+      grupos: (doc && Array.isArray(doc.grupos)) ? doc.grupos : [],
       projectName: (doc && doc.projectName) || id,
       projectSubtitle: (doc && doc.projectSubtitle) || '',
       selectedId: null, mode: 'none', search: '', hidden: {}, expanded: {}, zoom: 1,
@@ -1090,7 +1143,7 @@ class Component extends DCLogic {
     while(known.has(id)) { id = base + '-' + (++i); }
     const doc = fromExisting
       ? { ...this.buildDoc({}), projectName: name, projectSubtitle: this.state.projectSubtitle }
-      : { v: 4, nodes: [], areas: DEFAULT_AREAS.map(a => ({...a})), estados: DEFAULT_ESTADOS.map(e => ({...e})), areaOrder: DEFAULT_AREAS.map(a => a.name), projectName: name, projectSubtitle: 'RED DE PRECEDENCIA' };
+      : { v: 4, nodes: [], areas: DEFAULT_AREAS.map(a => ({...a})), estados: DEFAULT_ESTADOS.map(e => ({...e})), grupos: [], areaOrder: DEFAULT_AREAS.map(a => a.name), projectName: name, projectSubtitle: 'RED DE PRECEDENCIA' };
     const { error } = await cloud.insertBoard(id, doc);
     if(error){ window.alert('No se pudo crear el proyecto: ' + error); return; }
     try { localStorage.setItem(lsKeyFor(id), JSON.stringify(doc)); } catch(e) {}
@@ -1594,8 +1647,10 @@ class Component extends DCLogic {
     const AREA_PALETTE = ['#1F3B6F','#61B1E3','#025850','#332664','#74C6D3','#AD1924','#7486A6','#1F3B6F'];
     // Color estable por área (independiente de qué tan ocultas estén otras),
     // usado para identificar el área de un ítem en cualquier listado.
+    // Color por área: el de su GRUPO si pertenece a uno; si no, la paleta por
+    // posición (comportamiento previo para proyectos sin grupos).
     const areaColorMap = {};
-    orderedAreas.forEach((a, i) => { areaColorMap[a] = AREA_PALETTE[i % AREA_PALETTE.length]; });
+    orderedAreas.forEach((a, i) => { areaColorMap[a] = this.groupColorFor(a) || AREA_PALETTE[i % AREA_PALETTE.length]; });
     // Índice de orden de cada área, para ordenar los chips "áreas involucradas"
     // de una tarea según el orden del subproceso (mismo orden de los carriles).
     const areaOrderIdx = {};
@@ -1605,15 +1660,18 @@ class Component extends DCLogic {
       .slice()
       .sort((a, b) => (areaOrderIdx[a] ?? 999) - (areaOrderIdx[b] ?? 999))
       .map(a => ({ label: this.prefixFor(a), color: areaColorMap[a] || '#94A1BA' }));
-    const laneY = {};
+    const laneY = {}, laneH = {};
     let yCur = 34;
     const lanes = visAreas.map((a, i) => {
       const h = LP_T + laneMax[a] + LP_B;
-      laneY[a] = yCur;
-      const areaColor = AREA_PALETTE[i % AREA_PALETTE.length];
+      laneY[a] = yCur; laneH[a] = h;
+      const areaColor = areaColorMap[a];
+      const gPath = this.groupPathFor(a);
       const L = {
+        areaName: a,
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
         color: areaColor, line: areaColor + '80',
+        groupLabel: gPath, groupShow: gPath ? 'inline' : 'none',
         y: yCur, h, labelY: yCur + 12,
         onUp: (e) => { e.stopPropagation(); this.moveArea(a, -1); },
         onDown: (e) => { e.stopPropagation(); this.moveArea(a, 1); },
@@ -1626,6 +1684,29 @@ class Component extends DCLogic {
     const maxLevel = visible.length ? Math.max(...visible.map(n => levels[n.id])) : 0;
     const canvasW = LEFT + (maxLevel + 1) * (NW + CG) + 40;
     const canvasH = yCur + 40;
+
+    // Bandas/llaves de grupo (macro-áreas): una barra vertical a la izquierda
+    // que abarca los carriles de las áreas del grupo. Dos niveles: grupo (nivel
+    // 0) y subgrupo (nivel 1, indentado). Requiere que las áreas de un grupo
+    // sean contiguas — lo garantiza groupedAreaOrder().
+    const groupBands = [];
+    const spanOf = (areaList) => {
+      const vis = areaList.filter(a => laneY[a] != null);
+      if(!vis.length) return null;
+      const top = Math.min(...vis.map(a => laneY[a]));
+      const bot = Math.max(...vis.map(a => laneY[a] + laneH[a]));
+      return { top, height: bot - top };
+    };
+    this.grupos().filter(g => !g.parent).forEach(g => {
+      const subs = this.grupos().filter(s => s.parent === g.name);
+      const allAreas = [...(g.areas||[]), ...subs.flatMap(s => s.areas||[])];
+      const sp = spanOf(allAreas);
+      if(sp) groupBands.push({ level: 0, x: 2, color: g.color || '#7486A6', label: g.name.toUpperCase(), top: sp.top, height: sp.height });
+      subs.forEach(s => {
+        const sps = spanOf(s.areas||[]);
+        if(sps) groupBands.push({ level: 1, x: 12, color: s.color || g.color || '#7486A6', label: s.name.toUpperCase(), top: sps.top, height: sps.height });
+      });
+    });
 
     // bandas de fase (fondo por etapa del proyecto)
     const FASE_STYLES = {
@@ -2220,7 +2301,7 @@ class Component extends DCLogic {
     const docRowsCountLabel = docRows.length + ' documento(s) · ' + docRows.reduce((s, r) => s + r.count, 0) + ' referencia(s)' + (crossMode ? ' · todos los proyectos' : '');
 
     return {
-      canvasW, canvasH, lanes, nodeVMs, groupTitles, edgesSvg, chips, fasesBands,
+      canvasW, canvasH, lanes, nodeVMs, groupTitles, edgesSvg, chips, fasesBands, groupBands,
       projectName: this.state.projectName,
       projectSubtitle: this.state.projectSubtitle,
       onEditNombre: () => this.editProjectName(),
