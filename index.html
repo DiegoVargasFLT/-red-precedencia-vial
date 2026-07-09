@@ -91,6 +91,15 @@
     </sc-for>
     <button onClick="{{onAddArea}}" title="Agregar nueva área" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ ÁREA</button>
     <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">⚙ GESTIONAR</button>
+    <div style="width:1px;align-self:stretch;background:#D9E1EC;margin:0 2px"></div>
+    <button onClick="{{onExpandAll}}" title="Desplegar todas las subactividades, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px solid #D9E1EC" style-hover="border-color:#025850">▾ EXPANDIR TODO</button>
+    <button onClick="{{onCollapseAll}}" title="Plegar todas las subactividades, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">▸ COLAPSAR TODO</button>
+    <sc-if value="{{hasLevels}}" hint-placeholder-val="{{ false }}">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#94A1BA;margin-left:2px">NIVEL</span>
+      <sc-for list="{{levelButtons}}" as="lv" hint-placeholder-count="3">
+        <button onClick="{{lv.onClick}}" title="Desplegar hasta el nivel {{lv.lv}} en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:24px;height:24px;padding:0;cursor:pointer;background:transparent;color:{{lv.color}};border:1px solid {{lv.color}}" style-hover="background:{{lv.color}};color:#FFFFFF">{{lv.lv}}</button>
+      </sc-for>
+    </sc-if>
     <div style="flex:1"></div>
     <div style="display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6">
       <sc-for list="{{legend}}" as="g" hint-placeholder-count="4">
@@ -931,6 +940,39 @@ class Component extends DCLogic {
   // ── Subactividades (jerarquía de N niveles: componente → subcomponente → …) ──
   childrenOf(id){ return this.state.nodes.filter(n => n.parent === id); }
   toggleExpand(id){ this.setState(s => ({expanded: {...s.expanded, [id]: !s.expanded[id]}})); }
+
+  nodeDepth(id, byId){
+    let d = 0, nd = byId[id];
+    while(nd && nd.parent && byId[nd.parent]){ d++; nd = byId[nd.parent]; }
+    return d;
+  }
+  // Mapa id→hijos directos, reutilizado por los controles de expandir/colapsar.
+  kidsMap(nodes){
+    const kidsOf = {};
+    nodes.forEach(n => { if(n.parent) (kidsOf[n.parent] = kidsOf[n.parent] || []).push(n.id); });
+    return kidsOf;
+  }
+  expandAll(){
+    const nodes = this.state.nodes;
+    const kidsOf = this.kidsMap(nodes);
+    const expanded = {};
+    nodes.forEach(n => { if(kidsOf[n.id] && kidsOf[n.id].length) expanded[n.id] = true; });
+    this.setState({expanded});
+  }
+  collapseAll(){ this.setState({expanded: {}}); }
+  // Expande todo hasta el nivel `lvl` (1 = solo el primer nivel de subactividades
+  // de cada sección, 2 = ese más el siguiente, …), en todas las áreas a la vez.
+  expandToLevel(lvl){
+    const nodes = this.state.nodes;
+    const byId = {}; nodes.forEach(n => byId[n.id] = n);
+    const kidsOf = this.kidsMap(nodes);
+    const expanded = {};
+    nodes.forEach(n => {
+      if(!(kidsOf[n.id] && kidsOf[n.id].length)) return;
+      if(this.nodeDepth(n.id, byId) < lvl) expanded[n.id] = true;
+    });
+    this.setState({expanded});
+  }
   addSub(parentId){
     const nodes = this.state.nodes;
     const byId = {}; nodes.forEach(x => byId[x.id] = x);
@@ -1169,6 +1211,16 @@ class Component extends DCLogic {
     const depthOf = id => { let dd = 0, nd = byId[id]; while(nd && nd.parent && byId[nd.parent]){ dd++; nd = byId[nd.parent]; } return dd; };
     const indentOf = dd => Math.min(dd, MAX_INDENT_LV) * INDENT_STEP;
     const depthColor = dd => DEPTH_COLORS[(dd - 1 + DEPTH_COLORS.length) % DEPTH_COLORS.length];
+
+    // Botones "expandir hasta nivel N": uno por cada profundidad que exista
+    // en los datos, con el mismo color que ese nivel tendrá al desplegarse.
+    const kidsOfAll = this.kidsMap(nodes);
+    let maxKidDepth = 0;
+    nodes.forEach(n => { if(kidsOfAll[n.id] && kidsOfAll[n.id].length){ const dd = depthOf(n.id); if(dd > maxKidDepth) maxKidDepth = dd; } });
+    const levelButtons = [];
+    for(let lv = 1; lv <= maxKidDepth + 1; lv++){
+      levelButtons.push({ lv, color: depthColor(lv), onClick: () => this.expandToLevel(lv) });
+    }
 
     // node view models — las principales expandidas se dibujan aparte, como títulos
     const pos = {};
@@ -1531,6 +1583,9 @@ class Component extends DCLogic {
       onAgregar: () => this.addNode(),
       onReset: () => this.resetAll(),
       onAddArea: () => this.addArea(),
+      onExpandAll: () => this.expandAll(),
+      onCollapseAll: () => this.collapseAll(),
+      levelButtons, hasLevels: levelButtons.length > 0,
       onGestionar: () => this.openManage(),
       areaOptions, estadoOptions, manageAreas, manageEstados,
       legend: this.reconciledEstados().map(e => ({label: e.name.toUpperCase(), color: e.color})),
