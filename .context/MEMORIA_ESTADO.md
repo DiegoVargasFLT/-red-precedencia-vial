@@ -9,86 +9,88 @@ por área (carriles horizontales) y por fase/columna (Preconstrucción →
 Construcción → Entrega a Beneficiarios → Liquidación). Persistencia en
 Supabase + localStorage (ver `README.md`).
 
-## Trabajo en curso más reciente
-**Layout "rama a la derecha"** (`renderVals()` en `index.html`, clase
-`Component`): al expandir una actividad principal con subactividades, estas
-ya no se apilan debajo — se despliegan hacia la DERECHA de la principal,
-centradas verticalmente contra el bloque de sus hijas. Una subactividad
-expandida abre a su vez su propia rama (recursivo, N niveles).
+## Layout "rama a la derecha" (actividades)
+Al expandir una actividad principal con subactividades, estas no se apilan
+debajo — se despliegan hacia la DERECHA de la principal, centradas
+verticalmente contra el bloque de sus hijas (recursivo, N niveles). La
+principal expandida CONSERVA su tamaño de tarjeta normal (no se compacta a
+un título delgado — esto se pidió explícitamente; ver "qué NO hacer" abajo).
 
-- `branchH(id)` / `placeSub(id, x, yTop)`: calculan alto y posición absoluta
-  de cada nodo y su subárbol expandido.
-- `pos[id]` guarda `{x, y, w, h}` de cada nodo visible (tarjetas y títulos
-  de grupo por igual).
+- `branchH(id)` / `placeSub(id, x, yTop)`: alto y posición absoluta de cada
+  nodo y su subárbol expandido.
+- `pos[id]` guarda `{x, y, w, h}` de cada nodo visible.
+- `colX[]`: posiciones x de columna de FASE calculadas dinámicamente (no
+  fijas), empujadas hacia la derecha según la profundidad máxima de rama
+  (`extraDepth`) de la columna anterior — evita que una rama ancha quede
+  dibujada encima de nodos de la fase siguiente.
 
-**Bug encontrado y corregido en esta sesión** (commit `3ae7cdf`): las
-columnas de fase tenían un ancho fijo (`LEFT + level*(NW+CG)`), así que una
-rama expandida que necesitaba más de una columna de ancho quedaba dibujada
-ENCIMA de los nodos de la fase siguiente (se verificó visualmente: la
-tarjeta `LEG-01` de Liquidación se solapaba con la rama de `IDU-02`).
+## Mini-mapa de grupos de área (Construcción/IDU/Jurídico/…)
+El proyecto "Cierre de Proyectos" tiene `state.grupos` (macro-áreas, con
+subgrupos anidados) cargado en sus datos: Construcción (áreas EAAB, SDM +
+subgrupo IDU con áreas IDU/EyD/Entidades de servicios/Ambiental/Social);
+más Jurídico, Financiero, Predial como grupos de nivel superior sueltos.
 
-Fix: `colX[]` — array de posiciones x de columna calculado dinámicamente,
-que empuja cada columna hacia la derecha según la profundidad máxima de
-rama (`extraDepth`) que necesiten los nodos de la columna anterior. Se usa
-en tres sitios: `canvasW`, `fasesBands` (x/w) y el punto de partida de
-`placeSub` para nodos de nivel superior.
+**Cómo se muestra (versión final, aceptada):** un mini-mapa de NODOS
+conectados por curvas bézier, en el margen izquierdo del diagrama — mismo
+lenguaje visual que las ramas de actividades (no botones/pestañas/chips).
+Clic en un nodo-grupo pliega/despliega sus hijos. Si el nombre de un grupo
+coincide con una de sus áreas (p. ej. grupo "IDU" ↔ área "IDU", "Predial" ↔
+"Predial"), esa área se fusiona en el propio nodo del grupo en vez de
+dibujarse como hija aparte — así Jurídico/Predial quedan como un solo nodo.
 
-También se limpió código muerto (`indentOf`, `MIN_W`, del indentado
-anterior por sangría) y se corrigió el conector punteado de jerarquía
-(`guidePaths`) para que salga del borde DERECHO del título en abanico hacia
-sus hijas, en vez del borde izquierdo (diseño viejo pensado para hijas
-apiladas debajo).
+Piezas clave en `renderVals()`:
+- `gsAll`, `isGroupOpen(name)` (estado `state.groupOpen`; ausente/true =
+  abierto por defecto, solo `false` explícito pliega).
+- `normName`, `selfAreaOf(g)`, `kidsOfGroup(g)`: helpers de fusión
+  grupo↔área y de listar hijos (subgrupos + áreas propias).
+- `mmMaxDepth` calculado ANTES de fijar `LEFT` (inicio de la primera
+  columna de fase) — `LEFT` se ensancha si el mini-mapa abierto lo
+  necesita, para que nunca quede una tarjeta debajo de un nodo del mapa.
+- `placeMM(spec, x)`: posiciona cada nodo — las HOJAS (áreas reales) se
+  anclan a la altura de su carril real (`laneY[a]`); los nodos-grupo se
+  centran contra sus hijos; si un grupo no tiene carril propio (cerrado o
+  sin áreas, p. ej. "Financiero" con 0 áreas) usa `mmFallbackY`,
+  acumulador que arranca en `yCur` final (después de todos los carriles).
+- `mmNodes`/`mmPaths` se renderizan en el `<div style="position:sticky">`
+  del margen izquierdo; `canvasH` se reasigna a `mmH` (`let`, no `const`)
+  para que el lienzo scrollable sea al menos tan alto como el mini-mapa.
+- La barra "ÁREAS" de arriba volvió a ser una fila plana simple de chips
+  (un toggle de visibilidad por área) — la jerarquía vive SOLO en el
+  mini-mapa, para no tener dos controles redundantes.
+
+**Qué NO hacer (ya se probó y el usuario lo rechazó explícitamente):**
+- ❌ Botones/chips anidados y colapsables en la barra ÁREAS arriba del
+  diagrama ("pestañas"). Se intentó, el usuario dijo "no me estoy haciendo
+  entender" y pidió nodos conectados en su lugar.
+- ❌ Filas de "encabezado de grupo" dentro de los carriles del diagrama
+  (una fila más que empuja las demás hacia abajo). También rechazado por
+  ser "pestañas".
+- ❌ Compactar una actividad principal a un título delgado (30px) al
+  expandirla. El usuario quiere que mantenga su tamaño completo de tarjeta.
 
 ## Cómo probar localmente
 No hay servidor de dev propio: servir la carpeta con cualquier estático
 (`python -m http.server 8000` o `npx serve .`), nunca abrir con `file://`.
-Proyecto de prueba útil para ver ramas multinivel: **"Cierre de Proyectos"**
-(selector de proyecto en la barra lateral) — tiene nodos con varias
-subactividades anidadas (p. ej. `IDU-02` → `IDU-02-CT` → 19 hijas).
+Proyecto de prueba con grupos/mini-mapa: **"Cierre de Proyectos"**. Proyecto
+sin grupos (para probar el caso "áreas sueltas"): **"Proyecto vial —
+actividades"**.
 
-## Sesión 2026-07-10 (continuación): tarjetas sin compactar + barra ÁREAS en árbol
-Dos pedidos del usuario, resueltos en el commit `bf53a3f`:
-
-1. **Una principal expandida ya NO se compacta** a un título delgado de
-   30px (`GH`). Se eliminó por completo el concepto de "tarjeta-título": el
-   `isExpTitle(n)` ahora se usa SOLO para deduplicar líneas de dependencia a
-   nivel de grupo en `collectEdges` (el `isFan` pass), no para cambiar
-   tamaño ni estilo. `hOf(n)` ya no depende de `isExpTitle`; siempre
-   devuelve el alto normal de tarjeta (`NH` + chips). `nodeVMs` se
-   construye ahora desde `vSorted` completo (ya no hay split
-   `cardNodes`/`titleNodes`); se eliminó el array/objeto `groupTitles` y su
-   bloque `<sc-for>` en el template, y la clase CSS `.group-title` (código
-   muerto). El toggle ▸/▾ de una principal sigue siendo el mismo badge
-   `subsMark`/`onToggleSubs` que ya tenían todas las tarjetas.
-
-2. **Barra "ÁREAS" rediseñada como árbol colapsable** (antes: fila plana de
-   chips, uno por área). Ahora es una lista PLANA pero con jerarquía visual:
-   grupo (nivel 0) → subgrupo (nivel 1) → área hoja (nivel 2), usando
-   `display:none/inline-block` para ocultar hijos de un grupo plegado (no
-   hay sc-for anidado — el motor de plantillas de este proyecto no lo
-   soporta en otros lados del código, así que se evitó por consistencia).
-   Nuevo estado UI-only `state.groupOpen` (igual que `hidden`/`expanded`:
-   no se persiste, se resetea en `resetStateForProject`/`this.state` inicial).
-   Plegar un botón de grupo SOLO oculta sus botones hijos de la barra — NO
-   toca `state.hidden` (la visibilidad de un área en el diagrama). Verificado
-   en el proyecto "Cierre de Proyectos": Construcción(110) → IDU(64) →
-   [IDU, EyD, Entidades de servicios, Ambiental, Social] + EAAB(29) + SDM(17);
-   luego Jurídico(1), Financiero(0), Predial(3) — coincide con la
-   estructura que pidió el usuario (imagen de referencia con llaves).
-
-## Sesión 2026-07-10 (continuación 2): áreas sueltas primero, con acento propio
-Commit `4ece783`. El usuario pidió que las áreas que NO pertenecen a
-ningún grupo aparezcan ANTES que los botones de grupo en la barra ÁREAS
-(antes iban al final) y que se distingan gráficamente. Se agregó
-`looseAreaChip(a)` (junto a `areaChip`/`groupChip` ya existentes en
-`renderVals()`): mismo toggle de visibilidad de siempre, pero con marca
-"○" fija y borde neutro `#7486A6` (en vez del azul `#61B1E3` de una hoja
-dentro de un grupo). En el builder de `chips`, el bloque de áreas sueltas
-ahora va PRIMERO, antes del `gs.filter(g => !g.parent).forEach(...)`.
+## ⚠️ Este proyecto escribe a un Supabase REAL en vivo
+`config.js` tiene credenciales reales (no un sandbox) — la app hace
+`setNodes()` → guarda en localStorage Y sube el tablero completo a
+Supabase en CADA cambio, sin paso de "guardar" separado. Cualquier clic
+automatizado que toque un nodo real (seleccionar → botón ELIMINAR →
+`window.confirm()`) puede borrar datos de verdad. El 2026-07-10 esto pasó:
+pruebas automatizadas de esta sesión borraron 6 nodos reales del proyecto
+"Cierre de Proyectos" (`IDU-02-CJ/CL/CF` y sus `-D`); se detectó comparando
+contra `.context/backups/cierre-de-proyectos_20260709_171459.json` y se
+restauraron solo esos 6 nodos vía la API REST de Supabase (no un restore
+completo, porque el usuario ya había hecho otros cambios reales desde el
+backup). **Al probar en el navegador: preferir clics en controles de
+UI/toggle (expandir, plegar, chips) y evitar seleccionar tarjetas de
+actividades reales cuando sea posible**, o al menos estar alerta a
+cualquier diálogo `confirm()` nativo que pueda aparecer.
 
 ## Pendientes / posibles siguientes pasos
-- Ninguno abierto. Si se quiere una réplica más fiel del mockup visual
-  (llaves "{" con etiqueta, en vez de indentado + color de borde), sería un
-  trabajo de diseño aparte — el usuario ya optó explícitamente por la
-  versión "botones colapsables anidados" en vez de rehacer las llaves del
-  diagrama.
+- Ninguno abierto. El mini-mapa de nodos fue la versión que el usuario
+  confirmó visualmente como correcta (commit `b703f55`).
