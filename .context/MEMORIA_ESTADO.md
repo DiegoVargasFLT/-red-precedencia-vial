@@ -76,6 +76,16 @@ Dos pedidos del usuario, resueltos en el commit `bf53a3f`:
    luego Jurídico(1), Financiero(0), Predial(3) — coincide con la
    estructura que pidió el usuario (imagen de referencia con llaves).
 
+## Sesión 2026-07-10 (continuación 2): áreas sueltas primero, con acento propio
+Commit `4ece783`. El usuario pidió que las áreas que NO pertenecen a
+ningún grupo aparezcan ANTES que los botones de grupo en la barra ÁREAS
+(antes iban al final) y que se distingan gráficamente. Se agregó
+`looseAreaChip(a)` (junto a `areaChip`/`groupChip` ya existentes en
+`renderVals()`): mismo toggle de visibilidad de siempre, pero con marca
+"○" fija y borde neutro `#7486A6` (en vez del azul `#61B1E3` de una hoja
+dentro de un grupo). En el builder de `chips`, el bloque de áreas sueltas
+ahora va PRIMERO, antes del `gs.filter(g => !g.parent).forEach(...)`.
+
 ## Pendientes / posibles siguientes pasos
 - Ninguno abierto. Si se quiere una réplica más fiel del mockup visual
   (llaves "{" con etiqueta, en vez de indentado + color de borde), sería un
