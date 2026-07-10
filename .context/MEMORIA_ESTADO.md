@@ -9,6 +9,32 @@ por área (carriles horizontales) y por fase/columna (Preconstrucción →
 Construcción → Entrega a Beneficiarios → Liquidación). Persistencia en
 Supabase + localStorage (ver `README.md`).
 
+## Panel de área/grupo — los nodos del mini-mapa se comportan como tarjetas (commit `61dec11`)
+El usuario pidió que "los botones de grupos y áreas sean iguales a los de
+las tareas". Ahora clic en un nodo del mini-mapa abre un PANEL LATERAL
+(modo `mode:'ag'`, estado `mmSel:{kind,name}`, plantilla `sidebarAG`, VMs en
+`ag`), igual que seleccionar una actividad:
+- ÁREA: nombre, grupo al que pertenece, lista de sus actividades (clicables),
+  botón "+ AGREGAR ACTIVIDAD AQUÍ" (`addNodeInArea` → crea nodo con esa área
+  y abre su form), Renombrar, Eliminar.
+- GRUPO: nombre, lista de sus áreas (clicables → entran al área), lista de
+  todas sus actividades, Renombrar, Color, Eliminar.
+- El pliegue ▸/▾ sigue siendo el botón APARTE dentro del nodo (`onToggle`);
+  el clic en el CUERPO del nodo es `selectAG` (no renombra/oculta directo).
+- Nodo seleccionado = `outline` (como una card). `onCanvasClick` limpia
+  `mmSel`.
+Robustez: `renameArea`/`deleteArea` ahora también actualizan/limpian las
+referencias del área en `grupos` — antes quedaban áreas fantasma (causa raíz
+de que los grupos se "desordenaran" al editar). Esto era el problema de
+fondo que el usuario reportó.
+
+**Nota sobre "asignar tarea a un área":** una actividad pertenece a un área
+por su campo `n.area` (string). Reasignar el área de una actividad SÍ la mueve
+a ese carril. Las SUBACTIVIDADES (`n.parent`) se dibujan como rama de su padre
+sin importar su `area` — eso confundió al usuario (creía que reasignar el área
+de una subactividad no funcionaba; en realidad funciona a nivel de dato pero
+visualmente cuelga del padre).
+
 ## Layout "rama a la derecha" (actividades)
 Al expandir una actividad principal con subactividades, estas no se apilan
 debajo — se despliegan hacia la DERECHA de la principal, centradas
