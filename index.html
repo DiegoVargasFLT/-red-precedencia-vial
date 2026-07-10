@@ -2085,15 +2085,20 @@ class Component extends DCLogic {
     topVis.forEach(n => placeSub(n.id, colX[levels[n.id]], laneY[n.area] + LP_T + yOff[n.id]));
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
 
-    // Conectores área → actividades: una curva desde el nodo del área (en el
-    // mini-mapa) hacia cada actividad de nivel superior de esa área, para que
-    // se vea qué actividades pertenecen a cada área (p. ej. EyD → EAAB, SDM,
-    // ESP, Ambiental). Mismo color del área.
+    // Conectores área → PRIMERAS actividades: una curva desde el nodo del área
+    // (mini-mapa) SOLO hacia las actividades de la PRIMERA columna de esa
+    // área (las de menor nivel/fase = el arranque de la línea). Las
+    // actividades siguientes se alcanzan por sus flechas de dependencia, no
+    // desde el área. P. ej. EyD → EAAB, SDM, ESP, Ambiental (no a "Recibido
+    // IDU" ni a lo que va después).
     const areaActEls = [];
     visAreas.forEach(a => {
       const an = mmPos['a:' + a];
       if (!an) return;
-      topVis.filter(n => n.area === a && pos[n.id]).forEach(n => {
+      const acts = topVis.filter(n => n.area === a && pos[n.id]);
+      if (!acts.length) return;
+      const minLv = Math.min(...acts.map(n => levels[n.id]));
+      acts.filter(n => levels[n.id] === minLv).forEach(n => {
         const p = pos[n.id];
         const x1 = an.x + an.w, y1 = an.cy, x2 = p.x, y2 = p.y + hOf(byId[n.id]) / 2;
         const dx = Math.max(24, (x2 - x1) * 0.4);
