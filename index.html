@@ -390,6 +390,60 @@
         </div>
       </sc-if>
 
+      <sc-if value="{{sidebarAG}}" hint-placeholder-val="{{ false }}">
+        <div style="padding:20px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:9px">
+            <span style="width:16px;height:16px;flex:none;border-radius:5px;background:{{ag.color}}"></span>
+            <div style="display:flex;flex-direction:column;min-width:0">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">{{ag.kindLabel}}</span>
+              <span style="font-family:'Montserrat',sans-serif;font-size:17px;font-weight:700;color:#1F3B6F;line-height:1.15">{{ag.name}}</span>
+            </div>
+          </div>
+          <div style="font-size:11.5px;color:#5E7196">{{ag.subLabel}} · {{ag.actsCount}} actividad(es)</div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ag.onAdd}}" style="display:{{ag.addDisplay}};font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.04em;background:#025850;color:#FFFFFF;border:1px solid #025850;padding:9px 12px;cursor:pointer;font-weight:600" style-hover="background:#013f39">+ AGREGAR ACTIVIDAD AQUÍ</button>
+            <button onClick="{{ag.onRename}}" title="Renombrar" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.04em;background:transparent;color:#475E89;border:1px solid #D9E1EC;padding:9px 12px;cursor:pointer" style-hover="border-color:#61B1E3">✎ RENOMBRAR</button>
+            <button onClick="{{ag.onColor}}" title="Cambiar color" style="display:{{ag.colorDisplay}};font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.04em;background:transparent;color:#475E89;border:1px solid #D9E1EC;padding:9px 12px;cursor:pointer" style-hover="border-color:#61B1E3">◑ COLOR</button>
+          </div>
+
+          <sc-if value="{{ag.hasAreas}}" hint-placeholder-val="{{ false }}">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:6px">ÁREAS DEL GRUPO</div>
+              <sc-for list="{{ag.areasList}}" as="a" hint-placeholder-count="3">
+                <button onClick="{{a.onClick}}" class="dep-item" style="display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:#F7FAFD;border:1px solid #C7D6E8;border-left:3px solid {{a.color}};padding:8px 10px;margin-bottom:6px;cursor:pointer;color:#1F3B6F">
+                  <span style="width:9px;height:9px;flex:none;background:{{a.color}}"></span>
+                  <span style="flex:1;font-size:12px">{{a.name}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{a.count}}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:6px">ACTIVIDADES ({{ag.actsCount}})</div>
+            <sc-if value="{{ag.actsEmpty}}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:11.5px;color:#94A1BA;line-height:1.5">— Sin actividades aún. Usa «+ Agregar actividad aquí» para crear una en esta área.</div>
+            </sc-if>
+            <sc-for list="{{ag.acts}}" as="d" hint-placeholder-count="4">
+              <button onClick="{{d.onClick}}" class="dep-item" style="display:flex;flex-direction:column;gap:5px;width:100%;text-align:left;background:#FFFFFF;border:1px solid #D9E1EC;border-left:3px solid {{d.areaColor}};padding:8px 10px;margin-bottom:6px;cursor:pointer;color:#1F3B6F">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:{{d.areaColor}}">{{d.area}}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:{{d.faseColor}}">{{d.faseCode}}</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span title="Estado: {{d.estado}}" style="width:7px;height:7px;background:{{d.color}};flex:none"></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5E7196;flex:none">{{d.id}}</span>
+                  <span style="font-size:12px;line-height:1.3">{{d.titulo}}</span>
+                </div>
+              </button>
+            </sc-for>
+          </div>
+
+          <button onClick="{{ag.onDelete}}" style="align-self:flex-start;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;background:transparent;color:#AD1924;border:1px solid #AD1924;padding:9px 12px;cursor:pointer" style-hover="background:#AD1924;color:#EEF3F9">ELIMINAR {{ag.kindLabel}}</button>
+        </div>
+      </sc-if>
+
       </div>
     </div>
 
@@ -470,7 +524,7 @@
             </sc-for>
           </svg>
           <sc-for list="{{mmNodes}}" as="m" hint-placeholder-count="8">
-            <div onClick="{{m.onClick}}" title="Editar" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;gap:5px;background:{{m.color}};box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
+            <div onClick="{{m.onClick}}" title="Ver actividades / editar" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;gap:5px;background:{{m.color}};outline:{{m.outline}};outline-offset:2px;box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
               <button onClick="{{m.onToggle}}" title="Desplegar/plegar" style="display:{{m.markDisplay}};font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1;font-weight:700;color:#FFFFFF;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.4);border-radius:5px;width:16px;height:16px;padding:0;cursor:pointer;flex:none">{{m.mark}}</button>
               <span style="font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.03em;color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{m.label}}</span>
             </div>
@@ -857,6 +911,7 @@ class Component extends DCLogic {
       // muestran sin agrupar y con la paleta por defecto (comportamiento previo).
       grupos: (doc && Array.isArray(doc.grupos)) ? doc.grupos : [],
       selectedId: null,
+      mmSel: null,   // área/grupo seleccionado en el mini-mapa (panel lateral)
       mode: 'none',
       search: '',
       hidden: {},
@@ -1090,7 +1145,7 @@ class Component extends DCLogic {
       grupos: (doc && Array.isArray(doc.grupos)) ? doc.grupos : [],
       projectName: (doc && doc.projectName) || id,
       projectSubtitle: (doc && doc.projectSubtitle) || '',
-      selectedId: null, mode: 'none', search: '', hidden: {}, expanded: {}, groupOpen: {}, zoom: 1,
+      selectedId: null, mmSel: null, mode: 'none', search: '', hidden: {}, expanded: {}, groupOpen: {}, zoom: 1,
       projectCombo: false, projectComboQ: ''
     });
     this.connectProject(id, false);
@@ -1200,8 +1255,12 @@ class Component extends DCLogic {
     const nodes = this.state.nodes.map(n => n.area === oldName ? {...n, area: nuevo} : n);
     const hidden = {...this.state.hidden};
     if(oldName in hidden){ hidden[nuevo] = hidden[oldName]; delete hidden[oldName]; }
-    this.setState({areas: arr, nodes, hidden});
-    this.persist({areas: arr, nodes});
+    // Mantén los grupos en sync: renombra la referencia al área para que no
+    // quede una referencia fantasma (causa de la desincronización anterior).
+    const grupos = this.grupos().map(g => ({...g, areas: (g.areas||[]).map(a => a === oldName ? nuevo : a)}));
+    this.setState({areas: arr, nodes, hidden, grupos});
+    this.persist({areas: arr, nodes, grupos});
+    if(this.state.mmSel && this.state.mmSel.kind === 'area' && this.state.mmSel.name === oldName) this.setState({mmSel: {kind:'area', name: nuevo}});
   }
   editPrefix(name){
     const cur = this.reconciledAreas().find(x => x.name === name);
@@ -1214,7 +1273,11 @@ class Component extends DCLogic {
     const count = this.state.nodes.filter(n => n.area === name).length;
     if(count > 0){ window.alert('El área «'+name+'» tiene '+count+' actividad(es). Reasígnalas o elimínalas antes de borrar el área.'); return; }
     if(!window.confirm('¿Eliminar el área «'+name+'»?')) return;
-    this._setAreas(this.reconciledAreas().filter(a => a.name !== name));
+    // Quítala también de cualquier grupo (evita referencias fantasma).
+    const grupos = this.grupos().map(g => ({...g, areas: (g.areas||[]).filter(a => a !== name)}));
+    this.setState({areas: this.reconciledAreas().filter(a => a.name !== name), grupos});
+    this.persist({areas: this.reconciledAreas().filter(a => a.name !== name), grupos});
+    if(this.state.mmSel && this.state.mmSel.name === name) this.setState({mmSel: null, mode: 'none'});
   }
 
   // ── CRUD de estados ──
@@ -1287,7 +1350,41 @@ class Component extends DCLogic {
       return g;
     });
     this._setGrupos(arr);
+    if(this.state.mmSel && this.state.mmSel.name === oldName) this.setState({mmSel: {kind:'group', name: nuevo}});
   }
+  recolorGrupo(name){
+    const list = this.grupos();
+    const cur = list.find(g => g.name === name);
+    if(!cur) return;
+    const color = ((window.prompt('Color (hex) para «'+name+'»:', cur.color || '#7486A6') || '').trim());
+    if(!color) return;
+    this._setGrupos(list.map(g => g.name === name ? {...g, color} : g));
+  }
+  deleteGrupo(name){
+    const list = this.grupos();
+    if(list.some(g => g.parent === name)){ window.alert('«'+name+'» tiene subgrupos — elimínalos o reasígnalos primero.'); return; }
+    if(!window.confirm('¿Eliminar el grupo «'+name+'»? Sus áreas quedarán sin agrupar (no se borran las actividades).')) return;
+    this._setGrupos(list.filter(g => g.name !== name));
+    this.setState({mmSel: null, mode: 'none'});
+  }
+
+  // ── Panel de área/grupo (nodo del mini-mapa se comporta como una tarjeta) ──
+  // Clic en un nodo del mini-mapa abre este panel en la barra lateral, igual
+  // que al seleccionar una actividad: muestra sus actividades y permite
+  // agregar una nueva ya asignada a esa área.
+  selectAG(kind, name){
+    this.setState({selectedId: null, mode: 'ag', mmSel: {kind, name}, depFilter: '', enFilter: '', openCombo: null, comboQ: ''});
+  }
+  // Crea una actividad ya asignada al área dada y abre su formulario de edición.
+  addNodeInArea(area){
+    const estados = this.reconciledEstados();
+    const estadoDef = estados.some(e => e.name === 'Pendiente') ? 'Pendiente' : (estados[0] ? estados[0].name : 'Pendiente');
+    const id = this.genId(area);
+    const n = {id, area, fase: 'Entrega a Beneficiarios', titulo: 'Nueva actividad', estado: estadoDef, nota: '', dependeDe: []};
+    this.setNodes([...this.state.nodes, n]);
+    this.setState({selectedId: id, mode: 'edit', openCombo: null, comboQ: '', depFilter: '', enFilter: ''});
+  }
+
   openManage(){ this.setState({selectedId: null, mode: 'manage'}); }
 
   // Edita el nombre y subtítulo del proyecto.
@@ -1782,7 +1879,9 @@ class Component extends DCLogic {
       const L = {
         areaName: a,
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
-        color: areaColor, line: areaColor + '80',
+        // El PRIMER carril no lleva línea superior (no hay nada arriba que
+        // separar — era "la línea principal de arriba" sin información).
+        color: areaColor, line: i === 0 ? 'transparent' : areaColor + '80',
         // La línea divisoria del carril arranca en `LEFT` (donde empiezan las
         // columnas de fase), NO en 0: así los divisores horizontales solo se
         // ven sobre Beneficiarios/Liquidación, no cruzando el esquema de
@@ -1819,6 +1918,7 @@ class Component extends DCLogic {
     // para que una hoja sin carril propio (p. ej. "Financiero") caiga DEBAJO
     // del carril anterior y no se meta dentro de él.
     const laneBottomY = (a) => (laneY[a] != null) ? (laneY[a] + LP_T + laneMax[a] + LP_B) : null;
+    const mmSel = this.state.mmSel;  // área/grupo seleccionado (para realce)
     const mmPos = {};
     const mmNodes = [];
     let mmFlowY = 34; // para hojas sin carril propio (grupo vacío / colapsado sin área homónima)
@@ -1854,16 +1954,19 @@ class Component extends DCLogic {
       const expandable = !isArea && kidsOfGroup(g).length > 0;
       const label = isArea ? spec.a : g.name;
       const color = isArea ? (areaColorMap[spec.a] || '#7486A6') : (g.color || '#7486A6');
+      const agName = isArea ? spec.a : g.name;
+      const agKind = isArea ? 'area' : 'group';
+      const sel = this.state.mode === 'ag' && !!(mmSel && mmSel.kind === agKind && mmSel.name === agName);
       mmNodes.push({
         key, x, y, w: MM_W, h: selfH, label: label.toUpperCase(), color,
+        // Seleccionado = borde/realce, igual que una tarjeta de actividad.
+        outline: sel ? '2px solid #1F3B6F' : 'none',
         mark: expandable ? (open ? '−' : '+') : '',
         markDisplay: expandable ? 'inline-block' : 'none',
         onToggle: (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}})); },
-        onClick: (e) => {
-          e.stopPropagation();
-          if (isArea) this.setState(s => ({hidden: {...s.hidden, [spec.a]: !s.hidden[spec.a]}}));
-          else this.renameGrupo(g.name);
-        }
+        // Clic en el CUERPO abre el panel lateral del área/grupo (como una
+        // tarjeta de tarea), no renombra ni oculta directamente.
+        onClick: (e) => { e.stopPropagation(); this.selectAG(agKind, agName); }
       });
       return cy;
     };
@@ -2144,6 +2247,7 @@ class Component extends DCLogic {
     const mode = this.state.mode;
     const selNode = selId ? byId[selId] : null;
     const showManage = mode === 'manage';
+    const showAG = mode === 'ag' && !!mmSel;
     const showDetail = !!selNode && mode !== 'edit';
     const showForm = !!selNode && mode === 'edit';
     // Código corto de fase, para identificar de un vistazo (p.ej. "PRE" = Preconstrucción)
@@ -2158,6 +2262,50 @@ class Component extends DCLogic {
       faseCode: faseCodeFor(n.fase), faseColor: faseColorFor(n.fase),
       onClick: () => this.selectNode(n.id)
     });
+
+    // Panel de área/grupo (nodo del mini-mapa seleccionado). Muestra sus
+    // actividades y, para un área, permite "+ agregar actividad aquí".
+    let ag = null;
+    if (showAG) {
+      if (mmSel.kind === 'group') {
+        const g = gsAll.find(x => x.name === mmSel.name);
+        if (g) {
+          const subs = gsAll.filter(s => s.parent === g.name);
+          const areasIn = [...(g.areas||[]), ...subs.flatMap(s => s.areas||[])].filter(a => orderedAreas.includes(a));
+          const acts = nodes.filter(n => areasIn.includes(n.area));
+          ag = {
+            kind: 'group', name: g.name, color: g.color || '#7486A6', kindLabel: 'GRUPO',
+            subLabel: g.parent ? ('Subgrupo de ' + g.parent) : 'Grupo principal',
+            hasAreas: areasIn.length > 0,
+            areasList: areasIn.map(a => ({ name: a, count: nodes.filter(n => n.area === a).length, color: areaColorMap[a] || '#94A1BA', onClick: () => this.selectAG('area', a) })),
+            actsCount: acts.length, acts: acts.slice(0, 60).map(mkItem),
+            actsEmpty: acts.length === 0,
+            canAdd: false, addDisplay: 'none', colorDisplay: 'flex',
+            onRename: () => this.renameGrupo(g.name),
+            onColor: () => this.recolorGrupo(g.name),
+            onAdd: () => {},
+            onDelete: () => this.deleteGrupo(g.name)
+          };
+        }
+      } else {
+        const a = mmSel.name;
+        const grp = this.grupoOf(a);
+        const acts = nodes.filter(n => n.area === a);
+        ag = {
+          kind: 'area', name: a, color: areaColorMap[a] || '#7486A6', kindLabel: 'ÁREA',
+          subLabel: grp ? ('En grupo ' + grp.name) : 'Área sin grupo',
+          hasAreas: false, areasList: [],
+          actsCount: acts.length, acts: acts.map(mkItem),
+          actsEmpty: acts.length === 0,
+          canAdd: true, addDisplay: 'inline-block', colorDisplay: 'none',
+          onRename: () => this.renameArea(a),
+          onColor: () => {},
+          onAdd: () => this.addNodeInArea(a),
+          onDelete: () => this.deleteArea(a)
+        };
+      }
+    }
+    if (showAG && !ag) { /* grupo/área ya no existe: cerrar panel silenciosamente */ }
 
     // opciones para los selects del formulario y datos de gestión
     const areaOptions = orderedAreas.map(a => ({name: a}));
@@ -2489,14 +2637,14 @@ class Component extends DCLogic {
       onAddEstado: () => this.addEstado(),
       onAddGrupo: () => this.addGrupo(),
       onCerrarGestion: () => this.setState({mode: 'none'}),
-      onCanvasClick: () => this.setState({selectedId: null, mode: 'none'}),
+      onCanvasClick: () => this.setState({selectedId: null, mmSel: null, mode: 'none'}),
       zoom: this.state.zoom,
       zoomPct: Math.round(this.state.zoom * 100) + '%',
       onZoomIn: (e) => { e.stopPropagation(); this.setZoom(this.state.zoom + 0.1); },
       onZoomOut: (e) => { e.stopPropagation(); this.setZoom(this.state.zoom - 0.1); },
       onZoomReset: (e) => { e.stopPropagation(); this.setZoom(1); },
-      panelOpen: showDetail || showForm || showManage,
-      showEmpty: !(showDetail || showForm || showManage),
+      panelOpen: showDetail || showForm || showManage || (showAG && !!ag),
+      showEmpty: !(showDetail || showForm || showManage || (showAG && !!ag)),
       sidebarWidth: this.state.sidebarWidth,
       onStartResize: (e) => this.startSidebarResize(e),
       // El sidebar persiste en todas las vistas: detalle/form/gestión solo en
@@ -2504,7 +2652,9 @@ class Component extends DCLogic {
       sidebarDetail: viewDiagrama && showDetail,
       sidebarForm: viewDiagrama && showForm,
       sidebarManage: viewDiagrama && showManage,
-      sidebarHome: !viewDiagrama || !(showDetail || showForm || showManage),
+      sidebarAG: viewDiagrama && showAG && !!ag,
+      ag: ag || {},
+      sidebarHome: !viewDiagrama || !(showDetail || showForm || showManage || (showAG && !!ag)),
       boardDocsLabel: boardDocsTotal ? (boardDocsDone + '/' + boardDocsTotal) : '0',
       statAreas: orderedAreas.length,
       phaseBars,
