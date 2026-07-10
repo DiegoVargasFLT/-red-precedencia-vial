@@ -436,7 +436,7 @@
           </div>
         </sc-for>
         <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-          <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:2px solid {{l.line}};border-left:4px solid {{l.color}};pointer-events:none"></div>
+          <div style="position:absolute;left:{{l.x}}px;right:0;top:{{l.y}}px;height:{{l.h}}px;border-top:2px solid {{l.line}};border-left:4px solid {{l.color}};pointer-events:none"></div>
         </sc-for>
         {{edgesSvg}}
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
@@ -1783,6 +1783,11 @@ class Component extends DCLogic {
         areaName: a,
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
         color: areaColor, line: areaColor + '80',
+        // La línea divisoria del carril arranca en `LEFT` (donde empiezan las
+        // columnas de fase), NO en 0: así los divisores horizontales solo se
+        // ven sobre Beneficiarios/Liquidación, no cruzando el esquema de
+        // grupos/áreas de la izquierda.
+        x: LEFT,
         y: yCur, h,
         onUp: (e) => { e.stopPropagation(); this.moveArea(a, -1); },
         onDown: (e) => { e.stopPropagation(); this.moveArea(a, 1); },
@@ -1809,6 +1814,11 @@ class Component extends DCLogic {
     // (área); el pliegue/despliegue es un botón aparte, igual que el
     // badge ▸/▾ de subactividades en las tarjetas normales.
     const laneCenterY = (a) => (laneY[a] != null) ? (laneY[a] + LP_T + laneMax[a] / 2) : null;
+    // Fondo del carril: [laneY, laneY + LP_T + laneMax + LP_B]. El cursor de
+    // flujo debe saltar hasta el FONDO del carril anclado (no solo su centro),
+    // para que una hoja sin carril propio (p. ej. "Financiero") caiga DEBAJO
+    // del carril anterior y no se meta dentro de él.
+    const laneBottomY = (a) => (laneY[a] != null) ? (laneY[a] + LP_T + laneMax[a] + LP_B) : null;
     const mmPos = {};
     const mmNodes = [];
     let mmFlowY = 34; // para hojas sin carril propio (grupo vacío / colapsado sin área homónima)
@@ -1827,12 +1837,13 @@ class Component extends DCLogic {
       } else {
         // Hoja: ancla al carril de su área (área hoja, o grupo colapsado con
         // su área homónima). Si no tiene carril (grupo vacío como
-        // "Financiero", o grupo colapsado sin área propia), fluye en orden.
+        // "Financiero", o grupo colapsado sin área propia), fluye en orden,
+        // SIEMPRE por debajo del fondo del carril anterior (mmFlowY).
         const anchorArea = isArea ? spec.a : selfAreaOf(g);
         const lc = anchorArea != null ? laneCenterY(anchorArea) : null;
         if (lc != null) {
           cy = lc;
-          mmFlowY = Math.max(mmFlowY, cy + selfH / 2 + MM_GAPY);
+          mmFlowY = Math.max(mmFlowY, laneBottomY(anchorArea) + MM_GAPY);
         } else {
           cy = mmFlowY + selfH / 2;
           mmFlowY += selfH + MM_GAPY;
