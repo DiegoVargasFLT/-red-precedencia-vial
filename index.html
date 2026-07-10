@@ -349,7 +349,7 @@
       <sc-if value="{{sidebarManage}}" hint-placeholder-val="{{ false }}">
         <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#61B1E3">GESTIONAR ÁREAS Y ESTADOS</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#61B1E3">GESTIONAR ÁREAS, ESTADOS Y GRUPOS</span>
             <button onClick="{{onCerrarGestion}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:transparent;border:1px solid #D9E1EC;color:#5E7196;padding:5px 10px;cursor:pointer" style-hover="border-color:#61B1E3;color:#1F3B6F">CERRAR</button>
           </div>
 
@@ -386,7 +386,25 @@
             </sc-for>
           </div>
 
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;line-height:1.7">Renombrar actualiza todas las actividades afectadas. No se puede eliminar un área/estado con actividades en uso. Los cambios se guardan automáticamente.</div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">GRUPOS DE ÁREA</span>
+              <button onClick="{{onAddGrupo}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="border-color:#025850">+ AGREGAR GRUPO</button>
+            </div>
+            <sc-for list="{{manageGrupos}}" as="g" hint-placeholder-count="4">
+              <div class="soft" style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
+                <span style="width:13px;height:13px;flex:none;background:{{g.color}}"></span>
+                <span style="flex:1;font-size:12px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{g.name}} <span style="color:#94A1BA;font-size:10px">{{g.parentLabel}}</span></span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{g.count}} área(s)</span>
+                <button onClick="{{g.onRename}}" title="Renombrar grupo" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
+                <button onClick="{{g.onColor}}" title="Cambiar color" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">◑</button>
+                <button onClick="{{g.onStruct}}" title="Editar subgrupo y áreas que agrupa" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">▤</button>
+                <button onClick="{{g.onDelete}}" title="Eliminar grupo" style="background:transparent;border:1px solid #D9E1EC;color:#AD1924;width:22px;height:22px;cursor:pointer;font-size:12px;padding:0" style-hover="border-color:#AD1924">×</button>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;line-height:1.7">Renombrar actualiza todas las actividades afectadas. No se puede eliminar un área/estado con actividades en uso, ni un grupo con subgrupos propios. Los cambios se guardan automáticamente.</div>
         </div>
       </sc-if>
 
@@ -1164,6 +1182,7 @@ class Component extends DCLogic {
 
   _setAreas(arr){ this.setState({areas: arr}); this.persist({areas: arr}); }
   _setEstados(arr){ this.setState({estados: arr}); this.persist({estados: arr}); }
+  _setGrupos(arr){ this.setState({grupos: arr}); this.persist({grupos: arr}); }
 
   // Reordena un área subiéndola/bajándola respecto de su vecina visible.
   moveArea(area, dir){
@@ -1246,6 +1265,76 @@ class Component extends DCLogic {
     if(count > 0){ window.alert('El estado «'+name+'» está en uso por '+count+' actividad(es).'); return; }
     if(!window.confirm('¿Eliminar el estado «'+name+'»?')) return;
     this._setEstados(this.reconciledEstados().filter(e => e.name !== name));
+  }
+
+  // ── CRUD de grupos de área (macro-áreas del mini-mapa) ──
+  // Un grupo puede ser de nivel superior (parent: null) o subgrupo (parent:
+  // nombre de un grupo de nivel superior) — solo se admiten 2 niveles, los
+  // mismos que dibuja el mini-mapa.
+  addGrupo(){
+    const list = this.grupos();
+    const name = (window.prompt('Nombre del nuevo grupo:', '') || '').trim();
+    if(!name) return;
+    if(list.some(g => g.name === name)){ window.alert('Ya existe un grupo con ese nombre.'); return; }
+    const color = ((window.prompt('Color (hex, ej #7486A6):', '#7486A6') || '').trim()) || '#7486A6';
+    const tops = list.filter(g => !g.parent).map(g => g.name);
+    const parentInput = (window.prompt('¿Es subgrupo de otro grupo? Escribe el nombre exacto, o deja vacío para que sea de nivel superior.\nGrupos de nivel superior: ' + (tops.join(', ') || '(ninguno)'), '') || '').trim();
+    let parent = null;
+    if(parentInput){
+      const p = list.find(g => g.name === parentInput);
+      if(!p){ window.alert('No existe un grupo de nivel superior con ese nombre.'); return; }
+      if(p.parent){ window.alert('«'+parentInput+'» ya es un subgrupo — no se admiten más de 2 niveles.'); return; }
+      parent = parentInput;
+    }
+    const allAreas = this.reconciledAreas().map(a => a.name);
+    const areasInput = (window.prompt('Áreas que agrupa (separadas por coma).\nDisponibles: ' + allAreas.join(', '), '') || '');
+    const areas = areasInput.split(',').map(s => s.trim()).filter(s => s && allAreas.includes(s));
+    this._setGrupos(list.concat([{name, color, parent, areas}]));
+  }
+  renameGrupo(oldName){
+    const list = this.grupos();
+    const nuevo = (window.prompt('Nuevo nombre del grupo:', oldName) || '').trim();
+    if(!nuevo || nuevo === oldName) return;
+    if(list.some(g => g.name === nuevo)){ window.alert('Ya existe un grupo con ese nombre.'); return; }
+    const arr = list.map(g => {
+      if(g.name === oldName) return {...g, name: nuevo};
+      if(g.parent === oldName) return {...g, parent: nuevo};
+      return g;
+    });
+    this._setGrupos(arr);
+  }
+  recolorGrupo(name){
+    const list = this.grupos();
+    const cur = list.find(g => g.name === name);
+    if(!cur) return;
+    const color = ((window.prompt('Color (hex) para «'+name+'»:', cur.color || '#7486A6') || '').trim());
+    if(!color) return;
+    this._setGrupos(list.map(g => g.name === name ? {...g, color} : g));
+  }
+  // Edita en un solo flujo el subgrupo-padre y las áreas que agrupa.
+  editGrupoEstructura(name){
+    const list = this.grupos();
+    const g = list.find(x => x.name === name);
+    if(!g) return;
+    const tops = list.filter(x => !x.parent && x.name !== name).map(x => x.name);
+    const parentInput = (window.prompt('¿Es subgrupo de otro grupo? Escribe el nombre exacto, o deja vacío para que sea de nivel superior.\nGrupos de nivel superior: ' + (tops.join(', ') || '(ninguno)'), g.parent || '') || '').trim();
+    let parent = parentInput || null;
+    if(parent){
+      const p = list.find(x => x.name === parent);
+      if(!p){ window.alert('No existe un grupo de nivel superior con ese nombre.'); return; }
+      if(p.parent){ window.alert('«'+parent+'» ya es un subgrupo — no se admiten más de 2 niveles.'); return; }
+      if(list.some(x => x.parent === name)){ window.alert('«'+name+'» ya tiene subgrupos propios — no puede ser también subgrupo de otro.'); return; }
+    }
+    const allAreas = this.reconciledAreas().map(a => a.name);
+    const areasInput = (window.prompt('Áreas que agrupa (separadas por coma).\nDisponibles: ' + allAreas.join(', '), (g.areas||[]).join(', ')) || '');
+    const areas = areasInput.split(',').map(s => s.trim()).filter(s => s && allAreas.includes(s));
+    this._setGrupos(list.map(x => x.name === name ? {...x, parent, areas} : x));
+  }
+  deleteGrupo(name){
+    const list = this.grupos();
+    if(list.some(g => g.parent === name)){ window.alert('«'+name+'» tiene subgrupos — elimínalos o reasígnalos primero.'); return; }
+    if(!window.confirm('¿Eliminar el grupo «'+name+'»? Sus áreas quedarán sin agrupar (no se borran las actividades).')) return;
+    this._setGrupos(list.filter(g => g.name !== name));
   }
 
   openManage(){ this.setState({selectedId: null, mode: 'manage'}); }
@@ -2104,6 +2193,13 @@ class Component extends DCLogic {
       name: e.name, color: e.color, count: nodes.filter(n => n.estado === e.name).length,
       onRename: () => this.renameEstado(e.name), onColor: () => this.recolorEstado(e.name), onDelete: () => this.deleteEstado(e.name)
     }));
+    const manageGrupos = gsAll.map(g => ({
+      name: g.name, color: g.color || '#7486A6',
+      parentLabel: g.parent ? ('⤷ ' + g.parent) : '',
+      count: (g.areas||[]).length,
+      onRename: () => this.renameGrupo(g.name), onColor: () => this.recolorGrupo(g.name),
+      onStruct: () => this.editGrupoEstructura(g.name), onDelete: () => this.deleteGrupo(g.name)
+    }));
     const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
     const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
 
@@ -2417,10 +2513,11 @@ class Component extends DCLogic {
       onCollapseAll: () => this.collapseAll(),
       levelButtons, hasLevels: levelButtons.length > 0,
       onGestionar: () => this.openManage(),
-      areaOptions, estadoOptions, manageAreas, manageEstados,
+      areaOptions, estadoOptions, manageAreas, manageEstados, manageGrupos,
       legend: this.reconciledEstados().map(e => ({label: e.name.toUpperCase(), color: e.color})),
       showManage,
       onAddEstado: () => this.addEstado(),
+      onAddGrupo: () => this.addGrupo(),
       onCerrarGestion: () => this.setState({mode: 'none'}),
       onCanvasClick: () => this.setState({selectedId: null, mode: 'none'}),
       zoom: this.state.zoom,
