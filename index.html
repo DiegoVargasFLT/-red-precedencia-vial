@@ -31,8 +31,6 @@
     .soft{border-radius:10px;}
     .node-card{border-radius:12px;box-shadow:0 1px 2px rgba(31,59,111,.05);}
     .node-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(31,59,111,.15);border-color:#61B1E3!important;}
-    .group-title{border-radius:8px;transition:box-shadow .16s ease,opacity 140ms ease;}
-    .group-title:hover{box-shadow:0 4px 12px rgba(31,59,111,.12);}
     .dep-item{border-radius:10px;}
     .dep-item:hover{border-color:#61B1E3!important;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
     .doc-row{display:flex;gap:9px;align-items:flex-start;border:1px solid #D9E1EC;border-radius:10px;padding:9px 10px;margin-top:6px;transition:box-shadow .16s ease,background .16s ease;}
@@ -400,7 +398,7 @@
   <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#F4F7FB;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
     <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-right:4px">ÁREAS</span>
     <sc-for list="{{chips}}" as="c" hint-placeholder-count="7">
-      <button onClick="{{c.onToggle}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#61B1E3">{{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
+      <button onClick="{{c.onToggle}}" style="display:{{c.show}};margin-left:{{c.indent}}px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#61B1E3">{{c.mark}} {{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
     </sc-for>
     <button onClick="{{onAddArea}}" title="Agregar nueva área" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ ÁREA</button>
     <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">⚙ GESTIONAR</button>
@@ -460,13 +458,6 @@
                 </sc-for>
               </div>
             </div>
-          </div>
-        </sc-for>
-        <sc-for list="{{groupTitles}}" as="g" hint-placeholder-count="2">
-          <div onClick="{{g.onClick}}" title="{{g.tip}}" class="group-title" style="position:absolute;left:{{g.x}}px;top:{{g.y}}px;width:{{g.w}}px;height:{{g.h}}px;opacity:{{g.opacity}};z-index:2;display:flex;align-items:center;gap:7px;padding:0 9px;background:{{g.bg}};border:1px dashed {{g.bd}};border-left:3px solid {{g.color}};cursor:pointer;overflow:hidden">
-            <button onClick="{{g.onCollapse}}" title="Ocultar subactividades" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;line-height:1;background:#FFFFFF;border:1px solid #C7D6E8;color:#1F3B6F;padding:2px 6px;cursor:pointer;border-radius:6px;flex:none">▾ {{g.count}}</button>
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.08em;color:#7486A6;flex:none">{{g.id}}</span>
-            <span style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:#1F3B6F;letter-spacing:0.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">{{g.titulo}}</span>
           </div>
         </sc-for>
         <div style="position:sticky;left:0;width:236px;height:0;z-index:4;display:block">
@@ -871,6 +862,7 @@ class Component extends DCLogic {
       mode: 'none',
       search: '',
       hidden: {},
+      groupOpen: {},  // qué botones de grupo/subgrupo de la barra ÁREAS están desplegados
       zoom: 1,
       expanded: {},  // qué actividades principales muestran sus subactividades
       openCombo: null, comboQ: '',   // combo con búsqueda actualmente abierto
@@ -1106,7 +1098,7 @@ class Component extends DCLogic {
       grupos: (doc && Array.isArray(doc.grupos)) ? doc.grupos : [],
       projectName: (doc && doc.projectName) || id,
       projectSubtitle: (doc && doc.projectSubtitle) || '',
-      selectedId: null, mode: 'none', search: '', hidden: {}, expanded: {}, zoom: 1,
+      selectedId: null, mode: 'none', search: '', hidden: {}, expanded: {}, groupOpen: {}, zoom: 1,
       projectCombo: false, projectComboQ: ''
     });
     this.connectProject(id, false);
@@ -1610,15 +1602,17 @@ class Component extends DCLogic {
     const visAreas = orderedAreas.filter(a => !hidden[a]);
 
     // Apilado por área+columna con alturas variables: una principal expandida
-    // deja de ser tarjeta y se dibuja como un TÍTULO compacto (GH) encima de
-    // sus subactividades; el resto conserva la altura normal (NH).
-    const GH = 30;
+    // CONSERVA su tamaño de tarjeta normal (no se compacta) — sus hijas se
+    // despliegan a la derecha, en su propia rama.
     const CHIP_H = 18;   // fila extra al pie de la tarjeta para las áreas involucradas
     const kidsOf = {};
     nodes.forEach(n => { if(n.parent){ (kidsOf[n.parent] = kidsOf[n.parent] || []).push(n.id); } });
+    // Un nodo "es grupo" cuando está expandido y tiene hijas visibles — se usa
+    // solo para deduplicar líneas de dependencia a nivel de grupo (ver
+    // collectEdges), NO para cambiar su tamaño ni su estilo de tarjeta.
     const isExpTitle = n => !!(n && expanded[n.id] && kidsOf[n.id] && kidsOf[n.id].length);
-    const hasChips = n => !isExpTitle(n) && Array.isArray(n.areasInvolucradas) && n.areasInvolucradas.length > 0;
-    const hOf = n => isExpTitle(n) ? GH : (NH + (hasChips(n) ? CHIP_H : 0));
+    const hasChips = n => Array.isArray(n.areasInvolucradas) && n.areasInvolucradas.length > 0;
+    const hOf = n => NH + (hasChips(n) ? CHIP_H : 0);
     // Orden de apilado: recorrido en profundidad (DFS) del árbol completo, para
     // que cada nodo quede seguido de TODOS sus descendientes (jerarquía de N niveles).
     const dfsOrder = [];
@@ -1820,10 +1814,10 @@ class Component extends DCLogic {
     topVis.forEach(n => placeSub(n.id, colX[levels[n.id]], laneY[n.area] + LP_T + yOff[n.id]));
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
 
-    // node view models — las principales expandidas se dibujan aparte, como títulos
-    const cardNodes = vSorted.filter(n => !isExpTitle(n));
-    const titleNodes = vSorted.filter(n => isExpTitle(n));
-    const nodeVMs = cardNodes.map(n => {
+    // node view models — una principal expandida conserva su tamaño de
+    // tarjeta normal (no se compacta a un título); solo cambia su marca
+    // ▸/▾ de subactividades, igual que cualquier otra tarjeta con hijas.
+    const nodeVMs = vSorted.map(n => {
       const P = pos[n.id] || {x: 0, y: 0, w: NW};
       const depth = depthOf(n.id);
       const indent = 0;
@@ -1866,36 +1860,6 @@ class Component extends DCLogic {
           : '',
         z: sel ? 3 : 2,
         onClick: (e) => { e.stopPropagation(); this.selectNode(n.id); }
-      };
-    });
-
-    // Títulos de grupo (principales expandidas): compactos, sin conexiones propias.
-    const groupTitles = titleNodes.map(n => {
-      const P = pos[n.id] || {x: 0, y: 0, w: NW};
-      const depth = depthOf(n.id);
-      const indent = 0;
-      const x = P.x, w = P.w, ny = P.y;
-      let op = 1;
-      if (chain && !chain.has(n.id)) op = 0.16;
-      if (q) {
-        const m = (n.titulo + ' ' + n.id + ' ' + (n.nota||'') + ' ' + n.area + ' ' + n.estado).toLowerCase().includes(q);
-        if (!m) op = Math.min(op, 0.13);
-      }
-      const sel = n.id === selId;
-      const isSub = !!n.parent;
-      const dColor = isSub ? depthColor(depth) : (areaColorMap[n.area] || '#94A1BA');
-      pos[n.id] = {x, y: ny, w, indent, depth};   // ancla propia, para que las conexiones de grupo tengan dónde llegar
-      return {
-        id: n.id, titulo: n.titulo,
-        x, y: ny, w, h: GH,
-        color: dColor,
-        bd: sel ? '#61B1E3' : (dColor + '80'),
-        bg: sel ? '#E4F1FB' : (isSub ? dColor + '12' : 'rgba(244,247,251,0.92)'),
-        opacity: op,
-        count: (kidsOf[n.id] || []).length,
-        tip: n.titulo + '  [grupo de ' + (kidsOf[n.id] || []).length + ' subactividades — clic para ver detalle]',
-        onClick: (e) => { e.stopPropagation(); this.selectNode(n.id); },
-        onCollapse: (e) => { e.stopPropagation(); this.toggleExpand(n.id); }
       };
     });
 
@@ -1968,17 +1932,18 @@ class Component extends DCLogic {
       }));
     });
     // Guías de jerarquía: conector en forma de abanico (punteado, color del
-    // nivel) desde el borde derecho de cada título hacia sus hijas, que se
-    // despliegan a la derecha — refuerza con una línea explícita el "esto
-    // pertenece a aquello" de la rama.
+    // nivel) desde el borde derecho de cada principal expandida hacia sus
+    // hijas, que se despliegan a la derecha — refuerza con una línea
+    // explícita el "esto pertenece a aquello" de la rama.
     const guidePaths = [];
-    titleNodes.forEach(n => {
+    const expandedParents = vSorted.filter(n => expanded[n.id] && kidsOf[n.id] && kidsOf[n.id].length);
+    expandedParents.forEach(n => {
       const kids = (kidsOf[n.id] || []).filter(cId => visSet.has(cId) && pos[cId]);
       const pn = pos[n.id];
       if (!kids.length || !pn) return;
       const gx = pn.x + pn.w + BRANCH_GAPX / 2;
       const color = depthColor(depthOf(kids[0]));
-      const kidY = cId => pos[cId].y + (isExpTitle(byId[cId]) ? GH : NH) / 2;
+      const kidY = cId => pos[cId].y + hOf(byId[cId]) / 2;
       const kidYs = kids.map(kidY);
       const yTop = Math.min(...kidYs);
       const yBottom = Math.max(...kidYs);
@@ -2015,10 +1980,16 @@ class Component extends DCLogic {
     const boardDocsTotal = nodes.reduce((s, n) => s + (n.docs ? n.docs.length : 0), 0);
     const boardDocsDone = nodes.reduce((s, n) => s + (n.docs ? n.docs.filter(d => d && d.done).length : 0), 0);
 
-    // chips
-    const chips = orderedAreas.map(a => {
+    // chips — barra ÁREAS como árbol colapsable: grupo (nivel 0) → subgrupo
+    // (nivel 1) → área (hoja, el toggle de visibilidad de siempre). Plegar un
+    // grupo solo oculta sus botones hijos de la barra; no afecta si el área
+    // se ve en el diagrama (eso lo sigue controlando `hidden`, por área).
+    const groupOpen = this.state.groupOpen || {};
+    const gs = this.grupos();
+    const areaChip = (a, level, show) => {
       const off = !!hidden[a];
       return {
+        kind: 'area', level, show, mark: '', indent: level * 14,
         label: a, count: nodes.filter(n => n.area === a).length,
         bg: off ? 'transparent' : '#FFFFFF',
         fg: off ? '#94A1BA' : '#1F3B6F',
@@ -2026,7 +1997,34 @@ class Component extends DCLogic {
         bs: off ? 'dashed' : 'solid',
         onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
       };
+    };
+    const groupChip = (g, level, show) => {
+      const open = !!groupOpen[g.name];
+      const areasIn = [...(g.areas||[]), ...gs.filter(s => s.parent === g.name).flatMap(s => s.areas||[])];
+      const color = g.color || '#7486A6';
+      return {
+        kind: 'group', level, show, mark: open ? '▾' : '▸', indent: level * 14,
+        label: g.name, count: nodes.filter(n => areasIn.includes(n.area)).length,
+        bg: open ? color : 'transparent',
+        fg: open ? '#FFFFFF' : color,
+        bd: color, bs: 'solid',
+        onToggle: () => this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !s.groupOpen[g.name]}}))
+      };
+    };
+    const chips = [];
+    gs.filter(g => !g.parent).forEach(g => {
+      chips.push(groupChip(g, 0, 'inline-block'));
+      const open0 = !!groupOpen[g.name];
+      gs.filter(s => s.parent === g.name).forEach(s => {
+        chips.push(groupChip(s, 1, open0 ? 'inline-block' : 'none'));
+        const open1 = open0 && !!groupOpen[s.name];
+        (s.areas||[]).forEach(a => chips.push(areaChip(a, 2, open1 ? 'inline-block' : 'none')));
+      });
+      (g.areas||[]).forEach(a => chips.push(areaChip(a, 1, open0 ? 'inline-block' : 'none')));
     });
+    // Áreas que no pertenecen a ningún grupo: se muestran igual que antes
+    // (comportamiento previo para proyectos sin grupos configurados).
+    orderedAreas.filter(a => !this.grupoOf(a)).forEach(a => chips.push(areaChip(a, 0, 'inline-block')));
 
     // panel
     const mode = this.state.mode;
@@ -2355,7 +2353,7 @@ class Component extends DCLogic {
     const docRowsCountLabel = docRows.length + ' documento(s) · ' + docRows.reduce((s, r) => s + r.count, 0) + ' referencia(s)' + (crossMode ? ' · todos los proyectos' : '');
 
     return {
-      canvasW, canvasH, lanes, nodeVMs, groupTitles, edgesSvg, chips, fasesBands, groupBands,
+      canvasW, canvasH, lanes, nodeVMs, edgesSvg, chips, fasesBands, groupBands,
       projectName: this.state.projectName,
       projectSubtitle: this.state.projectSubtitle,
       onEditNombre: () => this.editProjectName(),
