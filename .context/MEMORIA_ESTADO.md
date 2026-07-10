@@ -35,6 +35,26 @@ sin importar su `area` — eso confundió al usuario (creía que reasignar el á
 de una subactividad no funcionaba; en realidad funciona a nivel de dato pero
 visualmente cuelga del padre).
 
+## Carriles de área vacíos se compactan (commit `a0f0bd2`)
+El "espacio vacío de arriba" que reportó el usuario eran carriles de área sin
+actividades de nivel superior ocupando ~142px. Fix:
+- `areaHasTop(a)`: ¿el área tiene nodos con `parent==null`? (los que ocupan
+  carril; las subactividades cuelgan de su padre en otro carril).
+- El carril del área homónima de un grupo (p. ej. "IDU") solo se crea si el
+  grupo está COLAPSADO o esa área tiene actividades propias (si expandido +
+  vacío, el nodo del grupo se centra en sus hijos y no necesita carril).
+- Cualquier área sin actividades de nivel superior usa `EMPTY_LANE_H=46px`
+  (compacto, lo justo para su nodo del mini-mapa) en vez del alto completo.
+- `laneCenterY`/`laneBottomY` leen `laneCYmap`/`laneHmap` (alto real por
+  carril, compacto o completo).
+
+## Datos: estructura EyD agregada (2026-07-10)
+A pedido del usuario (imagen de referencia), se agregaron 15 actividades al
+área EyD (fase Entrega a Beneficiarios) directo en Supabase: entidades EAAB,
+SDM, ESP (subs VANTI/ETB/ENRC/UAESP), Ambiental (subs SDA/CAR/ICANH/JBB) →
+convergen (dependencia) en "Recibido. IDU" → "No objeciones integrales
+productos EyD" → "Incorporación al DTINI". IDs EYD-01..EYD-15.
+
 ## Layout "rama a la derecha" (actividades)
 Al expandir una actividad principal con subactividades, estas no se apilan
 debajo — se despliegan hacia la DERECHA de la principal, centradas
