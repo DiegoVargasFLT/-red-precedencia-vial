@@ -53,12 +53,12 @@
   <div style="height:3px;flex:none;background:linear-gradient(90deg,#74C6D3 0%,#61B1E3 34%,#1F3B6F 72%,#332664 100%)"></div>
 
 
-  <div style="display:flex;flex:1;min-height:0">
+  <div style="display:flex;flex:1;min-height:0;position:relative">
 
-    <div class="side-panel" style="width:{{sidebarWidth}}px;flex:none;background:#FFFFFF;border-right:1px solid #D9E1EC;display:flex;flex-direction:column;overflow:hidden">
+    <div class="side-panel" style="width:{{sidebarWidth}}px;flex:none;background:#FFFFFF;border-right:1px solid #D9E1EC;display:{{sidebarDisplay}};flex-direction:column;overflow:hidden">
       <div style="flex:none;padding:18px 18px 16px;background:linear-gradient(160deg,#22417A 0%,#182F58 100%);color:#EEF3F9">
         <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
-          <span style="flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.22)"><img src="./favicon.png" alt="" style="width:29px;height:29px"></span>
+          <button onClick="{{onToggleSidebar}}" title="Ocultar la barra lateral" style="flex:none;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#FFFFFF;box-shadow:0 4px 12px rgba(0,0,0,0.22);border:none;padding:0;cursor:pointer" style-hover="box-shadow:0 4px 16px rgba(0,0,0,0.35)"><img src="./favicon.png" alt="" style="width:29px;height:29px"></button>
           <div style="min-width:0;flex:1">
             <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.14em;color:#8FB8E8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{projectSubtitle}}</div>
             <div style="font-family:'Montserrat',sans-serif;font-size:16px;font-weight:700;line-height:1.15;color:#FFFFFF;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{projectName}}</div>
@@ -447,7 +447,9 @@
       </div>
     </div>
 
-    <div onMouseDown="{{onStartResize}}" class="sidebar-resizer" title="Arrastra para cambiar el ancho del panel" style="flex:none;width:6px;cursor:col-resize;background:#E4EAF3;position:relative;z-index:7"></div>
+    <div onMouseDown="{{onStartResize}}" class="sidebar-resizer" title="Arrastra para cambiar el ancho del panel" style="display:{{resizerDisplay}};flex:none;width:6px;cursor:col-resize;background:#E4EAF3;position:relative;z-index:7"></div>
+
+    <button onClick="{{onToggleSidebar}}" title="Mostrar la barra lateral" style="display:{{floatBirdDisplay}};position:absolute;left:12px;top:12px;z-index:20;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:#22417A;box-shadow:0 4px 14px rgba(0,0,0,0.30);border:none;padding:0;cursor:pointer" style-hover="background:#182F58"><img src="./favicon.png" alt="" style="width:29px;height:29px"></button>
 
     <div style="flex:1;display:flex;flex-direction:column;min-width:0">
   <sc-if value="{{viewDiagrama}}" hint-placeholder-val="{{ true }}">
@@ -517,7 +519,7 @@
             </div>
           </div>
         </sc-for>
-        <div style="position:sticky;left:0;width:{{mmW}}px;height:0;z-index:4;display:block">
+        <div style="position:absolute;left:0;top:0;width:{{mmW}}px;height:0;z-index:4;display:block">
           <svg width="{{mmW}}" height="{{mmH}}" style="position:absolute;left:0;top:0;pointer-events:none;overflow:visible">
             <sc-for list="{{mmPaths}}" as="p" hint-placeholder-count="6">
               <path d="{{p.d}}" fill="none" stroke="{{p.color}}" stroke-width="1.6" opacity="0.55"></path>
@@ -932,9 +934,11 @@ class Component extends DCLogic {
       projectCombo: false, projectComboQ: '',
       docsAllProjects: false, docsProjectFilter: '', allProjectsCache: null, allProjectsLoading: false,
       // Ancho de la barra lateral (arrastrable). Se recuerda entre sesiones.
-      sidebarWidth: (() => { const w = parseInt(localStorage.getItem('rp-sidebar-width'), 10); return (w && w >= 220 && w <= 620) ? w : 300; })()
+      sidebarWidth: (() => { const w = parseInt(localStorage.getItem('rp-sidebar-width'), 10); return (w && w >= 220 && w <= 620) ? w : 300; })(),
+      sidebarHidden: false  // ocultar la barra lateral (clic en el ícono del ave)
     };
   }
+  toggleSidebar(){ this.setState(s => ({sidebarHidden: !s.sidebarHidden})); }
 
   // Arrastre para redimensionar la barra lateral izquierda.
   startSidebarResize(e){
@@ -1731,7 +1735,11 @@ class Component extends DCLogic {
       ...gsAll.filter(g => !g.parent).map(g => ({kind: 'group', g})),
       ...orderedAreas.filter(a => !this.grupoOf(a)).map(a => ({kind: 'area', a}))
     ];
-    const MM_W = 108, MM_H = 26, MM_GAPX = 30, MM_GAPY = 10;
+    // Ancho del nodo del mini-mapa: se ajusta a la etiqueta MÁS LARGA (grupo o
+    // área) para que el texto quepa completo (antes se truncaba con "…").
+    const mmLabels = [...orderedAreas, ...gsAll.map(g => g.name)];
+    const maxLabelLen = mmLabels.reduce((m, s) => Math.max(m, (s || '').length), 0);
+    const MM_W = Math.min(230, Math.max(112, maxLabelLen * 7 + 44)), MM_H = 26, MM_GAPX = 30, MM_GAPY = 10;
     // Profundidad máxima del árbol ABIERTO (cuánto se extiende el mini-mapa
     // hacia la derecha), para reservarle espacio antes de que empiece la
     // primera columna de fase — así nunca queda una tarjeta debajo de un
@@ -2661,6 +2669,11 @@ class Component extends DCLogic {
       showEmpty: !(showDetail || showForm || showManage || (showAG && !!ag)),
       sidebarWidth: this.state.sidebarWidth,
       onStartResize: (e) => this.startSidebarResize(e),
+      sidebarHidden: this.state.sidebarHidden,
+      sidebarDisplay: this.state.sidebarHidden ? 'none' : 'flex',
+      resizerDisplay: this.state.sidebarHidden ? 'none' : 'block',
+      floatBirdDisplay: this.state.sidebarHidden ? 'flex' : 'none',
+      onToggleSidebar: () => this.toggleSidebar(),
       // El sidebar persiste en todas las vistas: detalle/form/gestión solo en
       // Diagrama; en Dashboard/Documentos siempre muestra el home (stats).
       sidebarDetail: viewDiagrama && showDetail,
