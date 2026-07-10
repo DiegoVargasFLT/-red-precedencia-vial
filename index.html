@@ -1621,29 +1621,22 @@ class Component extends DCLogic {
       return true;
     };
 
-    // Filas del carril lateral: recorren grupo → subgrupo → área para saber
-    // qué áreas quedan visibles según `groupOpen` (el mini-mapa las pliega).
-    const laneRows = [];
-    const pushAreaRow = (a) => { if (orderedAreas.includes(a) && !hidden[a]) laneRows.push({kind: 'area', area: a}); };
-    gsAll.filter(g => !g.parent).forEach(g => {
-      const subs = gsAll.filter(s => s.parent === g.name);
-      const gAreas = [...(g.areas||[]), ...subs.flatMap(s => s.areas||[])].filter(a => orderedAreas.includes(a));
-      if (!gAreas.length) return; // grupo sin áreas reales en este proyecto: no ocupa fila
-      laneRows.push({kind: 'header', name: g.name, level: 0, color: g.color || '#7486A6',
-        count: nodes.filter(n => gAreas.includes(n.area)).length, open: isGroupOpen(g.name)});
-      if (isGroupOpen(g.name)) {
-        subs.forEach(s => {
-          const sAreas = (s.areas||[]).filter(a => orderedAreas.includes(a));
-          if (!sAreas.length) return;
-          laneRows.push({kind: 'header', name: s.name, level: 1, color: s.color || g.color || '#7486A6',
-            count: nodes.filter(n => sAreas.includes(n.area)).length, open: isGroupOpen(s.name)});
-          if (isGroupOpen(s.name)) sAreas.forEach(pushAreaRow);
-        });
-        (g.areas||[]).forEach(pushAreaRow);
-      }
-    });
-    orderedAreas.filter(a => !this.grupoOf(a)).forEach(pushAreaRow);
-    const visAreas = laneRows.filter(r => r.kind === 'area').map(r => r.area);
+    // Qué áreas quedan visibles: recorre el MISMO árbol grupo→subgrupo→área
+    // que el mini-mapa (`kidsOfGroup`/`selfAreaOf`), para que ambos concuerden
+    // siempre. Un área fusionada con su grupo (p. ej. "IDU" con el grupo
+    // "IDU") se mantiene visible SIEMPRE que el grupo exista, sin importar si
+    // está plegado — plegar solo oculta sus OTRAS hijas (EyD, Ambiental, …).
+    // Así la posición de "IDU"/"Construcción" en el mini-mapa no depende de
+    // carriles que aparecen y desaparecen, y no "salta" de área al plegar.
+    const visAreas = [];
+    const collectVisibleAreas = (spec) => {
+      if (spec.kind === 'area') { if (!hidden[spec.a]) visAreas.push(spec.a); return; }
+      const g = spec.g;
+      const self = selfAreaOf(g);
+      if (self && !hidden[self]) visAreas.push(self);
+      if (isGroupOpen(g.name)) kidsOfGroup(g).forEach(collectVisibleAreas);
+    };
+    mmRoots.forEach(collectVisibleAreas);
     const visAreaSet = new Set(visAreas);
     const visible = nodes.filter(n => visAreaSet.has(n.area) && isNodeVisible(n));
 
