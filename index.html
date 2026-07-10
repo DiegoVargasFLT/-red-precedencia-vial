@@ -1796,36 +1796,50 @@ class Component extends DCLogic {
     let canvasH = yCur + 40;
 
     // ── Mini-mapa de grupos de área ─────────────────────────────────────────
-    // Nodos conectados por curvas, posicionados con el MISMO algoritmo
-    // secuencial que `placeSub` usa para las ramas de actividades (alto
-    // propio vs. alto de hijos, centrado, acumulado en orden) — no depende
-    // de `laneY` ni de ningún otro cálculo que cambie con lo que esté
-    // abierto/cerrado en otra rama, así que un nodo nunca "salta" de lugar.
+    // Nodos conectados por curvas. Cada HOJA (un área) se ancla a la altura
+    // de SU carril real (`laneCenterY`) — así el nodo del área queda a la
+    // misma altura que sus actividades a la derecha y el esquema queda
+    // "conectado" con el diagrama, no suelto. Cada nodo-grupo se centra
+    // contra sus hijos (igual que en el diagrama de referencia). Como los
+    // carriles se apilan EN EL MISMO ORDEN en que el mini-mapa recorre el
+    // árbol (`collectVisibleAreas` == DFS de `mmRoots`), las alturas crecen
+    // de forma monótona y ningún nodo "salta": su Y depende solo de su
+    // propio carril / sus hijos, no del alto total del lienzo.
     // Clic en el cuerpo del nodo edita su nombre (grupo) o su visibilidad
     // (área); el pliegue/despliegue es un botón aparte, igual que el
     // badge ▸/▾ de subactividades en las tarjetas normales.
+    const laneCenterY = (a) => (laneY[a] != null) ? (laneY[a] + LP_T + laneMax[a] / 2) : null;
     const mmPos = {};
     const mmNodes = [];
-    const placeMM = (spec, x, yTop) => {
+    let mmFlowY = 34; // para hojas sin carril propio (grupo vacío / colapsado sin área homónima)
+    const placeMM = (spec, x) => {
       const isArea = spec.kind === 'area';
       const g = isArea ? null : spec.g;
       const key = isArea ? ('a:' + spec.a) : ('g:' + g.name);
       const open = !isArea && isGroupOpen(g.name);
       const kids = open ? kidsOfGroup(g) : [];
       const selfH = MM_H;
-      let y, totalH;
+      let cy;
       if (kids.length) {
         const childX = x + MM_W + MM_GAPX;
-        let yc = yTop;
-        kids.forEach((k, i) => { if (i) yc += MM_GAPY; yc += placeMM(k, childX, yc); });
-        const childrenH = yc - yTop;
-        y = yTop + Math.max(0, (childrenH - selfH) / 2);
-        totalH = Math.max(selfH, childrenH);
+        const childCys = kids.map(k => placeMM(k, childX));
+        cy = (Math.min(...childCys) + Math.max(...childCys)) / 2;
       } else {
-        y = yTop;
-        totalH = selfH;
+        // Hoja: ancla al carril de su área (área hoja, o grupo colapsado con
+        // su área homónima). Si no tiene carril (grupo vacío como
+        // "Financiero", o grupo colapsado sin área propia), fluye en orden.
+        const anchorArea = isArea ? spec.a : selfAreaOf(g);
+        const lc = anchorArea != null ? laneCenterY(anchorArea) : null;
+        if (lc != null) {
+          cy = lc;
+          mmFlowY = Math.max(mmFlowY, cy + selfH / 2 + MM_GAPY);
+        } else {
+          cy = mmFlowY + selfH / 2;
+          mmFlowY += selfH + MM_GAPY;
+        }
       }
-      mmPos[key] = {x, y, cy: y + selfH / 2, w: MM_W, h: selfH};
+      const y = cy - selfH / 2;
+      mmPos[key] = {x, y, cy, w: MM_W, h: selfH};
       const expandable = !isArea && kidsOfGroup(g).length > 0;
       const label = isArea ? spec.a : g.name;
       const color = isArea ? (areaColorMap[spec.a] || '#7486A6') : (g.color || '#7486A6');
@@ -1840,10 +1854,9 @@ class Component extends DCLogic {
           else this.renameGrupo(g.name);
         }
       });
-      return totalH;
+      return cy;
     };
-    let mmY = 34;
-    mmRoots.forEach(r => { mmY += placeMM(r, 26, mmY) + MM_GAPY; });
+    mmRoots.forEach(r => placeMM(r, 26));
     const mmPaths = [];
     const linkMM = (spec) => {
       if (spec.kind === 'area' || !isGroupOpen(spec.g.name)) return;
