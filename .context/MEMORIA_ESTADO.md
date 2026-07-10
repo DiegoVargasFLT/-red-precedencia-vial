@@ -114,6 +114,25 @@ solo por el código. No asumir que "IDU" siempre es subgrupo de
 "Construcción" con esas 5 áreas exactas — verificar el estado real
 (`fetch` a Supabase o la UI) antes de diagnosticar algo como bug de código.
 
+## Estructura de referencia del proyecto "Cierre de Proyectos" (2026-07-10)
+El usuario dio la jerarquía objetivo con un diagrama de referencia; se
+reconfiguró `grupos`/`areas` en Supabase para que coincida exactamente
+(escrito directo vía API REST tras confirmar con el usuario — no por la UI
+de prompts, habría tomado ~15 diálogos):
+- **Construcción** → áreas directas EAAB, SDM + subgrupo **IDU** → áreas
+  IDU(self), EyD, Componente Técnico, ESP, Ambiental, Social.
+- **Predial** (nivel superior, ya no un nodo suelto) → áreas Predial(self),
+  Infraestructura, "REDES (Reserva Vial)", "Canal, Quebradas, Humedal",
+  EBAR, "Operación 2" — estas 5 son áreas NUEVAS, creadas vacías (0
+  actividades), con prefijos INF/RED/CQH/EBA/OP2 respectivamente.
+- **Jurídico**, **Financiero**: sin cambios, siguen sueltos.
+
+Si esto vuelve a verse "desordenado" en una sesión futura, lo primero es
+comparar `grupos`/`areas` en vivo contra ESTA lista (no asumir que el
+código de `renderVals()` está mal) — ver la nota de arriba.
+
 ## Pendientes / posibles siguientes pasos
 - Ninguno abierto. El mini-mapa de nodos fue la versión que el usuario
-  confirmó visualmente como correcta (commit `b703f55`).
+  confirmó visualmente como correcta (commit `b703f55`), y la estructura de
+  grupos/áreas de "Cierre de Proyectos" ya coincide con su diagrama de
+  referencia.
