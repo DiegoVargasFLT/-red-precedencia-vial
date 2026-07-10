@@ -31,6 +31,8 @@
     .soft{border-radius:10px;}
     .node-card{border-radius:12px;box-shadow:0 1px 2px rgba(31,59,111,.05);}
     .node-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(31,59,111,.15);border-color:#61B1E3!important;}
+    .mm-node{border-radius:7px;transition:box-shadow .14s ease,transform .14s ease;}
+    .mm-node:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(31,59,111,.28)!important;}
     .dep-item{border-radius:10px;}
     .dep-item:hover{border-color:#61B1E3!important;box-shadow:0 4px 12px rgba(31,59,111,.10);transform:translateX(2px);}
     .doc-row{display:flex;gap:9px;align-items:flex-start;border:1px solid #D9E1EC;border-radius:10px;padding:9px 10px;margin-top:6px;transition:box-shadow .16s ease,background .16s ease;}
@@ -398,7 +400,7 @@
   <div style="display:flex;align-items:center;gap:8px;padding:10px 20px;background:#F4F7FB;border-bottom:1px solid #D9E1EC;flex-wrap:wrap">
     <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-right:4px">ÁREAS</span>
     <sc-for list="{{chips}}" as="c" hint-placeholder-count="7">
-      <button onClick="{{c.onToggle}}" style="display:{{c.show}};margin-left:{{c.indent}}px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#61B1E3">{{c.mark}} {{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
+      <button onClick="{{c.onToggle}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#61B1E3">{{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
     </sc-for>
     <button onClick="{{onAddArea}}" title="Agregar nueva área" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ ÁREA</button>
     <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">⚙ GESTIONAR</button>
@@ -435,9 +437,6 @@
         <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
           <div style="position:absolute;left:0;top:{{l.y}}px;height:{{l.h}}px;width:{{canvasW}}px;border-top:2px solid {{l.line}};border-left:4px solid {{l.color}};pointer-events:none"></div>
         </sc-for>
-        <sc-for list="{{groupHeaders}}" as="gh" hint-placeholder-count="2">
-          <div style="position:absolute;left:0;top:{{gh.y}}px;height:{{gh.h}}px;width:{{canvasW}}px;background:rgba(244,247,251,0.7);border-top:2px solid {{gh.color}};border-bottom:2px solid {{gh.line}};pointer-events:none"></div>
-        </sc-for>
         {{edgesSvg}}
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
           <div onClick="{{n.onClick}}" title="{{n.tip}}" class="node-card" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease,transform .14s ease,box-shadow .16s ease">
@@ -463,24 +462,16 @@
             </div>
           </div>
         </sc-for>
-        <div style="position:sticky;left:0;width:236px;height:0;z-index:4;display:block">
-          <sc-for list="{{groupBands}}" as="b" hint-placeholder-count="2">
-            <div title="{{b.label}}" style="position:absolute;left:{{b.x}}px;top:{{b.top}}px;height:{{b.height}}px;width:6px;background:{{b.color}};border-radius:4px;opacity:0.9;box-shadow:0 1px 4px rgba(31,59,111,.15)"></div>
-          </sc-for>
-          <sc-for list="{{lanes}}" as="l" hint-placeholder-count="7">
-            <div class="soft" style="position:absolute;left:26px;top:{{l.labelY}}px;display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.94);border:1px solid #D9E1EC;border-left:4px solid {{l.color}};padding:5px 8px;max-width:206px;box-shadow:0 2px 8px rgba(31,59,111,.06)">
-              <span style="width:9px;height:9px;flex:none;background:{{l.color}}"></span>
-              <div style="display:flex;flex-direction:column;gap:2px;flex:none">
-                <button onClick="{{l.onUp}}" title="Subir área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.upOpacity}}" style-hover="border-color:#61B1E3">▲</button>
-                <button onClick="{{l.onDown}}" title="Bajar área" style="width:17px;height:13px;line-height:1;padding:0;background:transparent;border:1px solid #D9E1EC;color:#475E89;font-size:8px;cursor:pointer;opacity:{{l.downOpacity}}" style-hover="border-color:#61B1E3">▼</button>
-              </div>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.12em;color:#475E89;white-space:nowrap">{{l.label}} <span style="color:#94A1BA">/ {{l.count}}</span></span>
-            </div>
-          </sc-for>
-          <sc-for list="{{groupHeaders}}" as="gh" hint-placeholder-count="2">
-            <div onClick="{{gh.onToggle}}" title="Plegar/desplegar el grupo" class="soft" style="position:absolute;left:{{gh.indent}}px;top:{{gh.labelY}}px;display:flex;align-items:center;gap:6px;background:{{gh.color}};border:1px solid {{gh.color}};padding:5px 9px;max-width:206px;box-shadow:0 2px 8px rgba(31,59,111,.10);cursor:pointer">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#FFFFFF;flex:none">{{gh.mark}}</span>
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;color:#FFFFFF;white-space:nowrap">{{gh.label}} <span style="opacity:0.75">/ {{gh.count}}</span></span>
+        <div style="position:sticky;left:0;width:{{mmW}}px;height:0;z-index:4;display:block">
+          <svg width="{{mmW}}" height="{{mmH}}" style="position:absolute;left:0;top:0;pointer-events:none;overflow:visible">
+            <sc-for list="{{mmPaths}}" as="p" hint-placeholder-count="6">
+              <path d="{{p.d}}" fill="none" stroke="{{p.color}}" stroke-width="1.6" opacity="0.55"></path>
+            </sc-for>
+          </svg>
+          <sc-for list="{{mmNodes}}" as="m" hint-placeholder-count="8">
+            <div onClick="{{m.onClick}}" title="{{m.label}}" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;gap:5px;background:{{m.color}};box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
+              <span style="display:{{m.markDisplay}};font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#FFFFFF;flex:none">{{m.mark}}</span>
+              <span style="font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.03em;color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{m.label}}</span>
             </div>
           </sc-for>
         </div>
@@ -1576,7 +1567,6 @@ class Component extends DCLogic {
     const compact = this.props.modoCompacto ?? false;
     const curv = this.props.curvatura ?? 0.5;
     const showFase = this.props.mostrarFase ?? true;
-    const NW = 216, NH = compact ? 54 : 78, CG = 110, SG = 14, LP_T = 44, LP_B = 20, LEFT = 190;
 
     const nodes = this.state.nodes;
     const sc = this.scMap();
@@ -1585,6 +1575,39 @@ class Component extends DCLogic {
     const levels = this.computePhaseLevels(nodes, byId);
     const hidden = this.state.hidden;
     const expanded = this.state.expanded;
+    const orderedAreas = this.effectiveAreaOrder();
+    const gsAll = this.grupos();
+    const groupOpenState = this.state.groupOpen || {};
+    const isGroupOpen = (name) => groupOpenState[name] !== false;
+    // Árbol del mini-mapa de grupos: los "hijos" de un grupo son sus
+    // subgrupos + sus áreas propias, salvo la que comparte nombre con el
+    // grupo (se fusiona en su propio nodo — ver renderizado más abajo).
+    const normName = s => (s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+    const selfAreaOf = (g) => (g.areas || []).find(a => orderedAreas.includes(a) && normName(a) === normName(g.name)) || null;
+    const kidsOfGroup = (g) => {
+      const subs = gsAll.filter(s => s.parent === g.name);
+      const self = selfAreaOf(g);
+      const ownAreas = (g.areas || []).filter(a => a !== self && orderedAreas.includes(a));
+      return [...subs.map(s => ({kind: 'group', g: s})), ...ownAreas.map(a => ({kind: 'area', a}))];
+    };
+    const mmRoots = [
+      ...gsAll.filter(g => !g.parent).map(g => ({kind: 'group', g})),
+      ...orderedAreas.filter(a => !this.grupoOf(a)).map(a => ({kind: 'area', a}))
+    ];
+    const MM_W = 108, MM_H = 26, MM_GAPX = 30, MM_GAPY = 10;
+    // Profundidad máxima del árbol ABIERTO (cuánto se extiende el mini-mapa
+    // hacia la derecha), para reservarle espacio antes de que empiece la
+    // primera columna de fase — así nunca queda una tarjeta debajo de un
+    // nodo del mini-mapa.
+    const mmDepthOf = (spec) => {
+      if (spec.kind === 'area') return 1;
+      const kids = isGroupOpen(spec.g.name) ? kidsOfGroup(spec.g) : [];
+      return kids.length ? 1 + Math.max(...kids.map(mmDepthOf)) : 1;
+    };
+    const mmMaxDepth = mmRoots.length ? Math.max(...mmRoots.map(mmDepthOf)) : 0;
+    const NW = 216, NH = compact ? 54 : 78, CG = 110, SG = 14, LP_T = 44, LP_B = 20;
+    const LEFT = mmMaxDepth ? (26 + mmMaxDepth * (MM_W + MM_GAPX) + 20) : 190;
+
     // Jerarquía de N niveles: un nodo es visible solo si TODOS sus ancestros
     // están expandidos (no solo el padre inmediato). Colapsado por defecto.
     const isNodeVisible = (n) => {
@@ -1597,17 +1620,9 @@ class Component extends DCLogic {
       }
       return true;
     };
-    const orderedAreas = this.effectiveAreaOrder();
 
-    // Filas del carril lateral: alternan encabezados de grupo/subgrupo
-    // (un "botón" plegable, igual que cualquier área) y carriles de área
-    // reales. Un encabezado SIEMPRE se muestra (aunque esté plegado, para
-    // poder reabrirlo); sus áreas (y las de sus subgrupos) solo entran en
-    // `visAreas` si el grupo/subgrupo está abierto. Por defecto TODO está
-    // abierto — plegar es una acción explícita, no el estado inicial.
-    const gsAll = this.grupos();
-    const groupOpenState = this.state.groupOpen || {};
-    const isGroupOpen = (name) => groupOpenState[name] !== false;
+    // Filas del carril lateral: recorren grupo → subgrupo → área para saber
+    // qué áreas quedan visibles según `groupOpen` (el mini-mapa las pliega).
     const laneRows = [];
     const pushAreaRow = (a) => { if (orderedAreas.includes(a) && !hidden[a]) laneRows.push({kind: 'area', area: a}); };
     gsAll.filter(g => !g.parent).forEach(g => {
@@ -1725,70 +1740,93 @@ class Component extends DCLogic {
       .slice()
       .sort((a, b) => (areaOrderIdx[a] ?? 999) - (areaOrderIdx[b] ?? 999))
       .map(a => ({ label: this.prefixFor(a), color: areaColorMap[a] || '#94A1BA' }));
-    // Encabezado de grupo/subgrupo: una fila más, con el mismo estilo de
-    // "botón" que un carril de área — se planta ANTES de sus áreas y las
-    // pliega/despliega (comparte estado con la barra ÁREAS de arriba).
-    const HEADER_H = 40;
-    const laneY = {}, laneH = {};
+    const laneY = {};
     let yCur = 34;
-    const lanes = [];
-    const groupHeaders = [];
-    let areaIdx = 0;
-    laneRows.forEach(row => {
-      if (row.kind === 'header') {
-        groupHeaders.push({
-          name: row.name, indent: row.level * 16,
-          label: row.name.toUpperCase(), count: row.count,
-          color: row.color, line: row.color + '80',
-          mark: row.open ? '▾' : '▸',
-          y: yCur, h: HEADER_H, labelY: yCur + 12,
-          onToggle: (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [row.name]: !isGroupOpen(row.name)}})); }
-        });
-        yCur += HEADER_H;
-        return;
-      }
-      const a = row.area;
+    const lanes = visAreas.map((a, i) => {
       const h = LP_T + laneMax[a] + LP_B;
-      laneY[a] = yCur; laneH[a] = h;
+      laneY[a] = yCur;
       const areaColor = areaColorMap[a];
-      lanes.push({
+      const L = {
         areaName: a,
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
         color: areaColor, line: areaColor + '80',
-        y: yCur, h, labelY: yCur + 12,
+        y: yCur, h,
         onUp: (e) => { e.stopPropagation(); this.moveArea(a, -1); },
         onDown: (e) => { e.stopPropagation(); this.moveArea(a, 1); },
-        upOpacity: areaIdx === 0 ? 0.2 : 0.85,
-        downOpacity: areaIdx === visAreas.length - 1 ? 0.2 : 0.85
-      });
+        upOpacity: i === 0 ? 0.2 : 0.85,
+        downOpacity: i === visAreas.length - 1 ? 0.2 : 0.85
+      };
       yCur += h;
-      areaIdx++;
+      return L;
     });
     let canvasW = colX[maxLevelAll + 1] + 40;   // se amplía con las ramas
-    const canvasH = yCur + 40;
+    let canvasH = yCur + 40;
 
-    // Bandas/llaves de grupo (macro-áreas): una barra vertical a la izquierda
-    // que abarca los carriles de las áreas del grupo. Dos niveles: grupo (nivel
-    // 0) y subgrupo (nivel 1, indentado). Requiere que las áreas de un grupo
-    // sean contiguas — lo garantiza groupedAreaOrder().
-    const groupBands = [];
-    const spanOf = (areaList) => {
-      const vis = areaList.filter(a => laneY[a] != null);
-      if(!vis.length) return null;
-      const top = Math.min(...vis.map(a => laneY[a]));
-      const bot = Math.max(...vis.map(a => laneY[a] + laneH[a]));
-      return { top, height: bot - top };
-    };
-    this.grupos().filter(g => !g.parent).forEach(g => {
-      const subs = this.grupos().filter(s => s.parent === g.name);
-      const allAreas = [...(g.areas||[]), ...subs.flatMap(s => s.areas||[])];
-      const sp = spanOf(allAreas);
-      if(sp) groupBands.push({ level: 0, x: 2, color: g.color || '#7486A6', label: g.name.toUpperCase(), top: sp.top, height: sp.height });
-      subs.forEach(s => {
-        const sps = spanOf(s.areas||[]);
-        if(sps) groupBands.push({ level: 1, x: 12, color: s.color || g.color || '#7486A6', label: s.name.toUpperCase(), top: sps.top, height: sps.height });
+    // ── Mini-mapa de grupos de área ─────────────────────────────────────────
+    // En vez de botones/pestañas: nodos conectados por curvas, igual que las
+    // ramas de actividades. Un grupo se pliega/despliega haciendo clic en su
+    // propio nodo; un área hoja alterna su visibilidad en el diagrama. Si el
+    // nombre de un grupo coincide con una de sus áreas (p. ej. grupo "IDU"
+    // con área "IDU"), esa área se fusiona en el propio nodo del grupo en
+    // vez de dibujarse como hija aparte (así el árbol no repite el nombre).
+    const areaCenterY = (a) => (laneY[a] != null) ? laneY[a] + LP_T + laneMax[a] / 2 : null;
+    const mmPos = {};
+    const mmNodes = [];
+    let mmFallbackY = yCur + 20;
+    const placeMM = (spec, x) => {
+      const isArea = spec.kind === 'area';
+      const g = isArea ? null : spec.g;
+      const selfArea = isArea ? spec.a : selfAreaOf(g);
+      const key = isArea ? ('a:' + spec.a) : ('g:' + g.name);
+      const open = !isArea && isGroupOpen(g.name);
+      const kids = open ? kidsOfGroup(g) : [];
+      let centerY;
+      if (kids.length) {
+        const childX = x + MM_W + MM_GAPX;
+        const childYs = kids.map(k => placeMM(k, childX));
+        centerY = (Math.min(...childYs) + Math.max(...childYs)) / 2;
+      } else if (selfArea != null && areaCenterY(selfArea) != null) {
+        centerY = areaCenterY(selfArea);
+      } else {
+        centerY = mmFallbackY;
+        mmFallbackY += MM_H + MM_GAPY;
+      }
+      const y = centerY - MM_H / 2;
+      mmPos[key] = {x, y, cy: centerY, w: MM_W, h: MM_H};
+      const expandable = !isArea && kidsOfGroup(g).length > 0;
+      const label = isArea ? spec.a : g.name;
+      const color = isArea ? (areaColorMap[spec.a] || '#7486A6') : (g.color || '#7486A6');
+      mmNodes.push({
+        key, x, y, w: MM_W, h: MM_H, label: label.toUpperCase(), color,
+        mark: expandable ? (open ? '−' : '+') : '',
+        markDisplay: expandable ? 'inline' : 'none',
+        onClick: (e) => {
+          e.stopPropagation();
+          if (expandable) this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}}));
+          else if (selfArea) this.setState(s => ({hidden: {...s.hidden, [selfArea]: !s.hidden[selfArea]}}));
+        }
       });
-    });
+      return centerY;
+    };
+    mmRoots.forEach(r => placeMM(r, 26));
+    const mmPaths = [];
+    const linkMM = (spec) => {
+      if (spec.kind === 'area' || !isGroupOpen(spec.g.name)) return;
+      const pk = 'g:' + spec.g.name;
+      kidsOfGroup(spec.g).forEach(k => {
+        const ck = k.kind === 'area' ? 'a:' + k.a : 'g:' + k.g.name;
+        const s = mmPos[pk], t = mmPos[ck];
+        const x1 = s.x + s.w, y1 = s.cy, x2 = t.x, y2 = t.cy;
+        const dx = Math.max(20, (x2 - x1) * 0.5);
+        mmPaths.push({d: 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2,
+          color: spec.g.color || '#7486A6'});
+        linkMM(k);
+      });
+    };
+    mmRoots.forEach(linkMM);
+    const mmW = Math.max(236, ...mmNodes.map(n => n.x + n.w + 24));
+    const mmH = Math.max(canvasH, ...mmNodes.map(n => n.y + n.h + 20));
+    canvasH = mmH; // el lienzo debe ser al menos tan alto como el mini-mapa
 
     // bandas de fase (fondo por etapa del proyecto)
     const FASE_STYLES = {
@@ -2029,16 +2067,11 @@ class Component extends DCLogic {
     const boardDocsTotal = nodes.reduce((s, n) => s + (n.docs ? n.docs.length : 0), 0);
     const boardDocsDone = nodes.reduce((s, n) => s + (n.docs ? n.docs.filter(d => d && d.done).length : 0), 0);
 
-    // chips — barra ÁREAS como árbol colapsable: grupo (nivel 0) → subgrupo
-    // (nivel 1) → área (hoja, el toggle de visibilidad de siempre). Comparte
-    // `groupOpen`/`isGroupOpen` con las filas de grupo del propio diagrama
-    // (ver más arriba): plegar desde cualquiera de los dos lugares oculta
-    // los mismos hijos en ambos.
-    const gs = gsAll;
-    const areaChip = (a, level, show) => {
+    // chips — barra ÁREAS: un toggle de visibilidad por área, plano (la
+    // jerarquía de grupos se navega en el mini-mapa del diagrama, no aquí).
+    const chips = orderedAreas.map(a => {
       const off = !!hidden[a];
       return {
-        kind: 'area', level, show, mark: '', indent: level * 14,
         label: a, count: nodes.filter(n => n.area === a).length,
         bg: off ? 'transparent' : '#FFFFFF',
         fg: off ? '#94A1BA' : '#1F3B6F',
@@ -2046,50 +2079,6 @@ class Component extends DCLogic {
         bs: off ? 'dashed' : 'solid',
         onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
       };
-    };
-    // Área "suelta" (no pertenece a ningún grupo): mismo toggle de
-    // visibilidad que una hoja normal, pero con un acento neutro fijo y una
-    // marca "○" para que se distinga a simple vista de los botones de grupo
-    // (▸/▾ + color propio) y de las áreas anidadas dentro de un grupo.
-    const looseAreaChip = (a) => {
-      const off = !!hidden[a];
-      return {
-        kind: 'area', level: 0, show: 'inline-block', mark: '○', indent: 0,
-        label: a, count: nodes.filter(n => n.area === a).length,
-        bg: off ? 'transparent' : '#FFFFFF',
-        fg: off ? '#94A1BA' : '#475E89',
-        bd: off ? '#D9E1EC' : '#7486A6',
-        bs: off ? 'dashed' : 'solid',
-        onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
-      };
-    };
-    const groupChip = (g, level, show) => {
-      const open = isGroupOpen(g.name);
-      const areasIn = [...(g.areas||[]), ...gs.filter(s => s.parent === g.name).flatMap(s => s.areas||[])];
-      const color = g.color || '#7486A6';
-      return {
-        kind: 'group', level, show, mark: open ? '▾' : '▸', indent: level * 14,
-        label: g.name, count: nodes.filter(n => areasIn.includes(n.area)).length,
-        bg: open ? color : 'transparent',
-        fg: open ? '#FFFFFF' : color,
-        bd: color, bs: 'solid',
-        onToggle: () => this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}}))
-      };
-    };
-    const chips = [];
-    // Áreas sueltas primero: van ANTES que los botones de grupo, con su
-    // propio acento neutro, para que de un vistazo se distinga qué áreas no
-    // están agrupadas (comportamiento previo para proyectos sin grupos).
-    orderedAreas.filter(a => !this.grupoOf(a)).forEach(a => chips.push(looseAreaChip(a)));
-    gs.filter(g => !g.parent).forEach(g => {
-      chips.push(groupChip(g, 0, 'inline-block'));
-      const open0 = isGroupOpen(g.name);
-      gs.filter(s => s.parent === g.name).forEach(s => {
-        chips.push(groupChip(s, 1, open0 ? 'inline-block' : 'none'));
-        const open1 = open0 && isGroupOpen(s.name);
-        (s.areas||[]).forEach(a => chips.push(areaChip(a, 2, open1 ? 'inline-block' : 'none')));
-      });
-      (g.areas||[]).forEach(a => chips.push(areaChip(a, 1, open0 ? 'inline-block' : 'none')));
     });
 
     // panel
@@ -2419,7 +2408,7 @@ class Component extends DCLogic {
     const docRowsCountLabel = docRows.length + ' documento(s) · ' + docRows.reduce((s, r) => s + r.count, 0) + ' referencia(s)' + (crossMode ? ' · todos los proyectos' : '');
 
     return {
-      canvasW, canvasH, lanes, groupHeaders, nodeVMs, edgesSvg, chips, fasesBands, groupBands,
+      canvasW, canvasH, lanes, mmNodes, mmPaths, mmW, mmH, nodeVMs, edgesSvg, chips, fasesBands,
       projectName: this.state.projectName,
       projectSubtitle: this.state.projectSubtitle,
       onEditNombre: () => this.editProjectName(),
