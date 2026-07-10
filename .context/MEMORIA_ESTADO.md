@@ -58,10 +58,19 @@ commit `a9208bc` — ver "Qué NO hacer" para las versiones descartadas):
   y la Y de cada nodo depende solo de su propio carril / sus hijos — no del
   alto total del lienzo. Una hoja SIN carril (grupo vacío como "Financiero"
   0 áreas, o grupo colapsado sin área homónima) fluye en orden con un
-  cursor `mmFlowY` (que avanza monótonamente, sin depender del alto total).
+  cursor `mmFlowY`. IMPORTANTE (commit `b17ffce`): `mmFlowY` salta hasta el
+  FONDO del carril anclado (`laneBottomY = laneY + LP_T + laneMax + LP_B`),
+  NO solo su centro — si no, una hoja sin carril caía DENTRO del carril
+  anterior (bug: "Financiero se metía en Jurídico"). Vale igual al colapsar
+  un grupo sin área propia.
 - `mmNodes`/`mmPaths` se renderizan en el `<div style="position:sticky">`
   del margen izquierdo; `canvasH` se reasigna a `mmH` (`let`, no `const`)
   para que el lienzo scrollable sea al menos tan alto como el mini-mapa.
+- Líneas divisorias de carril (`lanes` template): arrancan en `left:{{l.x}}`
+  = `LEFT` (inicio de las columnas de fase), con `right:0` — así los
+  divisores horizontales SOLO se ven sobre Beneficiarios/Liquidación, no
+  cruzando el esquema de grupos/áreas de la izquierda (pedido del usuario,
+  commit `b17ffce`).
 - Clic en el CUERPO del nodo edita: `renameGrupo` (grupo) o toggle de
   `hidden` (área). El pliegue/despliegue es un botón (▸/▾) APARTE dentro
   del nodo — igual que el badge de subactividades de las tarjetas
