@@ -2085,6 +2085,26 @@ class Component extends DCLogic {
     topVis.forEach(n => placeSub(n.id, colX[levels[n.id]], laneY[n.area] + LP_T + yOff[n.id]));
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
 
+    // Conectores área → actividades: una curva desde el nodo del área (en el
+    // mini-mapa) hacia cada actividad de nivel superior de esa área, para que
+    // se vea qué actividades pertenecen a cada área (p. ej. EyD → EAAB, SDM,
+    // ESP, Ambiental). Mismo color del área.
+    const areaActEls = [];
+    visAreas.forEach(a => {
+      const an = mmPos['a:' + a];
+      if (!an) return;
+      topVis.filter(n => n.area === a && pos[n.id]).forEach(n => {
+        const p = pos[n.id];
+        const x1 = an.x + an.w, y1 = an.cy, x2 = p.x, y2 = p.y + hOf(byId[n.id]) / 2;
+        const dx = Math.max(24, (x2 - x1) * 0.4);
+        areaActEls.push(React.createElement('path', {
+          key: 'aa-' + a + '-' + n.id,
+          d: 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2,
+          fill: 'none', stroke: (areaColorMap[a] || '#7486A6'), strokeWidth: 1.4, opacity: 0.45
+        }));
+      });
+    });
+
     // node view models — una principal expandida conserva su tamaño de
     // tarjeta normal (no se compacta a un título); solo cambia su marca
     // ▸/▾ de subactividades, igual que cualquier otra tarjeta con hijas.
@@ -2233,6 +2253,7 @@ class Component extends DCLogic {
     const edgesSvg = React.createElement('svg',
       {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
       React.createElement('defs', null, this.marker('arwS', '#B9C6D8'), this.marker('arwC', '#61B1E3')),
+      areaActEls,
       guidePaths,
       paths);
 
