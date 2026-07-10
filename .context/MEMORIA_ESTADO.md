@@ -63,6 +63,19 @@ Solicitando Reparto, Minutas, Paz y Salvo Predial, Firma Escritura Notaría,
 Pago Notariado y Registro, FMI), Adquirido IDU (2), Predios DADEP (2), No
 Adquiridos (2)]. Todas heredan área Predial / fase Beneficiarios.
 
+## Regla: subactividad hereda el área de su padre + líneas área→actividad (commit `8b2536d`)
+- **Datos:** el usuario pidió que toda subactividad tenga el área de la
+  actividad que la contiene. Se corrigieron en Supabase 12 nodos con área
+  incorrecta ("IDU"): 11 subs de Componente Técnico (IDU-02-CT-*) → área
+  "Componente Técnico", y IDU-02-CL-D → "Juridico". Regla aplicada:
+  `subactividad.area = area del padre inmediato` (top-down). Si vuelve a
+  pasar, propagar así. (Tras el fix, área "IDU" quedó con 0 nodos — es solo
+  el nombre del grupo/subgrupo, no un área con actividades propias.)
+- **UI (`areaActEls` en `renderVals`):** líneas conectoras curvas desde el
+  nodo de cada área (mini-mapa) hacia cada actividad de nivel superior de esa
+  área (p. ej. EyD → EAAB/SDM/ESP/Ambiental). Se calculan tras `placeSub`
+  usando `mmPos['a:'+area]` y `pos[id]`, y se agregan a `edgesSvg`.
+
 ## Sesión UI 2026-07-10 (commit `d80e34c`)
 Tres ajustes de interfaz:
 - El mini-mapa de grupos/áreas dejó de ser `position:sticky` → ahora se
