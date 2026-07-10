@@ -1765,13 +1765,21 @@ class Component extends DCLogic {
     // está plegado — plegar solo oculta sus OTRAS hijas (EyD, Ambiental, …).
     // Así la posición de "IDU"/"Construcción" en el mini-mapa no depende de
     // carriles que aparecen y desaparecen, y no "salta" de área al plegar.
+    // ¿Un área tiene actividades de nivel superior propias? (las que ocupan
+    // el carril; las subactividades cuelgan de su padre en otro carril).
+    const areaHasTop = (a) => nodes.some(n => !n.parent && n.area === a);
     const visAreas = [];
     const collectVisibleAreas = (spec) => {
       if (spec.kind === 'area') { if (!hidden[spec.a]) visAreas.push(spec.a); return; }
       const g = spec.g;
       const self = selfAreaOf(g);
-      if (self && !hidden[self]) visAreas.push(self);
-      if (isGroupOpen(g.name)) kidsOfGroup(g).forEach(collectVisibleAreas);
+      const open = isGroupOpen(g.name);
+      // El carril del área homónima del grupo (p. ej. "IDU") solo se crea si:
+      // el grupo está COLAPSADO (su nodo se ancla ahí), o esa área tiene
+      // actividades propias. Si el grupo está expandido y su área homónima
+      // está vacía, NO se crea carril — era el gran espacio vacío de arriba.
+      if (self && !hidden[self] && (!open || areaHasTop(self))) visAreas.push(self);
+      if (open) kidsOfGroup(g).forEach(collectVisibleAreas);
     };
     mmRoots.forEach(collectVisibleAreas);
     const visAreaSet = new Set(visAreas);
@@ -1870,11 +1878,17 @@ class Component extends DCLogic {
       .slice()
       .sort((a, b) => (areaOrderIdx[a] ?? 999) - (areaOrderIdx[b] ?? 999))
       .map(a => ({ label: this.prefixFor(a), color: areaColorMap[a] || '#94A1BA' }));
-    const laneY = {};
+    // Carril COMPACTO para áreas sin actividades de nivel superior: en vez de
+    // reservar el alto completo (LP_T+NH+LP_B ≈ 142px) que dejaba grandes
+    // bandas vacías, solo reserva lo justo para su nodo del mini-mapa.
+    const EMPTY_LANE_H = 46;
+    const laneY = {}, laneHmap = {}, laneCYmap = {};
     let yCur = 34;
     const lanes = visAreas.map((a, i) => {
-      const h = LP_T + laneMax[a] + LP_B;
-      laneY[a] = yCur;
+      const empty = !areaHasTop(a);
+      const h = empty ? EMPTY_LANE_H : (LP_T + laneMax[a] + LP_B);
+      laneY[a] = yCur; laneHmap[a] = h;
+      laneCYmap[a] = empty ? (yCur + h / 2) : (yCur + LP_T + laneMax[a] / 2);
       const areaColor = areaColorMap[a];
       const L = {
         areaName: a,
@@ -1912,12 +1926,12 @@ class Component extends DCLogic {
     // Clic en el cuerpo del nodo edita su nombre (grupo) o su visibilidad
     // (área); el pliegue/despliegue es un botón aparte, igual que el
     // badge ▸/▾ de subactividades en las tarjetas normales.
-    const laneCenterY = (a) => (laneY[a] != null) ? (laneY[a] + LP_T + laneMax[a] / 2) : null;
-    // Fondo del carril: [laneY, laneY + LP_T + laneMax + LP_B]. El cursor de
-    // flujo debe saltar hasta el FONDO del carril anclado (no solo su centro),
-    // para que una hoja sin carril propio (p. ej. "Financiero") caiga DEBAJO
-    // del carril anterior y no se meta dentro de él.
-    const laneBottomY = (a) => (laneY[a] != null) ? (laneY[a] + LP_T + laneMax[a] + LP_B) : null;
+    const laneCenterY = (a) => (laneCYmap[a] != null) ? laneCYmap[a] : null;
+    // Fondo del carril. El cursor de flujo debe saltar hasta el FONDO del
+    // carril anclado (no solo su centro), para que una hoja sin carril propio
+    // (p. ej. "Financiero") caiga DEBAJO del carril anterior y no se meta
+    // dentro de él.
+    const laneBottomY = (a) => (laneY[a] != null) ? (laneY[a] + laneHmap[a]) : null;
     const mmSel = this.state.mmSel;  // área/grupo seleccionado (para realce)
     const mmPos = {};
     const mmNodes = [];
