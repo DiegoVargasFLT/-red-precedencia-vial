@@ -1628,11 +1628,51 @@ class Component extends DCLogic {
     const orderIdx = {};
     dfsOrder.forEach((id, i) => orderIdx[id] = i);
     const vSorted = visible.slice().sort((a, b) => orderIdx[a.id] - orderIdx[b.id]);
+
+    // ── Layout "rama a la derecha" ─────────────────────────────────────────
+    // Al expandir una principal, sus subactividades se despliegan hacia la
+    // DERECHA (no hacia abajo), amarradas a la principal y distribuidas
+    // verticalmente; una subactividad expandida abre a su vez su propia rama.
+    const BRANCH_GAPX = 46, BRANCH_GAPY = 12;
+    const visChildrenOf = id => (kidsOf[id]||[])
+      .filter(cid => byId[cid] && !hidden[byId[cid].area])
+      .sort((a, b) => orderIdx[a] - orderIdx[b]);
+    // Alto total que ocupa el subárbol de `id` (para reservar espacio en el carril).
+    const branchH = (id) => {
+      const kids = expanded[id] ? visChildrenOf(id) : [];
+      if(!kids.length) return hOf(byId[id]);
+      let sum = 0; kids.forEach((cid, i) => { sum += (i ? BRANCH_GAPY : 0) + branchH(cid); });
+      return Math.max(hOf(byId[id]), sum);
+    };
+    // Solo se apilan en el carril las principales de nivel superior; cada una
+    // reserva el alto de TODA su rama. Las subactividades se posicionan después.
+    const topVis = vSorted.filter(n => !n.parent);
+
+    // Ancho de columna dinámico: una rama a la derecha puede necesitar más de
+    // una columna de ancho, así que las columnas de fase siguientes se corren
+    // para no pisar los nodos de esa fase (evita que un nodo de una fase
+    // posterior quede dibujado encima de una rama expandida).
+    const branchDepth = (id) => {
+      const kids = expanded[id] ? visChildrenOf(id) : [];
+      return kids.length ? 1 + Math.max(...kids.map(branchDepth)) : 1;
+    };
+    const maxLevelAll = visible.length ? Math.max(...visible.map(n => levels[n.id])) : 0;
+    const extraDepth = {};
+    topVis.forEach(n => {
+      const L = levels[n.id];
+      const d = branchDepth(n.id) - 1;
+      if (d > (extraDepth[L] || 0)) extraDepth[L] = d;
+    });
+    const colX = [LEFT];
+    for (let L = 1; L <= maxLevelAll + 1; L++) {
+      colX[L] = colX[L - 1] + (NW + CG) + (extraDepth[L - 1] || 0) * (NW + BRANCH_GAPX);
+    }
+
     const yOff = {}, colH = {};
-    vSorted.forEach(n => {
+    topVis.forEach(n => {
       const k = n.area + '|' + levels[n.id];
       yOff[n.id] = colH[k] || 0;
-      colH[k] = yOff[n.id] + hOf(n) + SG;
+      colH[k] = yOff[n.id] + branchH(n.id) + SG;
     });
     const laneMax = {}; // altura ocupada, en píxeles
     visAreas.forEach(a => laneMax[a] = NH);
@@ -1681,8 +1721,7 @@ class Component extends DCLogic {
       yCur += h;
       return L;
     });
-    const maxLevel = visible.length ? Math.max(...visible.map(n => levels[n.id])) : 0;
-    const canvasW = LEFT + (maxLevel + 1) * (NW + CG) + 40;
+    let canvasW = colX[maxLevelAll + 1] + 40;   // se amplía con las ramas
     const canvasH = yCur + 40;
 
     // Bandas/llaves de grupo (macro-áreas): una barra vertical a la izquierda
@@ -1723,8 +1762,8 @@ class Component extends DCLogic {
       const st = FASE_STYLES[f];
       fasesBands.push({
         label: f.toUpperCase(),
-        x: LEFT + mn * (NW + CG) - CG / 2,
-        w: (mx - mn + 1) * (NW + CG),
+        x: colX[mn] - CG / 2,
+        w: colX[mx + 1] - colX[mn],
         bg: st.bg, fg: st.fg, bd: st.fg + '55'
       });
     });
@@ -1749,9 +1788,7 @@ class Component extends DCLogic {
     // un árbol/outline) y recibe un color de acento propio, para que un
     // vistazo baste para saber que una tarjeta "cuelga" de otra.
     const DEPTH_COLORS = ['#61B1E3', '#0E9384', '#D97706', '#8B5CF6', '#DB2777'];
-    const INDENT_STEP = 20, MAX_INDENT_LV = 5, MIN_W = 130;
     const depthOf = id => { let dd = 0, nd = byId[id]; while(nd && nd.parent && byId[nd.parent]){ dd++; nd = byId[nd.parent]; } return dd; };
-    const indentOf = dd => Math.min(dd, MAX_INDENT_LV) * INDENT_STEP;
     const depthColor = dd => DEPTH_COLORS[(dd - 1 + DEPTH_COLORS.length) % DEPTH_COLORS.length];
 
     // Botones "expandir hasta nivel N": uno por cada profundidad que exista
@@ -1764,17 +1801,33 @@ class Component extends DCLogic {
       levelButtons.push({ lv, color: depthColor(lv), onClick: () => this.expandToLevel(lv) });
     }
 
-    // node view models — las principales expandidas se dibujan aparte, como títulos
+    // Posiciones absolutas de TODO el subárbol visible. Cada principal de nivel
+    // superior parte de su columna de fase; sus subactividades se colocan a la
+    // derecha (rama) y se centran verticalmente contra el bloque de sus hijas.
     const pos = {};
+    const placeSub = (id, x, yTop) => {
+      const selfH = hOf(byId[id]);
+      const kids = expanded[id] ? visChildrenOf(id) : [];
+      if(!kids.length){ pos[id] = {x, y: yTop, w: NW, h: selfH, indent: 0, depth: depthOf(id)}; return selfH; }
+      const childX = x + NW + BRANCH_GAPX;
+      let yc = yTop;
+      kids.forEach((cid, i) => { if(i) yc += BRANCH_GAPY; yc += placeSub(cid, childX, yc); });
+      const childrenH = yc - yTop;
+      const py = yTop + Math.max(0, (childrenH - selfH) / 2);
+      pos[id] = {x, y: py, w: NW, h: selfH, indent: 0, depth: depthOf(id)};
+      return Math.max(selfH, childrenH);
+    };
+    topVis.forEach(n => placeSub(n.id, colX[levels[n.id]], laneY[n.area] + LP_T + yOff[n.id]));
+    Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
+
+    // node view models — las principales expandidas se dibujan aparte, como títulos
     const cardNodes = vSorted.filter(n => !isExpTitle(n));
     const titleNodes = vSorted.filter(n => isExpTitle(n));
     const nodeVMs = cardNodes.map(n => {
+      const P = pos[n.id] || {x: 0, y: 0, w: NW};
       const depth = depthOf(n.id);
-      const indent = indentOf(depth);
-      const x = LEFT + levels[n.id] * (NW + CG) + indent;
-      const w = Math.max(MIN_W, NW - indent);
-      const ny = laneY[n.area] + LP_T + yOff[n.id];
-      pos[n.id] = {x, y: ny, w, indent, depth};
+      const indent = 0;
+      const x = P.x, w = P.w, ny = P.y;
       let op = 1;
       if (chain && !chain.has(n.id)) op = 0.16;
       if (q) {
@@ -1818,11 +1871,10 @@ class Component extends DCLogic {
 
     // Títulos de grupo (principales expandidas): compactos, sin conexiones propias.
     const groupTitles = titleNodes.map(n => {
+      const P = pos[n.id] || {x: 0, y: 0, w: NW};
       const depth = depthOf(n.id);
-      const indent = indentOf(depth);
-      const x = LEFT + levels[n.id] * (NW + CG) + indent;
-      const w = Math.max(MIN_W, NW - indent);
-      const ny = laneY[n.area] + LP_T + yOff[n.id];
+      const indent = 0;
+      const x = P.x, w = P.w, ny = P.y;
       let op = 1;
       if (chain && !chain.has(n.id)) op = 0.16;
       if (q) {
@@ -1915,19 +1967,21 @@ class Component extends DCLogic {
         markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
       }));
     });
-    // Guías de jerarquía: conector en L (punteado, color del nivel) desde cada
-    // título hacia sus hijas visibles — refuerza la sangría y el color con una
-    // línea explícita de "esto pertenece a aquello".
+    // Guías de jerarquía: conector en forma de abanico (punteado, color del
+    // nivel) desde el borde derecho de cada título hacia sus hijas, que se
+    // despliegan a la derecha — refuerza con una línea explícita el "esto
+    // pertenece a aquello" de la rama.
     const guidePaths = [];
     titleNodes.forEach(n => {
       const kids = (kidsOf[n.id] || []).filter(cId => visSet.has(cId) && pos[cId]);
       const pn = pos[n.id];
       if (!kids.length || !pn) return;
-      const gx = pn.x + 9;
-      const yTop = pn.y + GH;
+      const gx = pn.x + pn.w + BRANCH_GAPX / 2;
       const color = depthColor(depthOf(kids[0]));
       const kidY = cId => pos[cId].y + (isExpTitle(byId[cId]) ? GH : NH) / 2;
-      const yBottom = Math.max(...kids.map(kidY));
+      const kidYs = kids.map(kidY);
+      const yTop = Math.min(...kidYs);
+      const yBottom = Math.max(...kidYs);
       guidePaths.push(React.createElement('path', {
         key: 'gv-' + n.id, d: 'M ' + gx + ' ' + yTop + ' L ' + gx + ' ' + yBottom,
         fill: 'none', stroke: color, strokeWidth: 1.4, strokeDasharray: '2,3', opacity: 0.5
