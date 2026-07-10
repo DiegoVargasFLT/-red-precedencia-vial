@@ -46,9 +46,39 @@ Proyecto de prueba útil para ver ramas multinivel: **"Cierre de Proyectos"**
 (selector de proyecto en la barra lateral) — tiene nodos con varias
 subactividades anidadas (p. ej. `IDU-02` → `IDU-02-CT` → 19 hijas).
 
+## Sesión 2026-07-10 (continuación): tarjetas sin compactar + barra ÁREAS en árbol
+Dos pedidos del usuario, resueltos en el commit `bf53a3f`:
+
+1. **Una principal expandida ya NO se compacta** a un título delgado de
+   30px (`GH`). Se eliminó por completo el concepto de "tarjeta-título": el
+   `isExpTitle(n)` ahora se usa SOLO para deduplicar líneas de dependencia a
+   nivel de grupo en `collectEdges` (el `isFan` pass), no para cambiar
+   tamaño ni estilo. `hOf(n)` ya no depende de `isExpTitle`; siempre
+   devuelve el alto normal de tarjeta (`NH` + chips). `nodeVMs` se
+   construye ahora desde `vSorted` completo (ya no hay split
+   `cardNodes`/`titleNodes`); se eliminó el array/objeto `groupTitles` y su
+   bloque `<sc-for>` en el template, y la clase CSS `.group-title` (código
+   muerto). El toggle ▸/▾ de una principal sigue siendo el mismo badge
+   `subsMark`/`onToggleSubs` que ya tenían todas las tarjetas.
+
+2. **Barra "ÁREAS" rediseñada como árbol colapsable** (antes: fila plana de
+   chips, uno por área). Ahora es una lista PLANA pero con jerarquía visual:
+   grupo (nivel 0) → subgrupo (nivel 1) → área hoja (nivel 2), usando
+   `display:none/inline-block` para ocultar hijos de un grupo plegado (no
+   hay sc-for anidado — el motor de plantillas de este proyecto no lo
+   soporta en otros lados del código, así que se evitó por consistencia).
+   Nuevo estado UI-only `state.groupOpen` (igual que `hidden`/`expanded`:
+   no se persiste, se resetea en `resetStateForProject`/`this.state` inicial).
+   Plegar un botón de grupo SOLO oculta sus botones hijos de la barra — NO
+   toca `state.hidden` (la visibilidad de un área en el diagrama). Verificado
+   en el proyecto "Cierre de Proyectos": Construcción(110) → IDU(64) →
+   [IDU, EyD, Entidades de servicios, Ambiental, Social] + EAAB(29) + SDM(17);
+   luego Jurídico(1), Financiero(0), Predial(3) — coincide con la
+   estructura que pidió el usuario (imagen de referencia con llaves).
+
 ## Pendientes / posibles siguientes pasos
-- No hay pendientes explícitos abiertos tras el fix de esta sesión.
-- Si se retoma el layout de ramas, revisar también el comportamiento con
-  "EXPANDIR TODO" en proyectos muy grandes (ya se probó sin errores de
-  consola, pero no se validó exhaustivamente el aspecto visual a esa
-  escala).
+- Ninguno abierto. Si se quiere una réplica más fiel del mockup visual
+  (llaves "{" con etiqueta, en vez de indentado + color de borde), sería un
+  trabajo de diseño aparte — el usuario ya optó explícitamente por la
+  versión "botones colapsables anidados" en vez de rehacer las llaves del
+  diagrama.
