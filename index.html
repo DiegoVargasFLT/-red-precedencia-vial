@@ -1998,6 +1998,22 @@ class Component extends DCLogic {
         onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
       };
     };
+    // Área "suelta" (no pertenece a ningún grupo): mismo toggle de
+    // visibilidad que una hoja normal, pero con un acento neutro fijo y una
+    // marca "○" para que se distinga a simple vista de los botones de grupo
+    // (▸/▾ + color propio) y de las áreas anidadas dentro de un grupo.
+    const looseAreaChip = (a) => {
+      const off = !!hidden[a];
+      return {
+        kind: 'area', level: 0, show: 'inline-block', mark: '○', indent: 0,
+        label: a, count: nodes.filter(n => n.area === a).length,
+        bg: off ? 'transparent' : '#FFFFFF',
+        fg: off ? '#94A1BA' : '#475E89',
+        bd: off ? '#D9E1EC' : '#7486A6',
+        bs: off ? 'dashed' : 'solid',
+        onToggle: () => this.setState(s => ({hidden: {...s.hidden, [a]: !s.hidden[a]}}))
+      };
+    };
     const groupChip = (g, level, show) => {
       const open = !!groupOpen[g.name];
       const areasIn = [...(g.areas||[]), ...gs.filter(s => s.parent === g.name).flatMap(s => s.areas||[])];
@@ -2012,6 +2028,10 @@ class Component extends DCLogic {
       };
     };
     const chips = [];
+    // Áreas sueltas primero: van ANTES que los botones de grupo, con su
+    // propio acento neutro, para que de un vistazo se distinga qué áreas no
+    // están agrupadas (comportamiento previo para proyectos sin grupos).
+    orderedAreas.filter(a => !this.grupoOf(a)).forEach(a => chips.push(looseAreaChip(a)));
     gs.filter(g => !g.parent).forEach(g => {
       chips.push(groupChip(g, 0, 'inline-block'));
       const open0 = !!groupOpen[g.name];
@@ -2022,9 +2042,6 @@ class Component extends DCLogic {
       });
       (g.areas||[]).forEach(a => chips.push(areaChip(a, 1, open0 ? 'inline-block' : 'none')));
     });
-    // Áreas que no pertenecen a ningún grupo: se muestran igual que antes
-    // (comportamiento previo para proyectos sin grupos configurados).
-    orderedAreas.filter(a => !this.grupoOf(a)).forEach(a => chips.push(areaChip(a, 0, 'inline-block')));
 
     // panel
     const mode = this.state.mode;
