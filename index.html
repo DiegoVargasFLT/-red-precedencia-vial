@@ -2092,8 +2092,15 @@ class Component extends DCLogic {
     // desde el área. P. ej. EyD → EAAB, SDM, ESP, Ambiental (no a "Recibido
     // IDU" ni a lo que va después).
     const areaActEls = [];
+    // Nodo del mini-mapa de cada área: normalmente su nodo de área ('a:'),
+    // pero si el área es la homónima de un grupo (Jurídico↔Juridico,
+    // Financiero, Predial…) su nodo es el del GRUPO ('g:'). Así también esas
+    // áreas conectan con sus actividades, no solo las hojas.
+    const areaNodeKey = {};
+    visAreas.forEach(a => { areaNodeKey[a] = 'a:' + a; });
+    gsAll.forEach(g => { const s = selfAreaOf(g); if (s) areaNodeKey[s] = 'g:' + g.name; });
     visAreas.forEach(a => {
-      const an = mmPos['a:' + a];
+      const an = mmPos[areaNodeKey[a]];
       if (!an) return;
       const acts = topVis.filter(n => n.area === a && pos[n.id]);
       if (!acts.length) return;
