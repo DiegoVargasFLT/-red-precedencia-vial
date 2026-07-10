@@ -55,6 +55,25 @@ SDM, ESP (subs VANTI/ETB/ENRC/UAESP), Ambiental (subs SDA/CAR/ICANH/JBB) →
 convergen (dependencia) en "Recibido. IDU" → "No objeciones integrales
 productos EyD" → "Incorporación al DTINI". IDs EYD-01..EYD-15.
 
+## Datos: estructura Predial agregada (2026-07-10)
+Bajo la actividad existente "Infraestructura" (IDU-03, área Predial) se
+agregaron 18 subactividades (IDs PRD-01..PRD-18): Infraestructura → "IDU" →
+[Aportado FLT (7 items: Acta Restitución Contratista, Comunicación
+Solicitando Reparto, Minutas, Paz y Salvo Predial, Firma Escritura Notaría,
+Pago Notariado y Registro, FMI), Adquirido IDU (2), Predios DADEP (2), No
+Adquiridos (2)]. Todas heredan área Predial / fase Beneficiarios.
+
+## Sesión UI 2026-07-10 (commit `d80e34c`)
+Tres ajustes de interfaz:
+- El mini-mapa de grupos/áreas dejó de ser `position:sticky` → ahora se
+  desplaza con el lienzo (antes quedaba fijo y se sobreponía a las tarjetas
+  al hacer scroll horizontal).
+- `MM_W` (ancho de nodo del mini-mapa) se calcula según la etiqueta más
+  larga para que el texto quepa completo, acotado a [112, 230].
+- Clic en el ícono del ave (arriba-izq de la barra lateral) oculta la barra
+  lateral; queda un ícono flotante del ave (`floatBirdDisplay`) para
+  reabrirla. Estado `sidebarHidden`, método `toggleSidebar`.
+
 ## Layout "rama a la derecha" (actividades)
 Al expandir una actividad principal con subactividades, estas no se apilan
 debajo — se despliegan hacia la DERECHA de la principal, centradas
