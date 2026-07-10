@@ -349,7 +349,7 @@
       <sc-if value="{{sidebarManage}}" hint-placeholder-val="{{ false }}">
         <div style="padding:20px;display:flex;flex-direction:column;gap:18px">
           <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#61B1E3">GESTIONAR ÁREAS, ESTADOS Y GRUPOS</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#61B1E3">GESTIONAR ÁREAS Y ESTADOS</span>
             <button onClick="{{onCerrarGestion}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:transparent;border:1px solid #D9E1EC;color:#5E7196;padding:5px 10px;cursor:pointer" style-hover="border-color:#61B1E3;color:#1F3B6F">CERRAR</button>
           </div>
 
@@ -386,25 +386,7 @@
             </sc-for>
           </div>
 
-          <div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6">GRUPOS DE ÁREA</span>
-              <button onClick="{{onAddGrupo}}" style="font-family:'IBM Plex Mono',monospace;font-size:9px;background:transparent;border:1px dashed #025850;color:#025850;padding:4px 8px;cursor:pointer" style-hover="border-color:#025850">+ AGREGAR GRUPO</button>
-            </div>
-            <sc-for list="{{manageGrupos}}" as="g" hint-placeholder-count="4">
-              <div class="soft" style="display:flex;align-items:center;gap:5px;padding:7px 8px;border:1px solid #D9E1EC;background:#FFFFFF;margin-bottom:5px">
-                <span style="width:13px;height:13px;flex:none;background:{{g.color}}"></span>
-                <span style="flex:1;font-size:12px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{g.name}} <span style="color:#94A1BA;font-size:10px">{{g.parentLabel}}</span></span>
-                <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#7486A6">{{g.count}} área(s)</span>
-                <button onClick="{{g.onRename}}" title="Renombrar grupo" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">✎</button>
-                <button onClick="{{g.onColor}}" title="Cambiar color" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">◑</button>
-                <button onClick="{{g.onStruct}}" title="Editar subgrupo y áreas que agrupa" style="background:transparent;border:1px solid #D9E1EC;color:#475E89;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0" style-hover="border-color:#61B1E3">▤</button>
-                <button onClick="{{g.onDelete}}" title="Eliminar grupo" style="background:transparent;border:1px solid #D9E1EC;color:#AD1924;width:22px;height:22px;cursor:pointer;font-size:12px;padding:0" style-hover="border-color:#AD1924">×</button>
-              </div>
-            </sc-for>
-          </div>
-
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;line-height:1.7">Renombrar actualiza todas las actividades afectadas. No se puede eliminar un área/estado con actividades en uso, ni un grupo con subgrupos propios. Los cambios se guardan automáticamente.</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;line-height:1.7">Renombrar actualiza todas las actividades afectadas. No se puede eliminar un área/estado con actividades en uso. Los cambios se guardan automáticamente.</div>
         </div>
       </sc-if>
 
@@ -421,6 +403,7 @@
       <button onClick="{{c.onToggle}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:{{c.bg}};color:{{c.fg}};border:1px {{c.bs}} {{c.bd}}" style-hover="border-color:#61B1E3">{{c.label}} <span style="opacity:0.55">{{c.count}}</span></button>
     </sc-for>
     <button onClick="{{onAddArea}}" title="Agregar nueva área" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ ÁREA</button>
+    <button onClick="{{onAddGrupo}}" title="Agregar nuevo grupo de áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ GRUPO</button>
     <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">⚙ GESTIONAR</button>
     <div style="width:1px;align-self:stretch;background:#D9E1EC;margin:0 2px"></div>
     <button onClick="{{onExpandAll}}" title="Desplegar todas las subactividades, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px solid #D9E1EC" style-hover="border-color:#025850">▾ EXPANDIR TODO</button>
@@ -487,8 +470,8 @@
             </sc-for>
           </svg>
           <sc-for list="{{mmNodes}}" as="m" hint-placeholder-count="8">
-            <div onClick="{{m.onClick}}" title="{{m.label}}" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;gap:5px;background:{{m.color}};box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
-              <span style="display:{{m.markDisplay}};font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#FFFFFF;flex:none">{{m.mark}}</span>
+            <div onClick="{{m.onClick}}" title="Editar" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;gap:5px;background:{{m.color}};box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
+              <button onClick="{{m.onToggle}}" title="Desplegar/plegar" style="display:{{m.markDisplay}};font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1;font-weight:700;color:#FFFFFF;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.4);border-radius:5px;width:16px;height:16px;padding:0;cursor:pointer;flex:none">{{m.mark}}</button>
               <span style="font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:0.03em;color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{m.label}}</span>
             </div>
           </sc-for>
@@ -1267,10 +1250,12 @@ class Component extends DCLogic {
     this._setEstados(this.reconciledEstados().filter(e => e.name !== name));
   }
 
-  // ── CRUD de grupos de área (macro-áreas del mini-mapa) ──
+  // ── Grupos de área (macro-áreas del mini-mapa) ──
   // Un grupo puede ser de nivel superior (parent: null) o subgrupo (parent:
   // nombre de un grupo de nivel superior) — solo se admiten 2 niveles, los
-  // mismos que dibuja el mini-mapa.
+  // mismos que dibuja el mini-mapa. Crear pasa por el botón "+ GRUPO" de la
+  // barra ÁREAS; renombrar pasa por hacer clic directo en el nodo del
+  // mini-mapa (sin panel de gestión aparte — ver `renameGrupo`).
   addGrupo(){
     const list = this.grupos();
     const name = (window.prompt('Nombre del nuevo grupo:', '') || '').trim();
@@ -1303,40 +1288,6 @@ class Component extends DCLogic {
     });
     this._setGrupos(arr);
   }
-  recolorGrupo(name){
-    const list = this.grupos();
-    const cur = list.find(g => g.name === name);
-    if(!cur) return;
-    const color = ((window.prompt('Color (hex) para «'+name+'»:', cur.color || '#7486A6') || '').trim());
-    if(!color) return;
-    this._setGrupos(list.map(g => g.name === name ? {...g, color} : g));
-  }
-  // Edita en un solo flujo el subgrupo-padre y las áreas que agrupa.
-  editGrupoEstructura(name){
-    const list = this.grupos();
-    const g = list.find(x => x.name === name);
-    if(!g) return;
-    const tops = list.filter(x => !x.parent && x.name !== name).map(x => x.name);
-    const parentInput = (window.prompt('¿Es subgrupo de otro grupo? Escribe el nombre exacto, o deja vacío para que sea de nivel superior.\nGrupos de nivel superior: ' + (tops.join(', ') || '(ninguno)'), g.parent || '') || '').trim();
-    let parent = parentInput || null;
-    if(parent){
-      const p = list.find(x => x.name === parent);
-      if(!p){ window.alert('No existe un grupo de nivel superior con ese nombre.'); return; }
-      if(p.parent){ window.alert('«'+parent+'» ya es un subgrupo — no se admiten más de 2 niveles.'); return; }
-      if(list.some(x => x.parent === name)){ window.alert('«'+name+'» ya tiene subgrupos propios — no puede ser también subgrupo de otro.'); return; }
-    }
-    const allAreas = this.reconciledAreas().map(a => a.name);
-    const areasInput = (window.prompt('Áreas que agrupa (separadas por coma).\nDisponibles: ' + allAreas.join(', '), (g.areas||[]).join(', ')) || '');
-    const areas = areasInput.split(',').map(s => s.trim()).filter(s => s && allAreas.includes(s));
-    this._setGrupos(list.map(x => x.name === name ? {...x, parent, areas} : x));
-  }
-  deleteGrupo(name){
-    const list = this.grupos();
-    if(list.some(g => g.parent === name)){ window.alert('«'+name+'» tiene subgrupos — elimínalos o reasígnalos primero.'); return; }
-    if(!window.confirm('¿Eliminar el grupo «'+name+'»? Sus áreas quedarán sin agrupar (no se borran las actividades).')) return;
-    this._setGrupos(list.filter(g => g.name !== name));
-  }
-
   openManage(){ this.setState({selectedId: null, mode: 'manage'}); }
 
   // Edita el nombre y subtítulo del proyecto.
@@ -1845,52 +1796,54 @@ class Component extends DCLogic {
     let canvasH = yCur + 40;
 
     // ── Mini-mapa de grupos de área ─────────────────────────────────────────
-    // En vez de botones/pestañas: nodos conectados por curvas, igual que las
-    // ramas de actividades. Un grupo se pliega/despliega haciendo clic en su
-    // propio nodo; un área hoja alterna su visibilidad en el diagrama. Si el
-    // nombre de un grupo coincide con una de sus áreas (p. ej. grupo "IDU"
-    // con área "IDU"), esa área se fusiona en el propio nodo del grupo en
-    // vez de dibujarse como hija aparte (así el árbol no repite el nombre).
-    const areaCenterY = (a) => (laneY[a] != null) ? laneY[a] + LP_T + laneMax[a] / 2 : null;
+    // Nodos conectados por curvas, posicionados con el MISMO algoritmo
+    // secuencial que `placeSub` usa para las ramas de actividades (alto
+    // propio vs. alto de hijos, centrado, acumulado en orden) — no depende
+    // de `laneY` ni de ningún otro cálculo que cambie con lo que esté
+    // abierto/cerrado en otra rama, así que un nodo nunca "salta" de lugar.
+    // Clic en el cuerpo del nodo edita su nombre (grupo) o su visibilidad
+    // (área); el pliegue/despliegue es un botón aparte, igual que el
+    // badge ▸/▾ de subactividades en las tarjetas normales.
     const mmPos = {};
     const mmNodes = [];
-    let mmFallbackY = yCur + 20;
-    const placeMM = (spec, x) => {
+    const placeMM = (spec, x, yTop) => {
       const isArea = spec.kind === 'area';
       const g = isArea ? null : spec.g;
-      const selfArea = isArea ? spec.a : selfAreaOf(g);
       const key = isArea ? ('a:' + spec.a) : ('g:' + g.name);
       const open = !isArea && isGroupOpen(g.name);
       const kids = open ? kidsOfGroup(g) : [];
-      let centerY;
+      const selfH = MM_H;
+      let y, totalH;
       if (kids.length) {
         const childX = x + MM_W + MM_GAPX;
-        const childYs = kids.map(k => placeMM(k, childX));
-        centerY = (Math.min(...childYs) + Math.max(...childYs)) / 2;
-      } else if (selfArea != null && areaCenterY(selfArea) != null) {
-        centerY = areaCenterY(selfArea);
+        let yc = yTop;
+        kids.forEach((k, i) => { if (i) yc += MM_GAPY; yc += placeMM(k, childX, yc); });
+        const childrenH = yc - yTop;
+        y = yTop + Math.max(0, (childrenH - selfH) / 2);
+        totalH = Math.max(selfH, childrenH);
       } else {
-        centerY = mmFallbackY;
-        mmFallbackY += MM_H + MM_GAPY;
+        y = yTop;
+        totalH = selfH;
       }
-      const y = centerY - MM_H / 2;
-      mmPos[key] = {x, y, cy: centerY, w: MM_W, h: MM_H};
+      mmPos[key] = {x, y, cy: y + selfH / 2, w: MM_W, h: selfH};
       const expandable = !isArea && kidsOfGroup(g).length > 0;
       const label = isArea ? spec.a : g.name;
       const color = isArea ? (areaColorMap[spec.a] || '#7486A6') : (g.color || '#7486A6');
       mmNodes.push({
-        key, x, y, w: MM_W, h: MM_H, label: label.toUpperCase(), color,
+        key, x, y, w: MM_W, h: selfH, label: label.toUpperCase(), color,
         mark: expandable ? (open ? '−' : '+') : '',
-        markDisplay: expandable ? 'inline' : 'none',
+        markDisplay: expandable ? 'inline-block' : 'none',
+        onToggle: (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}})); },
         onClick: (e) => {
           e.stopPropagation();
-          if (expandable) this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}}));
-          else if (selfArea) this.setState(s => ({hidden: {...s.hidden, [selfArea]: !s.hidden[selfArea]}}));
+          if (isArea) this.setState(s => ({hidden: {...s.hidden, [spec.a]: !s.hidden[spec.a]}}));
+          else this.renameGrupo(g.name);
         }
       });
-      return centerY;
+      return totalH;
     };
-    mmRoots.forEach(r => placeMM(r, 26));
+    let mmY = 34;
+    mmRoots.forEach(r => { mmY += placeMM(r, 26, mmY) + MM_GAPY; });
     const mmPaths = [];
     const linkMM = (spec) => {
       if (spec.kind === 'area' || !isGroupOpen(spec.g.name)) return;
@@ -2192,13 +2145,6 @@ class Component extends DCLogic {
     const manageEstados = this.reconciledEstados().map(e => ({
       name: e.name, color: e.color, count: nodes.filter(n => n.estado === e.name).length,
       onRename: () => this.renameEstado(e.name), onColor: () => this.recolorEstado(e.name), onDelete: () => this.deleteEstado(e.name)
-    }));
-    const manageGrupos = gsAll.map(g => ({
-      name: g.name, color: g.color || '#7486A6',
-      parentLabel: g.parent ? ('⤷ ' + g.parent) : '',
-      count: (g.areas||[]).length,
-      onRename: () => this.renameGrupo(g.name), onColor: () => this.recolorGrupo(g.name),
-      onStruct: () => this.editGrupoEstructura(g.name), onDelete: () => this.deleteGrupo(g.name)
     }));
     const depList = selNode ? (selNode.dependeDe||[]).map(i => byId[i]).filter(Boolean).map(mkItem) : [];
     const enList = selNode ? nodes.filter(n => (n.dependeDe||[]).includes(selId)).map(mkItem) : [];
@@ -2513,7 +2459,7 @@ class Component extends DCLogic {
       onCollapseAll: () => this.collapseAll(),
       levelButtons, hasLevels: levelButtons.length > 0,
       onGestionar: () => this.openManage(),
-      areaOptions, estadoOptions, manageAreas, manageEstados, manageGrupos,
+      areaOptions, estadoOptions, manageAreas, manageEstados,
       legend: this.reconciledEstados().map(e => ({label: e.name.toUpperCase(), color: e.color})),
       showManage,
       onAddEstado: () => this.addEstado(),
