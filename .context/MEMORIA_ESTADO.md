@@ -68,6 +68,23 @@ Piezas clave en `renderVals()`:
 - ❌ Compactar una actividad principal a un título delgado (30px) al
   expandirla. El usuario quiere que mantenga su tamaño completo de tarjeta.
 
+**Bug corregido (commit `2914fb2`): nodos del mini-mapa "saltaban" de área.**
+Al plegar el grupo "IDU" (fusionado con el área "IDU"), su propio carril
+TAMBIÉN se ocultaba junto con sus otras hijas — encogiendo el total de
+carriles visibles, lo que hacía que "Construcción" (centrado contra sus
+hijos) saltara a una posición distinta cada vez. Fix: `visAreas` recorre
+el mismo árbol que el mini-mapa (`kidsOfGroup`/`selfAreaOf`) y el área
+fusionada queda visible mientras el grupo exista, sin importar si está
+plegado.
+
+**Gestión de grupos (commit `c5b11ac`):** nueva sección "GRUPOS DE ÁREA" en
+el panel GESTIONAR (⚙), mismo patrón de `window.prompt`/`window.confirm`
+que ya usaban ÁREAS/ESTADOS — crear, renombrar, recolorear, reasignar
+subgrupo/áreas y eliminar. Funciones: `addGrupo`, `renameGrupo`,
+`recolorGrupo`, `editGrupoEstructura` (parent + áreas en un solo flujo),
+`deleteGrupo`. Solo 2 niveles admitidos (grupo → subgrupo), validado al
+asignar padre.
+
 ## Cómo probar localmente
 No hay servidor de dev propio: servir la carpeta con cualquier estático
 (`python -m http.server 8000` o `npx serve .`), nunca abrir con `file://`.
