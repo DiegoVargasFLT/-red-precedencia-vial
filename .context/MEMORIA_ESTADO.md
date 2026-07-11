@@ -2,6 +2,19 @@
 
 _Última actualización: 2026-07-10_
 
+## Tanda UI/UX 2026-07-10 — 9/12 tareas (commits 9d17b48, 70b608b, e046bd7)
+Layout del diagrama: clic en nodo de área lo PLIEGA (`areaCollapsed`,
+`toggleAreaCollapse`); tarjetas más angostas `NW` 216→190 con ALTURA DINÁMICA por
+texto (`titleLines`/`baseH` en `hOf`, nunca corta); centrado vertical `LP_T/LP_B`
+16/16; `NH` 78→62; espaciado `CG` 110→60, `SG` 14→7; `MM_W` cap 206. Form: "Grupos
+involucrados" lee `this.grupos()` con fallback a áreas (`groupsInvolvedOf`,
+`toggleGrupoInvolucrado`, chip por grupo); deps/sucesoras marcadas primero
+(`byCheckedThenArea`). Auditoría: RLS se deja ABIERTA (decisión usuario); Supabase
+óptimo (doc de schema.sql corregido). PENDIENTE (diseño): #8 UX, #9 sidebar, #12
+dashboard más dinámico. Detalle completo en la memoria RAÍZ `F_FLujo/.context/`.
+**⚠️ Hay DOS `.context` (esta git-trackeada + la raíz canónica de CLAUDE.md) — están
+divergentes; conviene consolidar en una sola.**
+
 ## Qué es
 App estática (`index.html`, React vía dc-runtime, sin build) que dibuja un
 diagrama de precedencias entre actividades de un proyecto vial, agrupadas
