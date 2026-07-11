@@ -3,8 +3,10 @@
 -- Ejecutar en: Supabase → SQL Editor → New query → pegar → Run
 -- ============================================================
 
--- 1) Tabla: un tablero = una fila. El array completo de actividades
---    se guarda como JSON en la columna "data".
+-- 1) Tabla: un tablero (proyecto) = una fila. En la columna JSONB "data" se
+--    guarda el DOCUMENTO completo del proyecto: { nodes:[...], areas:[...],
+--    grupos:[...], projectName }. Se sube/baja entero (last-write-wins); a esta
+--    escala (decenas de KB por fila) no requiere índices GIN ni normalización.
 create table if not exists public.boards (
   id         text primary key,
   data       jsonb not null default '[]'::jsonb,
