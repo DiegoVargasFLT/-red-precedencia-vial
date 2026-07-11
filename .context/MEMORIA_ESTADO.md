@@ -2,7 +2,15 @@
 
 _Última actualización: 2026-07-10_
 
-## Tanda UI/UX 2026-07-10 — 9/12 tareas (commits 9d17b48, 70b608b, e046bd7)
+## Tanda UI/UX 2026-07-10 — 12/12 tareas ✅ (commits 9d17b48 … c72934a)
+Diseño (bocetos aprobados en Artifact): **#12 dashboard** (a742623) anillo hero +
+avance por grupo + "Requiere atención" [bloqueadas/cuellos por dependentsCount/casi
+listas] + barras clicables `jumpToArea`/`jumpToGroup`; **#9 sidebar** (16700d7) HOME
+compacto (anillo+stats, estados apilados) y detalle con pill+chips área/fase/grupo+
+anillo docs; **#8 UX** (c72934a) búsqueda global en el nav (`onGlobalSearch`).
+Proyecto con grupos: "Cierre de Proyectos".
+
+## Tanda UI/UX 2026-07-10 — base (commits 9d17b48, 70b608b, e046bd7)
 Layout del diagrama: clic en nodo de área lo PLIEGA (`areaCollapsed`,
 `toggleAreaCollapse`); tarjetas más angostas `NW` 216→190 con ALTURA DINÁMICA por
 texto (`titleLines`/`baseH` en `hOf`, nunca corta); centrado vertical `LP_T/LP_B`
