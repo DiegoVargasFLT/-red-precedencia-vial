@@ -77,6 +77,7 @@
           <button onClick="{{onViewDashboard}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.04em;padding:8px 4px;cursor:pointer;background:{{tabDashboardBg}};color:{{tabDashboardFg}};border:none;border-radius:7px;font-weight:600">▤ PANEL</button>
           <button onClick="{{onViewDocumentos}}" style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.04em;padding:8px 4px;cursor:pointer;background:{{tabDocumentosBg}};color:{{tabDocumentosFg}};border:none;border-radius:7px;font-weight:600">▦ DOCS</button>
         </div>
+        <input value="{{searchVal}}" onChange="{{onGlobalSearch}}" placeholder="🔎  Buscar actividad en todo el proyecto…" title="Busca desde cualquier vista; salta al diagrama y resalta coincidencias" style="width:100%;margin-top:10px;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:8px 11px;border-radius:8px;box-sizing:border-box">
       </div>
       <div style="flex:1;overflow:auto">
 
@@ -123,7 +124,7 @@
           </div>
 
           <button onClick="{{onAgregar}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;font-weight:600;padding:11px;cursor:pointer;background:#1F3B6F;color:#FFFFFF;border:none;border-radius:9px" style-hover="background:#16345E">+ AGREGAR ACTIVIDAD</button>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.04em;color:#94A1BA;line-height:1.6">Selecciona una actividad en el grafo para ver su detalle, documentos y conexiones.</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.04em;color:#94A1BA;line-height:1.6">Selecciona una actividad en el grafo para ver su detalle, documentos y conexiones. ¿No sabes por dónde empezar? Mira <b style="color:#61B1E3">PANEL → Requiere atención</b> (cuellos de botella y actividades casi listas).</div>
         </div>
       </sc-if>
 
@@ -2897,6 +2898,8 @@ class Component extends DCLogic {
       statProc, statBloq,
       searchVal: this.state.search,
       onSearch: e => this.setState({search: e.target.value}),
+      // Búsqueda GLOBAL desde el sidebar: escribir salta al diagrama y resalta.
+      onGlobalSearch: e => this.setState({search: e.target.value, view: 'diagrama'}),
       onAgregar: () => this.addNode(),
       onReset: () => this.resetAll(),
       onAddArea: () => this.addArea(),
