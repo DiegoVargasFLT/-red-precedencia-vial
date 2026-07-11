@@ -1725,21 +1725,18 @@ class Component extends DCLogic {
     this.effectiveAreaOrder().forEach(a => { areaCollapsed[a] = true; });
     this.setState({expanded: {}, groupOpen, areaCollapsed});
   }
-  // Botones de nivel de ÁREAS/grupos: despliegan el árbol grupo→área→actividades
-  // PROGRESIVAMENTE hasta el nivel `lvl`, como un explorador de archivos:
-  // 1 = solo los nodos raíz (grupos raíz y áreas sin grupo), todo plegado;
-  // 2 = abre los grupos raíz (aparecen subgrupos/áreas plegados) y las áreas
-  //     que YA eran nivel 1 muestran sus actividades; y así sucesivamente.
-  // Un área muestra actividades solo cuando su nivel quedó POR DEBAJO de `lvl`
-  // (las actividades son "el nivel siguiente" al del área). Independiente de
-  // los botones NIVEL de subactividades (no toca `expanded`).
+  // Botones de nivel de ÁREAS/grupos: despliegan SOLO el esqueleto grupo→área
+  // hasta el nivel `lvl` (1 = solo raíces; 2 = abre los grupos raíz mostrando
+  // sus subgrupos/áreas; … hasta el área más profunda). NUNCA muestran
+  // actividades — todas las áreas quedan plegadas; para desplegar actividades
+  // están los botones NIVEL (subactividades) o el clic en cada área.
   expandAreasToLevel(lvl){
     const gs = this.grupos();
     const byName = {}; gs.forEach(g => byName[g.name] = g);
     const groupOpen = {};
     gs.forEach(g => { groupOpen[g.name] = this.grupoDepth(g.name, byName) < lvl; });
     const areaCollapsed = {};
-    this.effectiveAreaOrder().forEach(a => { if(!(this.areaTreeLevel(a) < lvl)) areaCollapsed[a] = true; });
+    this.effectiveAreaOrder().forEach(a => { areaCollapsed[a] = true; });
     this.setState({groupOpen, areaCollapsed});
   }
   // Plegar/desplegar TODAS las actividades de un área (clic en su nodo del
@@ -1764,6 +1761,9 @@ class Component extends DCLogic {
   }
   // Expande todo hasta el nivel `lvl` (1 = solo el primer nivel de subactividades
   // de cada sección, 2 = ese más el siguiente, …), en todas las áreas a la vez.
+  // Como su propósito es MOSTRAR actividades, también despliega las áreas
+  // plegadas (p. ej. tras usar los botones ÁREAS); los grupos cerrados se
+  // respetan (sus áreas siguen ocultas — eso lo gobierna el árbol de ÁREAS).
   expandToLevel(lvl){
     const nodes = this.state.nodes;
     const byId = {}; nodes.forEach(n => byId[n.id] = n);
@@ -1773,7 +1773,7 @@ class Component extends DCLogic {
       if(!(kidsOf[n.id] && kidsOf[n.id].length)) return;
       if(this.nodeDepth(n.id, byId) < lvl) expanded[n.id] = true;
     });
-    this.setState({expanded});
+    this.setState({expanded, areaCollapsed: {}});
   }
   addSub(parentId){
     const nodes = this.state.nodes;
@@ -2041,25 +2041,34 @@ class Component extends DCLogic {
     // reserva el alto de TODA su rama. Las subactividades se posicionan después.
     const topVis = vSorted.filter(n => !n.parent);
 
-    // Ancho de columna dinámico: una rama a la derecha puede necesitar más de
-    // una columna de ancho, así que las columnas de fase siguientes se corren
-    // para no pisar los nodos de esa fase (evita que un nodo de una fase
-    // posterior quede dibujado encima de una rama expandida).
+    // Ancho de columna dinámico POR CARRIL: una rama a la derecha puede
+    // necesitar más de una columna de ancho, pero ese corrimiento solo debe
+    // afectar a las columnas siguientes DEL MISMO carril (área) — expandir
+    // subactividades en un área NO debe abrir huecos entre las actividades de
+    // las demás áreas. `extraByLane[área][L]` = profundidad extra de la rama
+    // más honda de ese carril en la columna L; `laneShift[área][L]` acumula el
+    // corrimiento heredado de las columnas anteriores de ese carril.
     const branchDepth = (id) => {
       const kids = expanded[id] ? visChildrenOf(id) : [];
       return kids.length ? 1 + Math.max(...kids.map(branchDepth)) : 1;
     };
     const maxLevelAll = visible.length ? Math.max(...visible.map(n => levels[n.id])) : 0;
-    const extraDepth = {};
+    const extraByLane = {};
     topVis.forEach(n => {
+      const per = extraByLane[n.area] || (extraByLane[n.area] = {});
       const L = levels[n.id];
       const d = branchDepth(n.id) - 1;
-      if (d > (extraDepth[L] || 0)) extraDepth[L] = d;
+      if (d > (per[L] || 0)) per[L] = d;
     });
+    const laneShift = {};
+    Object.keys(extraByLane).forEach(a => {
+      const per = extraByLane[a], sh = laneShift[a] = {};
+      let acc = 0;
+      for (let L = 0; L <= maxLevelAll; L++) { sh[L] = acc; acc += (per[L] || 0) * (NW + BRANCH_GAPX); }
+    });
+    const shiftOf = (a, L) => (laneShift[a] && laneShift[a][L]) || 0;
     const colX = [LEFT];
-    for (let L = 1; L <= maxLevelAll + 1; L++) {
-      colX[L] = colX[L - 1] + (NW + CG) + (extraDepth[L - 1] || 0) * (NW + BRANCH_GAPX);
-    }
+    for (let L = 1; L <= maxLevelAll + 1; L++) colX[L] = colX[L - 1] + (NW + CG);
 
     const yOff = {}, colH = {};
     topVis.forEach(n => {
@@ -2264,7 +2273,9 @@ class Component extends DCLogic {
     const mmH = Math.max(canvasH, ...mmNodes.map(n => n.y + n.h + 20));
     canvasH = mmH; // el lienzo debe ser al menos tan alto como el mini-mapa
 
-    // bandas de fase (fondo por etapa del proyecto)
+    // bandas de fase (fondo por etapa del proyecto) — se calculan DESPUÉS del
+    // posicionamiento (pos), porque con el corrimiento POR CARRIL una misma
+    // columna puede quedar a distinto x según el área; ver más abajo.
     const FASE_STYLES = {
       'Preconstrucción': {bg: 'rgba(97,177,227,0.05)', fg: '#61B1E3'},
       'Construcción': {bg: 'rgba(2,88,80,0.055)', fg: '#025850'},
@@ -2272,18 +2283,6 @@ class Component extends DCLogic {
       'Liquidación': {bg: 'rgba(51,38,100,0.06)', fg: '#332664'}
     };
     const fasesBands = [];
-    ['Preconstrucción','Construcción','Entrega a Beneficiarios','Liquidación'].forEach(f => {
-      const ls = visible.filter(n => n.fase === f).map(n => levels[n.id]);
-      if (!ls.length) return;
-      const mn = Math.min(...ls), mx = Math.max(...ls);
-      const st = FASE_STYLES[f];
-      fasesBands.push({
-        label: f.toUpperCase(),
-        x: colX[mn] - CG / 2,
-        w: colX[mx + 1] - colX[mn],
-        bg: st.bg, fg: st.fg, bd: st.fg + '55'
-      });
-    });
 
     // selection chain
     const selId = (this.state.selectedId && byId[this.state.selectedId]) ? this.state.selectedId : null;
@@ -2317,14 +2316,14 @@ class Component extends DCLogic {
     for(let lv = 1; lv <= maxKidDepth + 1; lv++){
       levelButtons.push({ lv, color: depthColor(lv), onClick: () => this.expandToLevel(lv) });
     }
-    // Botones de nivel de ÁREAS/grupos: despliegan el árbol grupo→área→
-    // actividades por nivel. Un botón por cada nivel real del árbol MÁS uno
-    // final (las actividades del área más profunda). Solo tienen sentido si
-    // el proyecto tiene grupos; sin grupos, «EXPANDIR/COLAPSAR TODO» basta.
+    // Botones de nivel de ÁREAS/grupos: despliegan el esqueleto grupo→área por
+    // nivel (SIN actividades — eso es de los botones NIVEL). Un botón por cada
+    // nivel real del árbol, hasta el del área más profunda. Solo tienen sentido
+    // si el proyecto tiene grupos; sin grupos, «EXPANDIR/COLAPSAR TODO» basta.
     const areaLevelButtons = [];
     if(this.grupoMaxDepth() >= 1){
       let maxAreaLevel = 1;
-      orderedAreas.forEach(a => { maxAreaLevel = Math.max(maxAreaLevel, this.areaTreeLevel(a) + 1); });
+      orderedAreas.forEach(a => { maxAreaLevel = Math.max(maxAreaLevel, this.areaTreeLevel(a)); });
       for(let lv = 1; lv <= maxAreaLevel; lv++){
         areaLevelButtons.push({ lv, color: '#7486A6', onClick: () => this.expandAreasToLevel(lv) });
       }
@@ -2346,8 +2345,25 @@ class Component extends DCLogic {
       pos[id] = {x, y: py, w: NW, h: selfH, indent: 0, depth: depthOf(id)};
       return Math.max(selfH, childrenH);
     };
-    topVis.forEach(n => placeSub(n.id, colX[levels[n.id]], laneY[n.area] + LP_T + yOff[n.id]));
+    topVis.forEach(n => placeSub(n.id, colX[levels[n.id]] + shiftOf(n.area, levels[n.id]), laneY[n.area] + LP_T + yOff[n.id]));
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
+
+    // Bandas de fase, desde las posiciones REALES: cada banda abarca del borde
+    // izquierdo del nodo más a la izquierda al derecho del más a la derecha de
+    // su fase (incluye ramas expandidas, que también viven en pos).
+    ['Preconstrucción','Construcción','Entrega a Beneficiarios','Liquidación'].forEach(f => {
+      const ps = visible.filter(n => n.fase === f && pos[n.id]).map(n => pos[n.id]);
+      if (!ps.length) return;
+      const mnX = Math.min(...ps.map(p => p.x));
+      const mxX = Math.max(...ps.map(p => p.x + p.w));
+      const st = FASE_STYLES[f];
+      fasesBands.push({
+        label: f.toUpperCase(),
+        x: mnX - CG / 2,
+        w: (mxX + CG / 2) - (mnX - CG / 2),
+        bg: st.bg, fg: st.fg, bd: st.fg + '55'
+      });
+    });
 
     // Conectores área → PRIMERAS actividades: una curva desde el nodo del área
     // (mini-mapa) SOLO hacia las actividades de la PRIMERA columna de esa
