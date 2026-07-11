@@ -527,9 +527,8 @@
             </sc-for>
           </svg>
           <sc-for list="{{mmNodes}}" as="m" hint-placeholder-count="8">
-            <div onClick="{{m.onClick}}" title="Ver actividades / editar" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;gap:5px;background:{{m.color}};outline:{{m.outline}};outline-offset:2px;box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
-              <button onClick="{{m.onToggle}}" title="Desplegar/plegar" style="display:{{m.markDisplay}};font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1;font-weight:700;color:#FFFFFF;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.4);border-radius:5px;width:16px;height:16px;padding:0;cursor:pointer;flex:none">{{m.mark}}</button>
-              <span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.02em;color:#FFFFFF;line-height:1.12;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{m.label}}</span>
+            <div onClick="{{m.onClick}}" title="{{m.tip}}" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;padding:0 9px;background:{{m.color}};outline:{{m.outline}};outline-offset:2px;box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
+              <span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.02em;color:#FFFFFF;line-height:1.12;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;word-break:break-word">{{m.label}}</span>
             </div>
           </sc-for>
         </div>
@@ -1834,7 +1833,7 @@ class Component extends DCLogic {
     // Viñetas del mini-mapa (grupos/áreas): más ANGOSTAS. Como el texto ahora
     // puede ir a 2 líneas, el ancho se basa en ~media etiqueta larga; el alto es
     // uniforme (MM_H) y da cabida a 2 renglones centrados.
-    const MM_W = Math.min(166, Math.max(94, maxLabelLen * 3.4 + 52)), MM_H = 34, MM_GAPX = 26, MM_GAPY = 10;
+    const MM_W = Math.min(148, Math.max(82, maxLabelLen * 3.1 + 40)), MM_H = 34, MM_GAPX = 26, MM_GAPY = 10;
     // Profundidad máxima del árbol ABIERTO (cuánto se extiende el mini-mapa
     // hacia la derecha), para reservarle espacio antes de que empiece la
     // primera columna de fase — así nunca queda una tarjeta debajo de un
@@ -2116,36 +2115,32 @@ class Component extends DCLogic {
       mmPos[key] = {x, y, cy, w: MM_W, h: selfH};
       const expandable = !isArea && kidsOfGroup(g).length > 0;
       // Grupo "hoja": solo tiene su área homónima (p. ej. Jurídico→Juridico,
-      // Financiero, Predial), sin subgrupos ni otras áreas. No hay nada que
-      // "desplegar" como grupo, pero SÍ tiene actividades — así que su nodo se
-      // comporta como un área plegable: el botón ▾/▸ pliega esas actividades.
+      // Financiero, Predial), sin subgrupos ni otras áreas — se pliega como un área.
       const selfA = isArea ? null : selfAreaOf(g);
       const groupAsArea = !isArea && !expandable && !!selfA && areaHasTop(selfA);
       // Área objetivo del plegado: la propia (nodo de área) o la homónima (grupo hoja).
       const foldArea = isArea ? spec.a : (groupAsArea ? selfA : null);
       const areaFoldable = !!foldArea;
-      const areaFolded = areaFoldable && !!areaCollapsed[foldArea];
       const label = isArea ? spec.a : g.name;
       const color = isArea ? (areaColorMap[spec.a] || '#7486A6') : (g.color || '#7486A6');
       const agName = isArea ? spec.a : g.name;
       const agKind = isArea ? 'area' : 'group';
       const sel = this.state.mode === 'ag' && !!(mmSel && mmSel.kind === agKind && mmSel.name === agName);
-      mmNodes.push({
-        key, x, y, w: MM_W, h: selfH, label: label.toUpperCase(), color,
-        // Seleccionado = borde/realce, igual que una tarjeta de actividad.
-        outline: sel ? '2px solid #1F3B6F' : 'none',
-        // Grupos con hijos: +/− despliega/pliega el grupo. Áreas y grupos hoja:
-        // ▾/▸ pliega sus actividades.
-        mark: expandable ? (open ? '−' : '+') : (areaFoldable ? (areaFolded ? '▸' : '▾') : ''),
-        markDisplay: (expandable || areaFoldable) ? 'inline-block' : 'none',
-        onToggle: expandable
-          ? (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}})); }
-          : (e) => { e.stopPropagation(); if (foldArea) this.toggleAreaCollapse(foldArea); },
-        // Clic en el CUERPO: si es plegable (área o grupo hoja) pliega/despliega
-        // sus actividades; si es un grupo con hijos, abre el panel lateral.
-        onClick: areaFoldable
+      // SIN botón: el clic en el nodo entero pliega/despliega. Grupos con hijos
+      // alternan grupo abierto/cerrado; áreas y grupos hoja pliegan sus
+      // actividades. Un grupo sin nada que plegar abre su panel (renombrar).
+      const onNodeClick = expandable
+        ? (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}})); }
+        : areaFoldable
           ? (e) => { e.stopPropagation(); this.toggleAreaCollapse(foldArea); }
-          : (e) => { e.stopPropagation(); this.selectAG(agKind, agName); }
+          : (e) => { e.stopPropagation(); this.selectAG(agKind, agName); };
+      const tip = expandable
+        ? 'Clic: ' + (open ? 'plegar' : 'desplegar') + ' el grupo'
+        : areaFoldable ? 'Clic: plegar/desplegar sus actividades' : 'Clic: ver / renombrar';
+      mmNodes.push({
+        key, x, y, w: MM_W, h: selfH, label: label.toUpperCase(), color, tip,
+        outline: sel ? '2px solid #1F3B6F' : 'none',
+        onClick: onNodeClick
       });
       return cy;
     };
