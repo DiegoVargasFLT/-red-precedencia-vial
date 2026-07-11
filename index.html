@@ -463,12 +463,18 @@
     <button onClick="{{onAddGrupo}}" title="Agregar nuevo grupo de áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px dashed #025850" style-hover="border-color:#025850">+ GRUPO</button>
     <button onClick="{{onGestionar}}" title="Gestionar áreas y estados" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">⚙ GESTIONAR</button>
     <div style="width:1px;align-self:stretch;background:#D9E1EC;margin:0 2px"></div>
-    <button onClick="{{onExpandAll}}" title="Desplegar todas las subactividades, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px solid #D9E1EC" style-hover="border-color:#025850">▾ EXPANDIR TODO</button>
-    <button onClick="{{onCollapseAll}}" title="Plegar todas las subactividades, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">▸ COLAPSAR TODO</button>
+    <button onClick="{{onExpandAll}}" title="Desplegar todo: grupos, áreas y subactividades" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px solid #D9E1EC" style-hover="border-color:#025850">▾ EXPANDIR TODO</button>
+    <button onClick="{{onCollapseAll}}" title="Plegar todo: grupos, áreas y subactividades" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">▸ COLAPSAR TODO</button>
+    <sc-if value="{{hasAreaLevels}}" hint-placeholder-val="{{ false }}">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#94A1BA;margin-left:2px" title="Desplegar el árbol de grupos y áreas por nivel">ÁREAS</span>
+      <sc-for list="{{areaLevelButtons}}" as="lv" hint-placeholder-count="3">
+        <button onClick="{{lv.onClick}}" title="Desplegar grupos y áreas hasta el nivel {{lv.lv}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:24px;height:24px;padding:0;cursor:pointer;background:transparent;color:{{lv.color}};border:1px solid {{lv.color}}" style-hover="background:{{lv.color}};color:#FFFFFF">{{lv.lv}}</button>
+      </sc-for>
+    </sc-if>
     <sc-if value="{{hasLevels}}" hint-placeholder-val="{{ false }}">
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#94A1BA;margin-left:2px">NIVEL</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#94A1BA;margin-left:2px" title="Desplegar subactividades por nivel">NIVEL</span>
       <sc-for list="{{levelButtons}}" as="lv" hint-placeholder-count="3">
-        <button onClick="{{lv.onClick}}" title="Desplegar hasta el nivel {{lv.lv}} en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:24px;height:24px;padding:0;cursor:pointer;background:transparent;color:{{lv.color}};border:1px solid {{lv.color}}" style-hover="background:{{lv.color}};color:#FFFFFF">{{lv.lv}}</button>
+        <button onClick="{{lv.onClick}}" title="Desplegar subactividades hasta el nivel {{lv.lv}}, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:24px;height:24px;padding:0;cursor:pointer;background:transparent;color:{{lv.color}};border:1px solid {{lv.color}}" style-hover="background:{{lv.color}};color:#FFFFFF">{{lv.lv}}</button>
       </sc-for>
     </sc-if>
     <div style="flex:1"></div>
@@ -1676,14 +1682,66 @@ class Component extends DCLogic {
     nodes.forEach(n => { if(n.parent) (kidsOf[n.parent] = kidsOf[n.parent] || []).push(n.id); });
     return kidsOf;
   }
+  // Profundidad de un grupo en el árbol de grupos (grupos raíz = 1).
+  grupoDepth(name, byName){
+    let d = 1, g = byName[name];
+    while(g && g.parent && byName[g.parent]){ d++; g = byName[g.parent]; }
+    return d;
+  }
+  grupoMaxDepth(){
+    const gs = this.grupos();
+    if(!gs.length) return 0;
+    const byName = {}; gs.forEach(g => byName[g.name] = g);
+    return Math.max(...gs.map(g => this.grupoDepth(g.name, byName)));
+  }
+  // Nivel de un área en el árbol grupo→área (raíz = 1). El área homónima de su
+  // grupo (p. ej. "Juridico" del grupo "Jurídico") se FUSIONA en el nodo del
+  // grupo en el mini-mapa, así que hereda el nivel del grupo; las demás áreas
+  // quedan un nivel por debajo de su grupo. Sus ACTIVIDADES son el nivel siguiente.
+  areaTreeLevel(area){
+    const g = this.grupoOf(area);
+    if(!g) return 1;
+    const gs = this.grupos();
+    const byName = {}; gs.forEach(x => byName[x.name] = x);
+    const norm = s => (s || '').toString().normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+    const d = this.grupoDepth(g.name, byName);
+    return norm(area) === norm(g.name) ? d : d + 1;
+  }
+  // EXPANDIR TODO: despliega TODO — subactividades, grupos y áreas.
   expandAll(){
     const nodes = this.state.nodes;
     const kidsOf = this.kidsMap(nodes);
     const expanded = {};
     nodes.forEach(n => { if(kidsOf[n.id] && kidsOf[n.id].length) expanded[n.id] = true; });
-    this.setState({expanded});
+    const groupOpen = {};
+    this.grupos().forEach(g => { groupOpen[g.name] = true; });
+    this.setState({expanded, groupOpen, areaCollapsed: {}});
   }
-  collapseAll(){ this.setState({expanded: {}}); }
+  // COLAPSAR TODO: pliega TODO — subactividades, grupos y actividades de cada área.
+  collapseAll(){
+    const groupOpen = {};
+    this.grupos().forEach(g => { groupOpen[g.name] = false; });
+    const areaCollapsed = {};
+    this.effectiveAreaOrder().forEach(a => { areaCollapsed[a] = true; });
+    this.setState({expanded: {}, groupOpen, areaCollapsed});
+  }
+  // Botones de nivel de ÁREAS/grupos: despliegan el árbol grupo→área→actividades
+  // PROGRESIVAMENTE hasta el nivel `lvl`, como un explorador de archivos:
+  // 1 = solo los nodos raíz (grupos raíz y áreas sin grupo), todo plegado;
+  // 2 = abre los grupos raíz (aparecen subgrupos/áreas plegados) y las áreas
+  //     que YA eran nivel 1 muestran sus actividades; y así sucesivamente.
+  // Un área muestra actividades solo cuando su nivel quedó POR DEBAJO de `lvl`
+  // (las actividades son "el nivel siguiente" al del área). Independiente de
+  // los botones NIVEL de subactividades (no toca `expanded`).
+  expandAreasToLevel(lvl){
+    const gs = this.grupos();
+    const byName = {}; gs.forEach(g => byName[g.name] = g);
+    const groupOpen = {};
+    gs.forEach(g => { groupOpen[g.name] = this.grupoDepth(g.name, byName) < lvl; });
+    const areaCollapsed = {};
+    this.effectiveAreaOrder().forEach(a => { if(!(this.areaTreeLevel(a) < lvl)) areaCollapsed[a] = true; });
+    this.setState({groupOpen, areaCollapsed});
+  }
   // Plegar/desplegar TODAS las actividades de un área (clic en su nodo del
   // mini-mapa). Al plegar, el carril del área queda compacto mostrando solo
   // el área; al desplegar, reaparecen sus actividades.
@@ -1905,6 +1963,12 @@ class Component extends DCLogic {
     // ¿Un área tiene actividades de nivel superior propias? (las que ocupan
     // el carril; las subactividades cuelgan de su padre en otro carril).
     const areaHasTop = (a) => nodes.some(n => !n.parent && n.area === a);
+    // Carril SINTÉTICO para un grupo CERRADO sin área homónima (p. ej.
+    // "Construcción"): sin él, su nodo del mini-mapa no tiene carril donde
+    // anclarse y se superpone con el carril siguiente (los carriles se apilan
+    // sin saber de los nodos "en flujo"). El sentinel nunca colisiona con un
+    // nombre de área real y su carril siempre es compacto (no tiene nodos).
+    const GLANE = '\u0000g:';
     const visAreas = [];
     const collectVisibleAreas = (spec) => {
       if (spec.kind === 'area') { if (!hidden[spec.a]) visAreas.push(spec.a); return; }
@@ -1916,6 +1980,7 @@ class Component extends DCLogic {
       // actividades propias. Si el grupo está expandido y su área homónima
       // está vacía, NO se crea carril — era el gran espacio vacío de arriba.
       if (self && !hidden[self] && (!open || areaHasTop(self))) visAreas.push(self);
+      if (!open && !self) visAreas.push(GLANE + g.name);
       if (open) kidsOfGroup(g).forEach(collectVisibleAreas);
     };
     mmRoots.forEach(collectVisibleAreas);
@@ -2068,7 +2133,10 @@ class Component extends DCLogic {
       const h = empty ? EMPTY_LANE_H : (LP_T + laneMax[a] + LP_B);
       laneY[a] = yCur; laneHmap[a] = h;
       laneCYmap[a] = empty ? (yCur + h / 2) : (yCur + LP_T + laneMax[a] / 2);
-      const areaColor = areaColorMap[a];
+      // Carril sintético de un grupo cerrado sin área homónima: usa el color
+      // del grupo (no hay área real de la cual tomarlo).
+      const glGroup = a.indexOf(GLANE) === 0 ? gsAll.find(g => (GLANE + g.name) === a) : null;
+      const areaColor = glGroup ? (glGroup.color || '#7486A6') : areaColorMap[a];
       const L = {
         areaName: a,
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
@@ -2129,10 +2197,11 @@ class Component extends DCLogic {
         cy = (Math.min(...childCys) + Math.max(...childCys)) / 2;
       } else {
         // Hoja: ancla al carril de su área (área hoja, o grupo colapsado con
-        // su área homónima). Si no tiene carril (grupo vacío como
-        // "Financiero", o grupo colapsado sin área propia), fluye en orden,
-        // SIEMPRE por debajo del fondo del carril anterior (mmFlowY).
-        const anchorArea = isArea ? spec.a : selfAreaOf(g);
+        // su área homónima; un grupo colapsado SIN área homónima ancla a su
+        // carril SINTÉTICO — ver GLANE). Si no tiene carril (grupo vacío
+        // abierto), fluye en orden, SIEMPRE por debajo del fondo del carril
+        // anterior (mmFlowY).
+        const anchorArea = isArea ? spec.a : (selfAreaOf(g) || (GLANE + g.name));
         const lc = anchorArea != null ? laneCenterY(anchorArea) : null;
         if (lc != null) {
           cy = lc;
@@ -2247,6 +2316,18 @@ class Component extends DCLogic {
     const levelButtons = [];
     for(let lv = 1; lv <= maxKidDepth + 1; lv++){
       levelButtons.push({ lv, color: depthColor(lv), onClick: () => this.expandToLevel(lv) });
+    }
+    // Botones de nivel de ÁREAS/grupos: despliegan el árbol grupo→área→
+    // actividades por nivel. Un botón por cada nivel real del árbol MÁS uno
+    // final (las actividades del área más profunda). Solo tienen sentido si
+    // el proyecto tiene grupos; sin grupos, «EXPANDIR/COLAPSAR TODO» basta.
+    const areaLevelButtons = [];
+    if(this.grupoMaxDepth() >= 1){
+      let maxAreaLevel = 1;
+      orderedAreas.forEach(a => { maxAreaLevel = Math.max(maxAreaLevel, this.areaTreeLevel(a) + 1); });
+      for(let lv = 1; lv <= maxAreaLevel; lv++){
+        areaLevelButtons.push({ lv, color: '#7486A6', onClick: () => this.expandAreasToLevel(lv) });
+      }
     }
 
     // Posiciones absolutas de TODO el subárbol visible. Cada principal de nivel
@@ -2942,6 +3023,7 @@ class Component extends DCLogic {
       onExpandAll: () => this.expandAll(),
       onCollapseAll: () => this.collapseAll(),
       levelButtons, hasLevels: levelButtons.length > 0,
+      areaLevelButtons, hasAreaLevels: areaLevelButtons.length > 0,
       onGestionar: () => this.openManage(),
       areaOptions, estadoOptions, manageAreas, manageEstados,
       legend: this.reconciledEstados().map(e => ({label: e.name.toUpperCase(), color: e.color})),
