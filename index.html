@@ -528,7 +528,7 @@
           </svg>
           <sc-for list="{{mmNodes}}" as="m" hint-placeholder-count="8">
             <div onClick="{{m.onClick}}" title="{{m.tip}}" class="soft mm-node" style="position:absolute;left:{{m.x}}px;top:{{m.y}}px;width:{{m.w}}px;height:{{m.h}}px;display:flex;align-items:center;justify-content:center;padding:0 9px;background:{{m.color}};outline:{{m.outline}};outline-offset:2px;box-shadow:0 2px 6px rgba(31,59,111,.18);cursor:pointer">
-              <span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.02em;color:#FFFFFF;line-height:1.12;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;word-break:break-word">{{m.label}}</span>
+              <span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.02em;color:#FFFFFF;line-height:1.12;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{{m.label}}</span>
             </div>
           </sc-for>
         </div>
@@ -1829,11 +1829,15 @@ class Component extends DCLogic {
     // Ancho del nodo del mini-mapa: se ajusta a la etiqueta MÁS LARGA (grupo o
     // área) para que el texto quepa completo (antes se truncaba con "…").
     const mmLabels = [...orderedAreas, ...gsAll.map(g => g.name)];
-    const maxLabelLen = mmLabels.reduce((m, s) => Math.max(m, (s || '').length), 0);
-    // Viñetas del mini-mapa (grupos/áreas): más ANGOSTAS. Como el texto ahora
-    // puede ir a 2 líneas, el ancho se basa en ~media etiqueta larga; el alto es
-    // uniforme (MM_H) y da cabida a 2 renglones centrados.
-    const MM_W = Math.min(148, Math.max(82, maxLabelLen * 3.1 + 40)), MM_H = 34, MM_GAPX = 26, MM_GAPY = 10;
+    // Ancho basado en la PALABRA más larga (no la etiqueta), para que ninguna
+    // palabra se parta a media palabra: las viñetas quedan lo justo para caber
+    // la palabra más larga en una línea, y las etiquetas de varias palabras
+    // pasan la siguiente palabra al segundo renglón (quiebre solo en espacios).
+    const maxWordLen = mmLabels.reduce((m, s) => {
+      const w = (s || '').split(/\s+/).reduce((a, t) => Math.max(a, t.length), 0);
+      return Math.max(m, w);
+    }, 0);
+    const MM_W = Math.min(210, Math.max(80, Math.round(maxWordLen * 7.6 + 20))), MM_H = 34, MM_GAPX = 26, MM_GAPY = 10;
     // Profundidad máxima del árbol ABIERTO (cuánto se extiende el mini-mapa
     // hacia la derecha), para reservarle espacio antes de que empiece la
     // primera columna de fase — así nunca queda una tarjeta debajo de un
