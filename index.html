@@ -42,6 +42,8 @@
     .combo-item:hover{background:#F4F7FB!important;}
     .doc-tr:hover td{background:#F7FAFD!important;}
     .doc-tr td{transition:background .14s ease;}
+    .bar-jump{transition:background .14s ease;}
+    .bar-jump:hover{background:#EEF3F9!important;}
     .sidebar-resizer{transition:background .14s ease;}
     .sidebar-resizer:hover{background:#61B1E3!important;}
     @keyframes rpSlideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
@@ -549,6 +551,26 @@
   <div style="flex:1;overflow:auto;padding:24px 28px;background:#EEF3F9">
     <div style="max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
 
+      <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;padding:18px 22px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div style="width:78px;height:78px;flex:none;border-radius:50%;background:{{heroSummary.ringBg}};display:flex;align-items:center;justify-content:center">
+          <div style="width:58px;height:58px;border-radius:50%;background:#FFFFFF;display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-size:19px;font-weight:800;color:#025850">{{heroSummary.pctLabel}}</div>
+        </div>
+        <div style="display:flex;gap:30px;flex-wrap:wrap;flex:1;align-items:center">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#94A1BA">COMPLETADAS</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:19px;font-weight:700;color:#1F3B6F;margin-top:3px">{{heroSummary.completadas}}</div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#94A1BA">DOCUMENTOS MARCADOS</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:19px;font-weight:700;color:#61B1E3;margin-top:3px">{{heroSummary.docs}}</div>
+          </div>
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:0.12em;color:#94A1BA">BLOQUEADAS</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:19px;font-weight:700;color:{{heroSummary.bloqueadasColor}};margin-top:3px">{{heroSummary.bloqueadas}}</div>
+          </div>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
         <sc-for list="{{dashKpis}}" as="k" hint-placeholder-count="4">
           <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;border-left:4px solid {{k.color}};padding:16px 18px">
@@ -562,12 +584,46 @@
         <div style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#1F3B6F;margin-bottom:2px">Avance por área</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;margin-bottom:16px">Porcentaje de avance fraccionario (actividades completadas + documentos marcados) por área</div>
         <sc-for list="{{areaBars}}" as="b" hint-placeholder-count="6">
-          <div title="{{b.tip}}" style="display:flex;align-items:center;gap:12px;margin-bottom:11px">
+          <div onClick="{{b.onClick}}" title="{{b.tip}}" class="bar-jump" style="display:flex;align-items:center;gap:12px;margin-bottom:11px;cursor:pointer;border-radius:8px;padding:2px 4px;margin-left:-4px">
             <div style="width:150px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{b.label}}</div>
             <div style="flex:1;height:16px;background:#EEF3F9;border-radius:8px;overflow:hidden;position:relative">
               <div style="height:100%;width:{{b.pct}};background:{{b.color}};border-radius:8px;transition:width .5s ease"></div>
             </div>
             <div style="width:44px;flex:none;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:{{b.color}}">{{b.pctLabel}}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{grupoBarsShow}}" hint-placeholder-val="{{ false }}">
+      <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;padding:20px 22px">
+        <div style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#1F3B6F;margin-bottom:2px">Avance por grupo</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;margin-bottom:16px">Clic en una barra para ver ese grupo en el diagrama</div>
+        <sc-for list="{{grupoBars}}" as="b" hint-placeholder-count="4">
+          <div onClick="{{b.onClick}}" title="{{b.tip}}" class="bar-jump" style="display:flex;align-items:center;gap:12px;margin-bottom:11px;cursor:pointer;border-radius:8px;padding:2px 4px;margin-left:-4px">
+            <div style="width:150px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1F3B6F;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{b.label}}</div>
+            <div style="flex:1;height:16px;background:#EEF3F9;border-radius:8px;overflow:hidden;position:relative">
+              <div style="height:100%;width:{{b.pct}};background:{{b.color}};border-radius:8px;transition:width .5s ease"></div>
+            </div>
+            <div style="width:44px;flex:none;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:{{b.color}}">{{b.pctLabel}}</div>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <div class="soft" style="background:#FFFFFF;border:1px solid #D9E1EC;padding:20px 22px">
+        <div style="font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#1F3B6F;margin-bottom:2px">Requiere atención</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;color:#94A1BA;margin-bottom:14px">Bloqueadas · cuellos de botella (lo que desbloquea más) · casi listas</div>
+        <sc-if value="{{attentionEmpty}}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12.5px;color:#025850">✓ Nada urgente: sin bloqueadas, cuellos de botella ni pendientes al 80%.</div>
+        </sc-if>
+        <sc-for list="{{attentionItems}}" as="a" hint-placeholder-count="4">
+          <div onClick="{{a.onClick}}" class="bar-jump" style="display:flex;align-items:center;gap:12px;padding:9px 6px;cursor:pointer;border-radius:8px;border-top:1px solid #F0F4F9">
+            <span style="width:4px;height:30px;border-radius:3px;flex:none;background:{{a.sev}}"></span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;color:#1F3B6F;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{a.titulo}}</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#94A1BA;margin-top:2px">{{a.id}} · {{a.sub}}</div>
+            </div>
+            <span style="flex:none;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:3px 8px;border-radius:6px;background:{{a.badgeBg}};color:{{a.badgeFg}}">{{a.badge}}</span>
           </div>
         </sc-for>
       </div>
@@ -1609,6 +1665,20 @@ class Component extends DCLogic {
   toggleAreaCollapse(area){
     this.setState(s => ({areaCollapsed: {...(s.areaCollapsed||{}), [area]: !(s.areaCollapsed||{})[area]}}));
   }
+  // Desde el dashboard: clic en una barra de área/grupo → salta al diagrama
+  // enfocado en ella (pliega las demás áreas; reversible expandiéndolas o con
+  // «EXPANDIR TODO»). Reutiliza el mecanismo de plegado por área (#1).
+  jumpToArea(area){
+    const areaCollapsed = {};
+    this.effectiveAreaOrder().forEach(a => { if (a !== area) areaCollapsed[a] = true; });
+    this.setState({view: 'diagrama', areaCollapsed, selectedId: null});
+  }
+  jumpToGroup(grupo){
+    const keep = new Set((grupo && grupo.areas) || []);
+    const areaCollapsed = {};
+    this.effectiveAreaOrder().forEach(a => { if (!keep.has(a)) areaCollapsed[a] = true; });
+    this.setState({view: 'diagrama', areaCollapsed, selectedId: null});
+  }
   // Expande todo hasta el nivel `lvl` (1 = solo el primer nivel de subactividades
   // de cada sección, 2 = ese más el siguiente, …), en todas las áreas a la vez.
   expandToLevel(lvl){
@@ -2627,17 +2697,57 @@ class Component extends DCLogic {
     const catColorMap = {};
     orderedAreas.forEach((a, i) => { catColorMap[a] = CAT_PALETTE[i % CAT_PALETTE.length]; });
 
-    // Avance fraccionario por área (misma fórmula que el % global, acotado al área)
-    const areaBars = orderedAreas.map(a => {
-      const ns = nodes.filter(n => n.area === a);
+    // Avance fraccionario reutilizable (misma fórmula que el % global).
+    const avanceOfNodes = (ns) => {
       const sum = ns.reduce((s, n) => {
         if (n.estado === 'Completado') return s + 1;
         const docs = n.docs || [];
         return s + (docs.length ? docs.filter(d => d && d.done).length / docs.length : 0);
       }, 0);
-      const pct = ns.length ? Math.round(sum / ns.length * 100) : 0;
-      return { label: a, pct: pct + '%', pctLabel: pct + '%', color: catColorMap[a] || '#7486A6', tip: a + ': ' + pct + '% de avance (' + ns.length + ' actividades)' };
+      return ns.length ? Math.round(sum / ns.length * 100) : 0;
+    };
+    // Avance por área. La barra es CLICABLE → enfoca esa área en el diagrama.
+    const areaBars = orderedAreas.map(a => {
+      const ns = nodes.filter(n => n.area === a);
+      const pct = avanceOfNodes(ns);
+      return { label: a, pct: pct + '%', pctLabel: pct + '%', color: catColorMap[a] || '#7486A6',
+        tip: 'Ver solo «' + a + '» en el diagrama (' + pct + '% · ' + ns.length + ' actividades)',
+        onClick: () => this.jumpToArea(a) };
     });
+
+    // Avance por GRUPO (Construcción, Financiero, Jurídico, Predial…). Aprovecha
+    // this.grupos() (#10). Barra CLICABLE → enfoca el grupo en el diagrama.
+    const grupoBars = gsAll.map((g, i) => {
+      const set = new Set(g.areas || []);
+      const ns = nodes.filter(n => set.has(n.area));
+      const pct = avanceOfNodes(ns);
+      return { label: g.name, pct: pct + '%', pctLabel: pct + '%',
+        color: g.color || CAT_PALETTE[i % CAT_PALETTE.length],
+        tip: 'Ver el grupo «' + g.name + '» en el diagrama (' + pct + '% · ' + ns.length + ' actividades)',
+        onClick: () => this.jumpToGroup(g) };
+    });
+    const grupoBarsEmpty = grupoBars.length === 0;
+
+    // ── "Requiere atención" — lecturas accionables ──────────────────────────
+    const dependentsCount = {};
+    nodes.forEach(n => (n.dependeDe || []).forEach(d => { dependentsCount[d] = (dependentsCount[d] || 0) + 1; }));
+    const docRatioOf = n => { const ds = n.docs || []; return ds.length ? ds.filter(d => d && d.done).length / ds.length : (n.estado === 'Completado' ? 1 : 0); };
+    const attentionItems = [];
+    const seenAtt = new Set();
+    const pushAtt = (n, o) => { if (seenAtt.has(n.id)) return; seenAtt.add(n.id); attentionItems.push({ id: n.id, titulo: n.titulo, onClick: () => this.selectNode(n.id), ...o }); };
+    // 1) Bloqueadas (rojo)
+    nodes.filter(n => n.estado === 'Bloqueado')
+      .forEach(n => pushAtt(n, { sev: '#AD1924', badge: 'BLOQUEADA', badgeBg: 'rgba(173,25,36,0.14)', badgeFg: '#AD1924', sub: 'Actividad bloqueada' }));
+    // 2) Cuellos de botella: no completadas que desbloquean a 2+ (ámbar)
+    nodes.filter(n => n.estado !== 'Completado' && (dependentsCount[n.id] || 0) >= 2)
+      .sort((a, b) => (dependentsCount[b.id] || 0) - (dependentsCount[a.id] || 0)).slice(0, 3)
+      .forEach(n => pushAtt(n, { sev: '#D97706', badge: 'DESBLOQUEA ' + dependentsCount[n.id], badgeBg: 'rgba(217,119,6,0.14)', badgeFg: '#D97706', sub: 'Habilita ' + dependentsCount[n.id] + ' actividades' }));
+    // 3) Casi listas: docs 80%+ pero sin completar (cian)
+    nodes.filter(n => n.estado !== 'Completado' && (n.docs || []).length && docRatioOf(n) >= 0.8 && docRatioOf(n) < 1)
+      .sort((a, b) => docRatioOf(b) - docRatioOf(a)).slice(0, 3)
+      .forEach(n => pushAtt(n, { sev: '#61B1E3', badge: Math.round(docRatioOf(n) * 100) + '%', badgeBg: 'rgba(97,177,227,0.16)', badgeFg: '#2F7FA0', sub: 'Documentos casi completos' }));
+    const attentionItemsCapped = attentionItems.slice(0, 6);
+    const attentionEmpty = attentionItemsCapped.length === 0;
 
     // Distribución de estados (mismos colores que el resto de la app)
     const ESTADO_STAT_COLORS = { 'Completado': '#025850', 'En proceso': '#61B1E3', 'Pendiente': '#5E7196', 'Bloqueado': '#AD1924' };
@@ -2663,6 +2773,20 @@ class Component extends DCLogic {
       { label: 'DOCUMENTOS MARCADOS', value: boardDocsTotal ? (boardDocsDone + '/' + boardDocsTotal) : '0', color: '#61B1E3' },
       { label: 'ÁREAS ACTIVAS', value: orderedAreas.length, color: '#332664' },
     ];
+
+    // Resumen hero del dashboard: anillo de avance + lecturas de un vistazo
+    // (lo importante primero — completadas, documentos, bloqueadas en rojo).
+    const heroPct = total ? Math.round(avanceSum / total * 100) : 0;
+    const bloqueadasN = nodes.filter(n => n.estado === 'Bloqueado').length;
+    const completadasN = nodes.filter(n => n.estado === 'Completado').length;
+    const heroSummary = {
+      pctLabel: heroPct + '%',
+      ringBg: 'conic-gradient(#025850 0 ' + heroPct + '%, #E4EAF3 ' + heroPct + '% 100%)',
+      completadas: completadasN + ' / ' + total,
+      docs: boardDocsTotal ? (boardDocsDone + ' / ' + boardDocsTotal) : '0',
+      bloqueadas: bloqueadasN,
+      bloqueadasColor: bloqueadasN ? '#AD1924' : '#7486A6'
+    };
 
     // Avance por fase (para el panel-inicio): solo las fases con actividades.
     const FASES_ALL = ['Preconstrucción', 'Construcción', 'Entrega a Beneficiarios', 'Liquidación'];
@@ -2830,6 +2954,8 @@ class Component extends DCLogic {
       // Dashboard
       dashKpis, areaBars, statusSegments, docAreaBars,
       docAreaEmpty: docAreaBars.every(b => b.countLabel === '0/0'),
+      heroSummary, grupoBars, grupoBarsShow: !grupoBarsEmpty,
+      attentionItems: attentionItemsCapped, attentionEmpty,
 
       // Documentos
       docSearchVal: this.state.docSearch, onDocSearch: e => this.setState({docSearch: e.target.value}),
