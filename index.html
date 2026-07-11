@@ -1092,6 +1092,21 @@ class Component extends DCLogic {
   // Único punto de guardado: localStorage + nube. Siempre contra el proyecto
   // actualmente abierto (this.state.projectId).
   persist(over){
+    // Marca de tiempo de la última edición LOCAL: la usa la suscripción en vivo
+    // para no pisar el texto que el usuario está escribiendo con el eco de su
+    // propia escritura (que vuelve por realtime).
+    this.__lastLocalEdit = Date.now();
+    // Debounce del guardado: en vez de serializar el documento completo (todos
+    // los nodos) en CADA tecla — lo que hacía la escritura lenta —, se agrupa y
+    // se guarda ~250 ms después de la última pulsación. El estado (input) ya se
+    // actualizó de inmediato vía setState; esto solo difiere la DURABILIDAD.
+    this.__persistOver = Object.assign(this.__persistOver || {}, over || {});
+    clearTimeout(this.__persistTimer);
+    this.__persistTimer = setTimeout(() => this._flushPersist(), 250);
+  }
+  _flushPersist(){
+    clearTimeout(this.__persistTimer); this.__persistTimer = null;
+    const over = this.__persistOver || {}; this.__persistOver = null;
     const doc = this.buildDoc(over);
     try { localStorage.setItem(lsKeyFor(this.state.projectId), JSON.stringify(doc)); } catch(e) {}
     if(cloud.enabled && !this.__applyingRemote) cloud.save(doc, this.state.projectId);
@@ -1121,6 +1136,10 @@ class Component extends DCLogic {
     // Tecla Escape: cierra el panel lateral (detalle/edición/gestión).
     this.__esc = (e) => { if(e.key === 'Escape' && (this.state.mode !== 'none' || this.state.selectedId)) this.setState({selectedId: null, mode: 'none'}); };
     window.addEventListener('keydown', this.__esc);
+    // Antes de recargar/cerrar, vacía el guardado pendiente (debounce) para no
+    // perder las últimas pulsaciones en localStorage.
+    this.__beforeUnload = () => { if(this.__persistTimer) this._flushPersist(); };
+    window.addEventListener('beforeunload', this.__beforeUnload);
     this.loadProjectsList();
     if(!cloud.enabled) return;
     this.connectProject(this.state.projectId, /*seedFromLocal*/true);
@@ -1128,10 +1147,14 @@ class Component extends DCLogic {
 
   componentWillUnmount(){
     if(this.__esc){ window.removeEventListener('keydown', this.__esc); }
+    if(this.__beforeUnload){ window.removeEventListener('beforeunload', this.__beforeUnload); }
+    if(this.__persistTimer) this._flushPersist();
     this.disconnectProject();
   }
 
   disconnectProject(){
+    // Vacía cualquier guardado pendiente (debounce) antes de soltar el canal.
+    if(this.__persistTimer) this._flushPersist();
     if(this.__cloudSub && _sb){ try { _sb.removeChannel(this.__cloudSub); } catch(e) {} this.__cloudSub = null; }
   }
 
@@ -1152,6 +1175,10 @@ class Component extends DCLogic {
     });
     this.__cloudSub = cloud.subscribe(boardId, (raw) => {
       if(boardId !== this.state.projectId) return;
+      // No pisar la edición en curso: si el usuario acaba de escribir/editar
+      // (incluye el eco de su propia escritura que vuelve por realtime), se
+      // ignora el cambio remoto. Tras ~2.5 s de inactividad vuelve a aplicarlos.
+      if(Date.now() - (this.__lastLocalEdit || 0) < 2500) return;
       const doc = toDoc(raw);
       if(!doc) return;
       const cur = this.buildDoc({});
