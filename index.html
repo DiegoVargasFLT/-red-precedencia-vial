@@ -262,8 +262,8 @@
             <textarea value="{{fNota}}" onChange="{{onFNota}}" rows="3" style="width:100%;background:#EEF3F9;border:1px solid #D9E1EC;color:#1F3B6F;font-family:'Montserrat',sans-serif;font-size:12.5px;padding:8px 10px;resize:vertical"></textarea>
           </label>
           <div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">ÁREAS INVOLUCRADAS ({{areaInvCount}})</div>
-            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">Marca las áreas involucradas en esta tarea. Aparecen como etiquetas al pie de la tarjeta, en el orden de las áreas del subproceso.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.12em;color:#7486A6;margin-bottom:5px">{{areaInvLabel}} ({{areaInvCount}})</div>
+            <div style="font-size:10.5px;color:#94A1BA;margin-bottom:6px;line-height:1.5">{{areaInvHint}}</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px">
               <sc-for list="{{areaInvOptions}}" as="o" hint-placeholder-count="4">
                 <label style="display:flex;gap:6px;align-items:center;padding:5px 9px;border:1px solid {{o.borderColor}};border-left:3px solid {{o.color}};background:{{o.bg}};cursor:pointer;font-size:11px;color:#1F3B6F;border-radius:6px" style-hover="border-color:#61B1E3">
@@ -1425,6 +1425,21 @@ class Component extends DCLogic {
     const next = cur.includes(area) ? cur.filter(a => a !== area) : [...cur, area];
     this.updateNode(id, {areasInvolucradas: next});
   }
+  // Marca/desmarca un GRUPO involucrado. Guarda el NOMBRE DEL GRUPO en
+  // `areasInvolucradas` y, al desmarcar, limpia también cualquier área miembro
+  // legada (auto-migración: el dato converge a nombres de grupo al re-editar).
+  toggleGrupoInvolucrado(id, groupName){
+    const n = this.state.nodes.find(x => x.id === id);
+    if(!n) return;
+    const g = this.grupos().find(x => x.name === groupName);
+    const memberAreas = g ? (g.areas || []) : [];
+    const cur = Array.isArray(n.areasInvolucradas) ? n.areasInvolucradas : [];
+    const has = cur.includes(groupName) || cur.some(e => memberAreas.includes(e));
+    const next = has
+      ? cur.filter(e => e !== groupName && !memberAreas.includes(e))
+      : [...cur, groupName];
+    this.updateNode(id, {areasInvolucradas: next});
+  }
 
   // ── Documentos por actividad (lista de enlaces {name, url}) ──
   docsOf(n){ return (n && Array.isArray(n.docs)) ? n.docs : []; }
@@ -1906,11 +1921,37 @@ class Component extends DCLogic {
     // de una tarea según el orden del subproceso (mismo orden de los carriles).
     const areaOrderIdx = {};
     orderedAreas.forEach((a, i) => { areaOrderIdx[a] = i; });
-    const chipsOf = n => (Array.isArray(n.areasInvolucradas) ? n.areasInvolucradas : [])
-      .filter(a => a)
+    // Chips al pie de la tarjeta = GRUPOS involucrados (Construcción, Financiero,
+    // Jurídico, Predial…), no áreas sueltas. `groupsInvolvedOf` normaliza el
+    // campo guardado: acepta nombres de grupo directamente y también áreas
+    // legadas (las mapea a su grupo), de modo que las tarjetas existentes ya se
+    // ven "migradas" sin reescribir datos. Al re-editar, se guardan como grupo.
+    const groupByName = {};
+    gsAll.forEach(g => { groupByName[g.name] = g; });
+    const groupOrderIdx = {};
+    gsAll.forEach((g, i) => { groupOrderIdx[g.name] = i; });
+    const hasGroups = gsAll.length > 0;
+    const groupsInvolvedOf = n => {
+      const raw = Array.isArray(n.areasInvolucradas) ? n.areasInvolucradas : [];
+      // Sin grupos definidos: degradación limpia — se devuelven las áreas tal
+      // cual (comportamiento previo), para no perder los chips existentes.
+      if (!hasGroups) return raw.filter(Boolean);
+      const names = [];
+      raw.forEach(e => {
+        if (!e) return;
+        const gn = groupByName[e] ? e : ((this.grupoOf(e) || {}).name || null);
+        if (gn && !names.includes(gn)) names.push(gn);
+      });
+      return names;
+    };
+    const chipsOf = n => groupsInvolvedOf(n)
       .slice()
-      .sort((a, b) => (areaOrderIdx[a] ?? 999) - (areaOrderIdx[b] ?? 999))
-      .map(a => ({ label: this.prefixFor(a), color: areaColorMap[a] || '#94A1BA' }));
+      .sort((a, b) => hasGroups
+        ? (groupOrderIdx[a] ?? 999) - (groupOrderIdx[b] ?? 999)
+        : (areaOrderIdx[a] ?? 999) - (areaOrderIdx[b] ?? 999))
+      .map(x => hasGroups
+        ? ({ label: x, color: (groupByName[x] || {}).color || '#94A1BA' })
+        : ({ label: this.prefixFor(x), color: areaColorMap[x] || '#94A1BA' }));
     // Carril COMPACTO para áreas sin actividades de nivel superior: en vez de
     // reservar el alto completo (LP_T+NH+LP_B ≈ 142px) que dejaba grandes
     // bandas vacías, solo reserva lo justo para su nodo del mini-mapa.
@@ -2483,18 +2524,32 @@ class Component extends DCLogic {
     // Se muestran como chips al pie de la tarjeta. Independientes de las deps.
     let areaInvOptions = [], areaInvCount = 0;
     if (showForm) {
-      const sel = Array.isArray(selNode.areasInvolucradas) ? selNode.areasInvolucradas : [];
-      areaInvCount = sel.length;
-      areaInvOptions = orderedAreas.map(a => {
-        const checked = sel.includes(a);
-        const color = areaColorMap[a] || '#94A1BA';
-        return {
-          area: a, abbr: this.prefixFor(a), color, checked,
-          bg: checked ? color + '18' : '#F4F7FB',
-          borderColor: checked ? color + '77' : '#D9E1EC',
-          onToggle: () => this.toggleAreaInvolucrada(selId, a)
-        };
-      });
+      // Opciones = GRUPOS (leídos de this.grupos()), así los grupos nuevos que se
+      // creen en el futuro entran automáticamente. El estado marcado se calcula
+      // con groupsInvolvedOf (que también reconoce áreas legadas).
+      const involved = new Set(groupsInvolvedOf(selNode));
+      areaInvCount = involved.size;
+      areaInvOptions = hasGroups
+        ? gsAll.map(g => {
+            const checked = involved.has(g.name);
+            const color = g.color || '#94A1BA';
+            return {
+              area: g.name, abbr: '●', color, checked,
+              bg: checked ? color + '18' : '#F4F7FB',
+              borderColor: checked ? color + '77' : '#D9E1EC',
+              onToggle: () => this.toggleGrupoInvolucrado(selId, g.name)
+            };
+          })
+        : orderedAreas.map(a => {  // sin grupos: fallback a áreas (comportamiento previo)
+            const checked = involved.has(a);
+            const color = areaColorMap[a] || '#94A1BA';
+            return {
+              area: a, abbr: this.prefixFor(a), color, checked,
+              bg: checked ? color + '18' : '#F4F7FB',
+              borderColor: checked ? color + '77' : '#D9E1EC',
+              onToggle: () => this.toggleAreaInvolucrada(selId, a)
+            };
+          });
     }
 
     // Selectores con búsqueda (mkCombo): área, fase, estado y «pertenece a».
@@ -2824,6 +2879,10 @@ class Component extends DCLogic {
       fParentShow: !!fParentSelect,
       fAreaSelect, fFaseSelect, fEstadoSelect, fDocsEditor,
       areaInvOptions, areaInvCount,
+      areaInvLabel: (gsAll.length ? 'GRUPOS INVOLUCRADOS' : 'ÁREAS INVOLUCRADAS'),
+      areaInvHint: (gsAll.length
+        ? 'Marca los grupos involucrados en esta tarea (Construcción, Financiero, Jurídico, Predial…). Aparecen como etiquetas al pie de la tarjeta.'
+        : 'Marca las áreas involucradas en esta tarea. Aparecen como etiquetas al pie de la tarjeta.'),
       depOptions, enOptions, depSelCount, enSelCount,
       depFilterVal: this.state.depFilter, onDepFilter: e => this.setState({depFilter: e.target.value}),
       enFilterVal: this.state.enFilter, onEnFilter: e => this.setState({enFilter: e.target.value}),
