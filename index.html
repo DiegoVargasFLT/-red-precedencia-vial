@@ -923,6 +923,7 @@ class Component extends DCLogic {
       groupOpen: {},
       zoom: 1,
       expanded: {},  // qué actividades principales muestran sus subactividades
+      areaCollapsed: {},  // áreas cuyas actividades están plegadas (queda solo el área)
       openCombo: null, comboQ: '',   // combo con búsqueda actualmente abierto
       depFilter: '', enFilter: '',   // filtros de las listas de predecesoras/sucesoras
       view: 'diagrama',              // 'diagrama' | 'dashboard' | 'documentos'
@@ -1587,6 +1588,12 @@ class Component extends DCLogic {
     this.setState({expanded});
   }
   collapseAll(){ this.setState({expanded: {}}); }
+  // Plegar/desplegar TODAS las actividades de un área (clic en su nodo del
+  // mini-mapa). Al plegar, el carril del área queda compacto mostrando solo
+  // el área; al desplegar, reaparecen sus actividades.
+  toggleAreaCollapse(area){
+    this.setState(s => ({areaCollapsed: {...(s.areaCollapsed||{}), [area]: !(s.areaCollapsed||{})[area]}}));
+  }
   // Expande todo hasta el nivel `lvl` (1 = solo el primer nivel de subactividades
   // de cada sección, 2 = ese más el siguiente, …), en todas las áreas a la vez.
   expandToLevel(lvl){
@@ -1716,6 +1723,7 @@ class Component extends DCLogic {
     const levels = this.computePhaseLevels(nodes, byId);
     const hidden = this.state.hidden;
     const expanded = this.state.expanded;
+    const areaCollapsed = this.state.areaCollapsed || {};  // áreas plegadas (solo el área visible)
     const orderedAreas = this.effectiveAreaOrder();
     const gsAll = this.grupos();
     const groupOpenState = this.state.groupOpen || {};
@@ -1739,7 +1747,7 @@ class Component extends DCLogic {
     // área) para que el texto quepa completo (antes se truncaba con "…").
     const mmLabels = [...orderedAreas, ...gsAll.map(g => g.name)];
     const maxLabelLen = mmLabels.reduce((m, s) => Math.max(m, (s || '').length), 0);
-    const MM_W = Math.min(230, Math.max(112, maxLabelLen * 7 + 44)), MM_H = 26, MM_GAPX = 30, MM_GAPY = 10;
+    const MM_W = Math.min(206, Math.max(96, maxLabelLen * 6.6 + 38)), MM_H = 26, MM_GAPX = 26, MM_GAPY = 10;
     // Profundidad máxima del árbol ABIERTO (cuánto se extiende el mini-mapa
     // hacia la derecha), para reservarle espacio antes de que empiece la
     // primera columna de fase — así nunca queda una tarjeta debajo de un
@@ -1750,7 +1758,11 @@ class Component extends DCLogic {
       return kids.length ? 1 + Math.max(...kids.map(mmDepthOf)) : 1;
     };
     const mmMaxDepth = mmRoots.length ? Math.max(...mmRoots.map(mmDepthOf)) : 0;
-    const NW = 216, NH = compact ? 54 : 78, CG = 110, SG = 14, LP_T = 44, LP_B = 20;
+    // NW: ancho de tarjeta (más angosto; el alto es dinámico según el texto).
+    // CG: separación horizontal entre columnas (~mitad). SG: separación vertical
+    // entre actividades apiladas (~mitad). LP_T/LP_B: relleno del carril,
+    // balanceados para CENTRAR verticalmente las tarjetas y compactar el alto.
+    const NW = 190, NH = compact ? 50 : 62, CG = 60, SG = 7, LP_T = 16, LP_B = 16;
     const LEFT = mmMaxDepth ? (26 + mmMaxDepth * (MM_W + MM_GAPX) + 20) : 190;
 
     // Jerarquía de N niveles: un nodo es visible solo si TODOS sus ancestros
@@ -1791,7 +1803,7 @@ class Component extends DCLogic {
     };
     mmRoots.forEach(collectVisibleAreas);
     const visAreaSet = new Set(visAreas);
-    const visible = nodes.filter(n => visAreaSet.has(n.area) && isNodeVisible(n));
+    const visible = nodes.filter(n => visAreaSet.has(n.area) && isNodeVisible(n) && !areaCollapsed[n.area]);
 
     // Apilado por área+columna con alturas variables: una principal expandida
     // CONSERVA su tamaño de tarjeta normal (no se compacta) — sus hijas se
@@ -1804,7 +1816,20 @@ class Component extends DCLogic {
     // collectEdges), NO para cambiar su tamaño ni su estilo de tarjeta.
     const isExpTitle = n => !!(n && expanded[n.id] && kidsOf[n.id] && kidsOf[n.id].length);
     const hasChips = n => Array.isArray(n.areasInvolucradas) && n.areasInvolucradas.length > 0;
-    const hOf = n => NH + (hasChips(n) ? CHIP_H : 0);
+    // Altura DINÁMICA: la tarjeta crece según cuántas líneas ocupe su título,
+    // para que el texto se vea COMPLETO aunque el nodo sea más angosto (NW).
+    // Se estima con holgura (char ancho ~7px y se reserva siempre la fila meta)
+    // para no cortar NUNCA el texto; NH actúa como alto mínimo.
+    const TITLE_LNH = 15.6, CARD_PADY = 16, CARD_ROW1 = 15, CARD_GAP = 3, CARD_META = 12;
+    const titleLines = t => {
+      // ~8.3 px/carácter para Montserrat 600 a 12.5px (medido en el panel real):
+      // sobreestima el nº de líneas para que el título NUNCA se corte.
+      const cpl = Math.max(5, (NW - 24) / 8.3);
+      return Math.max(1, Math.ceil((t || '').length / cpl));
+    };
+    const baseH = n => CARD_PADY + CARD_ROW1 + CARD_GAP + Math.ceil(titleLines(n.titulo) * TITLE_LNH)
+      + (compact ? 0 : CARD_GAP + CARD_META);
+    const hOf = n => Math.max(NH, baseH(n)) + (hasChips(n) ? CHIP_H : 0);
     // Orden de apilado: recorrido en profundidad (DFS) del árbol completo, para
     // que cada nodo quede seguido de TODOS sus descendientes (jerarquía de N niveles).
     const dfsOrder = [];
@@ -1893,7 +1918,10 @@ class Component extends DCLogic {
     const laneY = {}, laneHmap = {}, laneCYmap = {};
     let yCur = 34;
     const lanes = visAreas.map((a, i) => {
-      const empty = !areaHasTop(a);
+      // Un carril es "compacto" si no tiene actividades propias O si el área
+      // está plegada (clic en su nodo): en ambos casos solo se reserva la
+      // altura mínima para mostrar el área, sin sus tarjetas.
+      const empty = !areaHasTop(a) || !!areaCollapsed[a];
       const h = empty ? EMPTY_LANE_H : (LP_T + laneMax[a] + LP_B);
       laneY[a] = yCur; laneHmap[a] = h;
       laneCYmap[a] = empty ? (yCur + h / 2) : (yCur + LP_T + laneMax[a] / 2);
@@ -1974,6 +2002,10 @@ class Component extends DCLogic {
       const y = cy - selfH / 2;
       mmPos[key] = {x, y, cy, w: MM_W, h: selfH};
       const expandable = !isArea && kidsOfGroup(g).length > 0;
+      // Un área con actividades propias es "plegable": su nodo muestra ▾/▸ y el
+      // clic pliega/despliega sus tarjetas (queda solo el área).
+      const areaFoldable = isArea && areaHasTop(spec.a);
+      const areaFolded = isArea && !!areaCollapsed[spec.a];
       const label = isArea ? spec.a : g.name;
       const color = isArea ? (areaColorMap[spec.a] || '#7486A6') : (g.color || '#7486A6');
       const agName = isArea ? spec.a : g.name;
@@ -1983,12 +2015,17 @@ class Component extends DCLogic {
         key, x, y, w: MM_W, h: selfH, label: label.toUpperCase(), color,
         // Seleccionado = borde/realce, igual que una tarjeta de actividad.
         outline: sel ? '2px solid #1F3B6F' : 'none',
-        mark: expandable ? (open ? '−' : '+') : '',
-        markDisplay: expandable ? 'inline-block' : 'none',
-        onToggle: (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}})); },
-        // Clic en el CUERPO abre el panel lateral del área/grupo (como una
-        // tarjeta de tarea), no renombra ni oculta directamente.
-        onClick: (e) => { e.stopPropagation(); this.selectAG(agKind, agName); }
+        // Grupos: +/− despliega/pliega el grupo. Áreas: ▾/▸ pliega sus actividades.
+        mark: expandable ? (open ? '−' : '+') : (areaFoldable ? (areaFolded ? '▸' : '▾') : ''),
+        markDisplay: (expandable || areaFoldable) ? 'inline-block' : 'none',
+        onToggle: isArea
+          ? (e) => { e.stopPropagation(); this.toggleAreaCollapse(spec.a); }
+          : (e) => { e.stopPropagation(); this.setState(s => ({groupOpen: {...s.groupOpen, [g.name]: !isGroupOpen(g.name)}})); },
+        // Clic en el CUERPO: en un ÁREA pliega/despliega sus actividades; en un
+        // GRUPO abre el panel lateral (renombrar / ver) como antes.
+        onClick: isArea
+          ? (e) => { e.stopPropagation(); this.toggleAreaCollapse(spec.a); }
+          : (e) => { e.stopPropagation(); this.selectAG(agKind, agName); }
       });
       return cy;
     };
@@ -2416,6 +2453,8 @@ class Component extends DCLogic {
         checked, onToggle
       });
       const byAreaId = (a, b) => a.area.localeCompare(b.area) || a.id.localeCompare(b.id);
+      // Las YA marcadas van primero (para desmarcarlas fácil), luego por área/id.
+      const byCheckedThenArea = (a, b) => (b.checked ? 1 : 0) - (a.checked ? 1 : 0) || byAreaId(a, b);
       const matches = (o, f) => !f || (o.titulo + ' ' + o.id + ' ' + o.area).toLowerCase().includes(f);
 
       // Predecesoras: se excluyen la actividad y sus descendientes (ciclos).
@@ -2423,7 +2462,7 @@ class Component extends DCLogic {
       this.collectDesc(exclDown, nodes);
       depOptions = nodes.filter(n => !exclDown.has(n.id))
         .map(n => mkOpt(n, (selNode.dependeDe||[]).includes(n.id), () => this.toggleDep(selId, n.id)))
-        .sort(byAreaId);
+        .sort(byCheckedThenArea);
       depSelCount = depOptions.filter(o => o.checked).length;
       const df = (this.state.depFilter||'').trim().toLowerCase();
       depOptions = depOptions.filter(o => o.checked || matches(o, df));
@@ -2434,7 +2473,7 @@ class Component extends DCLogic {
       exclUp.add(selId);
       enOptions = nodes.filter(n => !exclUp.has(n.id))
         .map(n => mkOpt(n, (n.dependeDe||[]).includes(selId), () => this.toggleDep(n.id, selId)))
-        .sort(byAreaId);
+        .sort(byCheckedThenArea);
       enSelCount = enOptions.filter(o => o.checked).length;
       const ef = (this.state.enFilter||'').trim().toLowerCase();
       enOptions = enOptions.filter(o => o.checked || matches(o, ef));
