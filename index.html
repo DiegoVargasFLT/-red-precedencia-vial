@@ -474,7 +474,7 @@
     <sc-if value="{{hasLevels}}" hint-placeholder-val="{{ false }}">
       <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#94A1BA;margin-left:2px" title="Desplegar subactividades por nivel">NIVEL</span>
       <sc-for list="{{levelButtons}}" as="lv" hint-placeholder-count="3">
-        <button onClick="{{lv.onClick}}" title="Desplegar subactividades hasta el nivel {{lv.lv}}, en todas las áreas" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:24px;height:24px;padding:0;cursor:pointer;background:transparent;color:{{lv.color}};border:1px solid {{lv.color}}" style-hover="background:{{lv.color}};color:#FFFFFF">{{lv.lv}}</button>
+        <button onClick="{{lv.onClick}}" title="Mostrar actividades hasta el nivel {{lv.lv}}, en todas las áreas (1 = solo las principales)" style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;width:24px;height:24px;padding:0;cursor:pointer;background:transparent;color:{{lv.color}};border:1px solid {{lv.color}}" style-hover="background:{{lv.color}};color:#FFFFFF">{{lv.lv}}</button>
       </sc-for>
     </sc-if>
     <div style="flex:1"></div>
@@ -1759,8 +1759,10 @@ class Component extends DCLogic {
     this.effectiveAreaOrder().forEach(a => { if (!keep.has(a)) areaCollapsed[a] = true; });
     this.setState({view: 'diagrama', areaCollapsed, selectedId: null});
   }
-  // Expande todo hasta el nivel `lvl` (1 = solo el primer nivel de subactividades
-  // de cada sección, 2 = ese más el siguiente, …), en todas las áreas a la vez.
+  // Expande las actividades hasta el nivel `lvl`, en todas las áreas a la vez:
+  // 1 = SOLO las actividades principales (ninguna subactividad desplegada);
+  // 2 = principales + su primer nivel de subactividades; 3 = ese más el
+  // siguiente; … (se expanden los padres de profundidad < lvl-1).
   // Como su propósito es MOSTRAR actividades, también despliega las áreas
   // plegadas (p. ej. tras usar los botones ÁREAS); los grupos cerrados se
   // respetan (sus áreas siguen ocultas — eso lo gobierna el árbol de ÁREAS).
@@ -1771,7 +1773,7 @@ class Component extends DCLogic {
     const expanded = {};
     nodes.forEach(n => {
       if(!(kidsOf[n.id] && kidsOf[n.id].length)) return;
-      if(this.nodeDepth(n.id, byId) < lvl) expanded[n.id] = true;
+      if(this.nodeDepth(n.id, byId) < lvl - 1) expanded[n.id] = true;
     });
     this.setState({expanded, areaCollapsed: {}});
   }
@@ -2307,14 +2309,18 @@ class Component extends DCLogic {
     const depthOf = id => { let dd = 0, nd = byId[id]; while(nd && nd.parent && byId[nd.parent]){ dd++; nd = byId[nd.parent]; } return dd; };
     const depthColor = dd => DEPTH_COLORS[(dd - 1 + DEPTH_COLORS.length) % DEPTH_COLORS.length];
 
-    // Botones "expandir hasta nivel N": uno por cada profundidad que exista
-    // en los datos, con el mismo color que ese nivel tendrá al desplegarse.
+    // Botones "expandir hasta nivel N": el nivel 1 son las actividades
+    // PRINCIPALES solas (nada desplegado); a partir del 2, cada botón agrega
+    // un nivel de subactividades. La cantidad se calcula de los DATOS
+    // (profundidad real del árbol de subactividades): botones 1..maxKidDepth+2.
+    // Color: el del nivel de subactividad más profundo que ese botón muestra
+    // (el 1 usa gris neutro — solo raíces, que llevan color de área).
     const kidsOfAll = this.kidsMap(nodes);
     let maxKidDepth = 0;
     nodes.forEach(n => { if(kidsOfAll[n.id] && kidsOfAll[n.id].length){ const dd = depthOf(n.id); if(dd > maxKidDepth) maxKidDepth = dd; } });
     const levelButtons = [];
-    for(let lv = 1; lv <= maxKidDepth + 1; lv++){
-      levelButtons.push({ lv, color: depthColor(lv), onClick: () => this.expandToLevel(lv) });
+    for(let lv = 1; lv <= maxKidDepth + 2; lv++){
+      levelButtons.push({ lv, color: lv === 1 ? '#7486A6' : depthColor(lv - 1), onClick: () => this.expandToLevel(lv) });
     }
     // Botones de nivel de ÁREAS/grupos: despliegan el esqueleto grupo→área por
     // nivel (SIN actividades — eso es de los botones NIVEL). Un botón por cada
