@@ -2202,20 +2202,22 @@ class Component extends DCLogic {
       // actividades propias. Si el grupo está expandido y su área homónima
       // está vacía, NO se crea carril — era el gran espacio vacío de arriba.
       if (self && !hidden[self] && (!open || areaHasTop(self))) visAreas.push(self);
-      if (!open && !self) visAreas.push(GLANE + g.name);
-      if (open) kidsOfGroup(g).forEach(collectVisibleAreas);
-      else {
-        // Grupo cerrado: además del carril del propio grupo, se agregan los
-        // carriles de las áreas que tengan un hito de Liquidación, para que
-        // esos hitos sigan visibles con las ÁREAS en nivel 1.
-        const pushLiqAreas = (sp) => {
-          if (sp.kind === 'area') { if (liqAreas.has(sp.a) && !hidden[sp.a] && !visAreas.includes(sp.a)) visAreas.push(sp.a); return; }
-          const s2 = selfAreaOf(sp.g);
-          if (s2 && liqAreas.has(s2) && !hidden[s2] && !visAreas.includes(s2)) visAreas.push(s2);
-          kidsOfGroup(sp.g).forEach(pushLiqAreas);
-        };
-        kidsOfGroup(g).forEach(pushLiqAreas);
-      }
+      if (open) { kidsOfGroup(g).forEach(collectVisibleAreas); return; }
+      // Grupo cerrado: reunir los carriles de las áreas descendientes con un
+      // hito de Liquidación, para que esos hitos sigan visibles con las ÁREAS en
+      // nivel 1. El nodo del grupo se centrará contra ellos (ver placeMM).
+      const liqKids = [];
+      const collectLiq = (sp) => {
+        if (sp.kind === 'area') { if (liqAreas.has(sp.a) && !hidden[sp.a] && sp.a !== self && !liqKids.includes(sp.a)) liqKids.push(sp.a); return; }
+        const s2 = selfAreaOf(sp.g);
+        if (s2 && liqAreas.has(s2) && !hidden[s2] && s2 !== self && !liqKids.includes(s2)) liqKids.push(s2);
+        kidsOfGroup(sp.g).forEach(collectLiq);
+      };
+      kidsOfGroup(g).forEach(collectLiq);
+      // Carril SINTÉTICO solo si el grupo no tiene dónde anclar (ni área
+      // homónima ni carriles de Liquidación).
+      if (!self && !liqKids.length) visAreas.push(GLANE + g.name);
+      liqKids.forEach(a => { if (!visAreas.includes(a)) visAreas.push(a); });
     };
     mmRoots.forEach(collectVisibleAreas);
     const visAreaSet = new Set(visAreas);
@@ -2288,11 +2290,20 @@ class Component extends DCLogic {
       const kids = expanded[id] ? visChildrenOf(id) : [];
       return kids.length ? 1 + Math.max(...kids.map(branchDepth)) : 1;
     };
-    const maxLevelAll = visible.length ? Math.max(...visible.map(n => levels[n.id])) : 0;
+    // Compactación de columnas: los niveles de fase que REALMENTE tienen alguna
+    // actividad visible se remapean a índices contiguos (0,1,2,…). Así no quedan
+    // columnas vacías entre las áreas y la primera actividad visible: al colapsar,
+    // los hitos de Liquidación quedan pegados a las áreas y las columnas se van
+    // separando a medida que aparecen más actividades. `clv(n)` = columna
+    // compacta del nodo (sigue usando `levels` para el orden real de fase).
+    const usedLevels = [...new Set(visible.map(n => levels[n.id]))].sort((a, b) => a - b);
+    const clvMap = {}; usedLevels.forEach((L, i) => { clvMap[L] = i; });
+    const clv = (n) => (clvMap[levels[n.id]] != null ? clvMap[levels[n.id]] : 0);
+    const maxLevelAll = usedLevels.length ? usedLevels.length - 1 : 0;
     const extraByLane = {};
     topVis.forEach(n => {
       const per = extraByLane[n.area] || (extraByLane[n.area] = {});
-      const L = levels[n.id];
+      const L = clv(n);
       const d = branchDepth(n.id) - 1;
       if (d > (per[L] || 0)) per[L] = d;
     });
@@ -2308,7 +2319,7 @@ class Component extends DCLogic {
 
     const yOff = {}, colH = {};
     topVis.forEach(n => {
-      const k = n.area + '|' + levels[n.id];
+      const k = n.area + '|' + clv(n);
       yOff[n.id] = colH[k] || 0;
       colH[k] = yOff[n.id] + branchH(n.id) + SG;
     });
@@ -2445,7 +2456,25 @@ class Component extends DCLogic {
       const kids = open ? kidsOfGroup(g) : [];
       const selfH = MM_H;
       let cy;
-      if (kids.length) {
+      // Grupo CERRADO con carriles de Liquidación descendientes: se centra el
+      // nodo del grupo contra el rango vertical de esos carriles (en vez de
+      // quedar pegado arriba a su carril sintético).
+      let liqLaneCys = null;
+      if (!isArea && !open) {
+        const cys = [];
+        const scan = (sp) => {
+          if (sp.kind === 'area') { if (visAreaSet.has(sp.a)) { const c = laneCenterY(sp.a); if (c != null) cys.push({c, a: sp.a}); } return; }
+          const s2 = selfAreaOf(sp.g); if (s2 && visAreaSet.has(s2)) { const c = laneCenterY(s2); if (c != null) cys.push({c, a: s2}); }
+          kidsOfGroup(sp.g).forEach(scan);
+        };
+        kidsOfGroup(g).forEach(scan);
+        if (cys.length) liqLaneCys = cys;
+      }
+      if (liqLaneCys) {
+        const cvals = liqLaneCys.map(o => o.c);
+        cy = (Math.min(...cvals) + Math.max(...cvals)) / 2;
+        liqLaneCys.forEach(o => { const b = laneBottomY(o.a); if (b != null) mmFlowY = Math.max(mmFlowY, b + MM_GAPY); });
+      } else if (kids.length) {
         const childX = x + MM_W + MM_GAPX;
         const childCys = kids.map(k => placeMM(k, childX));
         cy = (Math.min(...childCys) + Math.max(...childCys)) / 2;
@@ -2594,7 +2623,7 @@ class Component extends DCLogic {
       pos[id] = {x, y: py, w: NW, h: selfH, indent: 0, depth: depthOf(id)};
       return Math.max(selfH, childrenH);
     };
-    topVis.forEach(n => placeSub(n.id, colX[levels[n.id]] + shiftOf(n.area, levels[n.id]), laneY[n.area] + LP_T + yOff[n.id]));
+    topVis.forEach(n => placeSub(n.id, colX[clv(n)] + shiftOf(n.area, clv(n)), laneY[n.area] + LP_T + yOff[n.id]));
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
 
     // Bandas de fase, desde las posiciones REALES: cada banda abarca del borde
@@ -2633,8 +2662,8 @@ class Component extends DCLogic {
       if (!an) return;
       const acts = topVis.filter(n => n.area === a && pos[n.id]);
       if (!acts.length) return;
-      const minLv = Math.min(...acts.map(n => levels[n.id]));
-      acts.filter(n => levels[n.id] === minLv).forEach(n => {
+      const minLv = Math.min(...acts.map(n => clv(n)));
+      acts.filter(n => clv(n) === minLv).forEach(n => {
         const p = pos[n.id];
         const x1 = an.x + an.w, y1 = an.cy, x2 = p.x, y2 = p.y + hOf(byId[n.id]) / 2;
         const dx = Math.max(24, (x2 - x1) * 0.4);
