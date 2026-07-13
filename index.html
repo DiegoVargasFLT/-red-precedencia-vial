@@ -497,7 +497,7 @@
 
     <div style="flex:1;position:relative;min-width:0">
      <div class="diagram-scroll" style="position:absolute;inset:0;overflow:auto">
-      <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;zoom:{{zoom}};background-image:radial-gradient(circle, rgba(97,177,227,0.10) 1px, transparent 1.4px);background-size:26px 26px">
+      <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;margin-top:{{diagramPadTop}}px;margin-bottom:{{diagramPadBot}}px;zoom:{{zoom}};background-image:radial-gradient(circle, rgba(97,177,227,0.10) 1px, transparent 1.4px);background-size:26px 26px">
         <sc-for list="{{fasesBands}}" as="f" hint-placeholder-count="4">
           <div style="position:absolute;left:{{f.x}}px;top:0;width:{{f.w}}px;height:{{canvasH}}px;background:{{f.bg}};border-left:1px dashed {{f.bd}};pointer-events:none;white-space:nowrap">
             <span style="position:sticky;left:196px;display:inline-block;margin-top:8px;margin-left:12px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,0.88);border:1px solid {{f.bd}};box-shadow:0 1px 3px rgba(31,59,111,.06);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;color:{{f.fg}}">{{f.label}}</span>
@@ -1260,6 +1260,40 @@ class Component extends DCLogic {
       });
     };
     window.addEventListener('wheel', this.__wheelZoom, {passive: false});
+    // Desplazamiento con clic sostenido (pan): arrastrar sobre el diagrama mueve
+    // el scroll en cualquier dirección. Un umbral de 5px distingue el arrastre de
+    // un clic simple; tras arrastrar se suprime el `click` para no seleccionar/
+    // deseleccionar una tarjeta por accidente.
+    this.__panState = null;
+    this.__panDown = (e) => {
+      if(e.button !== 0) return;
+      const sc = e.target && e.target.closest && e.target.closest('.diagram-scroll');
+      if(!sc) return;
+      this.__panState = {sc, x: e.clientX, y: e.clientY, sl: sc.scrollLeft, st: sc.scrollTop, moved: false};
+    };
+    this.__panMove = (e) => {
+      const p = this.__panState;
+      if(!p) return;
+      const dx = e.clientX - p.x, dy = e.clientY - p.y;
+      if(!p.moved && (Math.abs(dx) + Math.abs(dy)) < 5) return;
+      p.moved = true;
+      e.preventDefault();
+      p.sc.scrollLeft = p.sl - dx;
+      p.sc.scrollTop = p.st - dy;
+      document.body.style.cursor = 'grabbing';
+    };
+    this.__panUp = () => {
+      const p = this.__panState;
+      if(!p) return;
+      this.__panState = null;
+      document.body.style.cursor = '';
+      if(p.moved){ this.__suppressClick = true; setTimeout(() => { this.__suppressClick = false; }, 0); }
+    };
+    this.__panClick = (e) => { if(this.__suppressClick){ e.stopPropagation(); e.preventDefault(); } };
+    window.addEventListener('mousedown', this.__panDown);
+    window.addEventListener('mousemove', this.__panMove);
+    window.addEventListener('mouseup', this.__panUp);
+    window.addEventListener('click', this.__panClick, true);
     // Antes de recargar/cerrar, vacía el guardado pendiente (debounce) para no
     // perder las últimas pulsaciones en localStorage.
     this.__beforeUnload = () => { if(this.__persistTimer) this._flushPersist(); };
@@ -1273,6 +1307,10 @@ class Component extends DCLogic {
     if(this.__esc){ window.removeEventListener('keydown', this.__esc); }
     if(this.__presentKeys){ window.removeEventListener('keydown', this.__presentKeys); }
     if(this.__wheelZoom){ window.removeEventListener('wheel', this.__wheelZoom, {passive: false}); }
+    if(this.__panDown){ window.removeEventListener('mousedown', this.__panDown); }
+    if(this.__panMove){ window.removeEventListener('mousemove', this.__panMove); }
+    if(this.__panUp){ window.removeEventListener('mouseup', this.__panUp); }
+    if(this.__panClick){ window.removeEventListener('click', this.__panClick, true); }
     if(this.__beforeUnload){ window.removeEventListener('beforeunload', this.__beforeUnload); }
     if(this.__persistTimer) this._flushPersist();
     this.disconnectProject();
@@ -2130,6 +2168,13 @@ class Component extends DCLogic {
       return true;
     };
 
+    // Hito de Liquidación: actividad principal (sin padre) de la fase
+    // Liquidación. Estas SIEMPRE se muestran en el diagrama —su carril aparece
+    // aunque el área esté plegada o su grupo cerrado (botones ÁREAS en nivel 1)—
+    // para que el cierre del proyecto nunca desaparezca al colapsar niveles.
+    const isLiqTop = (n) => !!n && !n.parent && n.fase === 'Liquidación' && !hidden[n.area];
+    const liqAreas = new Set(nodes.filter(isLiqTop).map(n => n.area));
+
     // Qué áreas quedan visibles: recorre el MISMO árbol grupo→subgrupo→área
     // que el mini-mapa (`kidsOfGroup`/`selfAreaOf`), para que ambos concuerden
     // siempre. Un área fusionada con su grupo (p. ej. "IDU" con el grupo
@@ -2159,10 +2204,24 @@ class Component extends DCLogic {
       if (self && !hidden[self] && (!open || areaHasTop(self))) visAreas.push(self);
       if (!open && !self) visAreas.push(GLANE + g.name);
       if (open) kidsOfGroup(g).forEach(collectVisibleAreas);
+      else {
+        // Grupo cerrado: además del carril del propio grupo, se agregan los
+        // carriles de las áreas que tengan un hito de Liquidación, para que
+        // esos hitos sigan visibles con las ÁREAS en nivel 1.
+        const pushLiqAreas = (sp) => {
+          if (sp.kind === 'area') { if (liqAreas.has(sp.a) && !hidden[sp.a] && !visAreas.includes(sp.a)) visAreas.push(sp.a); return; }
+          const s2 = selfAreaOf(sp.g);
+          if (s2 && liqAreas.has(s2) && !hidden[s2] && !visAreas.includes(s2)) visAreas.push(s2);
+          kidsOfGroup(sp.g).forEach(pushLiqAreas);
+        };
+        kidsOfGroup(g).forEach(pushLiqAreas);
+      }
     };
     mmRoots.forEach(collectVisibleAreas);
     const visAreaSet = new Set(visAreas);
-    const visible = nodes.filter(n => visAreaSet.has(n.area) && isNodeVisible(n) && !areaCollapsed[n.area]);
+    // Los hitos de Liquidación (isLiqTop) se eximen del plegado de área: se
+    // muestran aunque su área esté colapsada.
+    const visible = nodes.filter(n => visAreaSet.has(n.area) && isNodeVisible(n) && (!areaCollapsed[n.area] || isLiqTop(n)));
 
     // Apilado por área+columna con alturas variables: una principal expandida
     // CONSERVA su tamaño de tarjeta normal (no se compacta) — sus hijas se
@@ -2315,7 +2374,13 @@ class Component extends DCLogic {
       // Un carril es "compacto" si no tiene actividades propias O si el área
       // está plegada (clic en su nodo): en ambos casos solo se reserva la
       // altura mínima para mostrar el área, sin sus tarjetas.
-      const empty = !areaHasTop(a) || !!areaCollapsed[a];
+      // `wouldBeEmpty`: el carril NO tiene actividades que mostrar por sí mismo
+      // (sin actividades propias o área plegada). En ese caso se oculta su línea
+      // divisoria (ver más abajo). Un carril con un hito de Liquidación NO se
+      // compacta aunque esté plegado —reserva altura para esa tarjeta— pero
+      // tampoco dibuja la línea larga: la tarjeta queda "flotando" en su columna.
+      const wouldBeEmpty = !areaHasTop(a) || !!areaCollapsed[a];
+      const empty = wouldBeEmpty && !liqAreas.has(a);
       const h = empty ? EMPTY_LANE_H : (LP_T + laneMax[a] + LP_B);
       laneY[a] = yCur; laneHmap[a] = h;
       laneCYmap[a] = empty ? (yCur + h / 2) : (yCur + LP_T + laneMax[a] / 2);
@@ -2328,7 +2393,10 @@ class Component extends DCLogic {
         label: a.toUpperCase(), count: nodes.filter(n => n.area === a).length,
         // El PRIMER carril no lleva línea superior (no hay nada arriba que
         // separar — era "la línea principal de arriba" sin información).
-        color: areaColor, line: i === 0 ? 'transparent' : areaColor + '80',
+        // La línea divisoria horizontal se OCULTA cuando el carril está
+        // comprimido (área plegada o sin actividades propias) — así no quedan
+        // líneas largas cruzando el lienzo hacia áreas/grupos vacíos.
+        color: areaColor, line: (i === 0 || wouldBeEmpty) ? 'transparent' : areaColor + '80',
         // La línea divisoria del carril arranca en `LEFT` (donde empiezan las
         // columnas de fase), NO en 0: así los divisores horizontales solo se
         // ven sobre Beneficiarios/Liquidación, no cruzando el esquema de
@@ -3311,6 +3379,11 @@ class Component extends DCLogic {
     return {
       ...presentVals,
       canvasW, canvasH, lanes, mmNodes, mmPaths, mmW, mmH, nodeVMs, edgesSvg, chips, fasesBands,
+      // En el diagrama guiado de la presentación, el overlay superior (título)
+      // y la barra inferior (controles) son opacos: se empuja el lienzo hacia
+      // abajo y se le deja margen al pie para que NADA quede tapado.
+      diagramPadTop: presentVals.presentDiagramShow ? 150 : 0,
+      diagramPadBot: presentVals.presentDiagramShow ? 120 : 0,
       projectName: this.state.projectName,
       projectSubtitle: this.state.projectSubtitle,
       onEditNombre: () => this.editProjectName(),
