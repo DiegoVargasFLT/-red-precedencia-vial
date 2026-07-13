@@ -496,7 +496,7 @@
 
 
     <div style="flex:1;position:relative;min-width:0">
-     <div style="position:absolute;inset:0;overflow:auto">
+     <div class="diagram-scroll" style="position:absolute;inset:0;overflow:auto">
       <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;zoom:{{zoom}};background-image:radial-gradient(circle, rgba(97,177,227,0.10) 1px, transparent 1.4px);background-size:26px 26px">
         <sc-for list="{{fasesBands}}" as="f" hint-placeholder-count="4">
           <div style="position:absolute;left:{{f.x}}px;top:0;width:{{f.w}}px;height:{{canvasH}}px;background:{{f.bg}};border-left:1px dashed {{f.bd}};pointer-events:none;white-space:nowrap">
@@ -1237,6 +1237,29 @@ class Component extends DCLogic {
       else if(e.key === 'Home'){ e.preventDefault(); this.presentGoto(0); }
     };
     window.addEventListener('keydown', this.__presentKeys);
+    // Zoom del diagrama con la rueda del mouse (acerca/aleja hacia el cursor).
+    // Listener nativo NO pasivo para poder preventDefault() y evitar el scroll.
+    this.__wheelZoom = (e) => {
+      const sc = e.target && e.target.closest && e.target.closest('.diagram-scroll');
+      if(!sc) return;
+      e.preventDefault();
+      const rect = sc.getBoundingClientRect();
+      const px = e.clientX - rect.left, py = e.clientY - rect.top;
+      // Fracción del contenido bajo el cursor (para mantener ese punto fijo).
+      const fx = sc.scrollWidth ? (sc.scrollLeft + px) / sc.scrollWidth : 0;
+      const fy = sc.scrollHeight ? (sc.scrollTop + py) / sc.scrollHeight : 0;
+      const dir = e.deltaY < 0 ? 1 : -1;
+      const z0 = this.state.zoom || 1;
+      const z1 = Math.min(2, Math.max(0.5, Math.round((z0 + dir * 0.1) * 100) / 100));
+      if(z1 === z0) return;
+      this.setState({zoom: z1}, () => {
+        requestAnimationFrame(() => {
+          sc.scrollLeft = fx * sc.scrollWidth - px;
+          sc.scrollTop = fy * sc.scrollHeight - py;
+        });
+      });
+    };
+    window.addEventListener('wheel', this.__wheelZoom, {passive: false});
     // Antes de recargar/cerrar, vacía el guardado pendiente (debounce) para no
     // perder las últimas pulsaciones en localStorage.
     this.__beforeUnload = () => { if(this.__persistTimer) this._flushPersist(); };
@@ -1249,6 +1272,7 @@ class Component extends DCLogic {
   componentWillUnmount(){
     if(this.__esc){ window.removeEventListener('keydown', this.__esc); }
     if(this.__presentKeys){ window.removeEventListener('keydown', this.__presentKeys); }
+    if(this.__wheelZoom){ window.removeEventListener('wheel', this.__wheelZoom, {passive: false}); }
     if(this.__beforeUnload){ window.removeEventListener('beforeunload', this.__beforeUnload); }
     if(this.__persistTimer) this._flushPersist();
     this.disconnectProject();
