@@ -2876,6 +2876,36 @@ class Component extends DCLogic {
     });
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
 
+    // Centrado de nodos de convergencia/divergencia DENTRO de su carril: cuando
+    // una actividad agrupa varias predecesoras (o varias sucesoras), se recoloca
+    // en el CENTRO vertical de ese grupo —acotado a su propia área— para que el
+    // abanico de líneas quede simétrico y la tarjeta mejor ubicada. Solo se
+    // recentran nodos que están SOLOS en su celda (área+columna): así el
+    // desplazamiento vertical nunca solapa tarjetas apiladas de esa columna.
+    const cellCount = {};
+    topVis.forEach(n => { const k = n.area + '|' + clv(n); cellCount[k] = (cellCount[k] || 0) + 1; });
+    const succMap = {};
+    nodes.forEach(m => (m.dependeDe || []).forEach(d => { (succMap[d] = succMap[d] || []).push(m.id); }));
+    // Representante VISIBLE de un id (sube por ancestros hasta uno que esté en pos).
+    const repInPos = (id) => { let c = byId[id]; while (c && !pos[c.id]) c = c.parent ? byId[c.parent] : null; return c ? c.id : null; };
+    const centerYof = (id) => pos[id].y + hOf(byId[id]) / 2;
+    const shiftTree = (id, dy) => { if (pos[id]) pos[id].y += dy; (expanded[id] ? visChildrenOf(id) : []).forEach(cid => shiftTree(cid, dy)); };
+    topVis.forEach(n => {
+      if (!pos[n.id]) return;
+      if ((cellCount[n.area + '|' + clv(n)] || 0) > 1) return;   // celda con tarjetas apiladas: no mover
+      const preds = [...new Set((n.dependeDe || []).map(repInPos).filter(id => id && id !== n.id && pos[id]))];
+      const succs = [...new Set((succMap[n.id] || []).map(repInPos).filter(id => id && id !== n.id && pos[id]))];
+      const grp = succs.length > preds.length ? succs : preds;   // el abanico más grande manda
+      if (grp.length < 2) return;
+      const cs = grp.map(centerYof);
+      const target = (Math.min(...cs) + Math.max(...cs)) / 2;
+      const selfH = hOf(byId[n.id]);
+      const minTop = laneY[n.area] + LP_T;
+      const maxTop = Math.max(minTop, laneY[n.area] + laneHmap[n.area] - LP_B - selfH);
+      const newTop = Math.min(Math.max(target - selfH / 2, minTop), maxTop);
+      shiftTree(n.id, newTop - pos[n.id].y);
+    });
+
     // Bandas de fase, desde las posiciones REALES: cada banda abarca del borde
     // izquierdo del nodo más a la izquierda al derecho del más a la derecha de
     // su fase (incluye ramas expandidas, que también viven en pos).
