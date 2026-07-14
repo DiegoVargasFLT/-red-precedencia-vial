@@ -845,7 +845,17 @@
         <div style="font-family:'Montserrat',sans-serif;font-size:30px;font-weight:800;color:#FFFFFF;margin-top:6px">{{presentTitle}} &nbsp;<span style="font-size:18px;font-weight:700;color:#74C6D3">{{presentPct}}</span></div>
         <div style="font-family:'Montserrat',sans-serif;font-size:14px;color:#B9CDE8;margin-top:4px;max-width:680px">{{presentNote}}</div>
       </div>
-      <button onClick="{{onPresentExit}}" title="Salir de la presentación (Esc)" style="flex:none;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;padding:8px 14px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">✕  SALIR</button>
+      <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:9px">
+        <button onClick="{{onPresentExit}}" title="Salir de la presentación (Esc)" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;padding:8px 14px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">✕  SALIR</button>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(20,34,74,0.7);border:1px solid rgba(255,255,255,0.16);border-radius:10px;padding:5px 6px">
+          <button onClick="{{onPresentZoomOut}}" title="Alejar (o rueda del mouse)" style="width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#EEF3F9;font-size:16px;line-height:1;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">−</button>
+          <span style="min-width:42px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B9CDE8">{{presentZoomPct}}</span>
+          <button onClick="{{onPresentZoomIn}}" title="Acercar (o rueda del mouse)" style="width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#EEF3F9;font-size:16px;line-height:1;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">+</button>
+          <span style="width:1px;height:20px;background:rgba(255,255,255,0.18);margin:0 2px"></span>
+          <button onClick="{{onSaveFraming}}" title="Guardar el tamaño (zoom) y el encuadre actuales en esta diapositiva" style="background:{{presentFramingBg}};border:1px solid rgba(116,198,211,0.5);color:#EAFBFD;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.05em;font-weight:700;padding:7px 11px;border-radius:8px;cursor:pointer" style-hover="filter:brightness(1.1)">{{presentFramingLabel}}</button>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.04em;color:#8FB8E8;text-align:right">Rueda: zoom · Arrastra: mover la vista</div>
+      </div>
     </div>
     <div style="position:absolute;left:0;right:0;bottom:0;pointer-events:none;display:flex;align-items:center;justify-content:center;gap:22px;padding:26px 40px 26px;background:linear-gradient(0deg,rgba(14,26,56,0.92) 0%,rgba(14,26,56,0) 100%)">
       <button onClick="{{onPresentPrev}}" style="pointer-events:auto;opacity:{{presentPrevOpacity}};background:rgba(20,34,74,0.85);border:1px solid rgba(255,255,255,0.22);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;padding:11px 20px;border-radius:9px;cursor:pointer" style-hover="background:rgba(34,65,122,0.95)">←  ANTERIOR</button>
@@ -889,6 +899,10 @@
             <div style="display:{{r.customDisplay}};flex-direction:column;gap:7px;padding-left:35px">
               <input value="{{r.title}}" onChange="{{r.onTitle}}" placeholder="Título de la diapositiva" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#FFFFFF;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:600;padding:8px 11px;border-radius:8px;box-sizing:border-box">
               <input value="{{r.note}}" onChange="{{r.onNote}}" placeholder="Nota / texto de apoyo (opcional)" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.16);color:#DCE7F5;font-family:'Montserrat',sans-serif;font-size:12.5px;line-height:1.5;padding:8px 11px;border-radius:8px;box-sizing:border-box">
+            </div>
+            <div style="display:{{r.framingDisplay}};align-items:center;gap:10px;padding-left:35px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#9BE0EA;background:rgba(116,198,211,0.14);border:1px solid rgba(116,198,211,0.35);padding:4px 9px;border-radius:7px">{{r.framingLabel}}</span>
+              <button onClick="{{r.onClearFraming}}" title="Quitar el encuadre guardado (volver al automático)" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:#B9CDE8;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.04em;padding:4px 9px;border-radius:7px;cursor:pointer" style-hover="background:rgba(255,255,255,0.08)">Quitar</button>
             </div>
           </div>
         </sc-for>
@@ -2088,9 +2102,57 @@ class Component extends DCLogic {
     if (s.type === 'diagram') {
       if (s.kind === 'group') { const g = this.grupos().find(x => x.name === s.name); if (g) this.jumpToGroup(g); }
       else { this.jumpToArea(s.name); }
-      this.setZoom(0.8);
+      this.setZoom(s.zoom || 0.8);
+      // Restaura el encuadre GUARDADO (punto central de la vista) si la
+      // diapositiva lo tiene; si no, queda el encuadre por defecto.
+      if (s.sx != null && s.sy != null) this._restoreFraming(s.sx, s.sy);
     }
   }
+  // Reposiciona el scroll del diagrama para centrar la fracción (cfx,cfy) del
+  // contenido — se reafirma en varios frames porque el relayout + el zoom del
+  // paso tardan en asentarse.
+  _restoreFraming(cfx, cfy){
+    let tries = 0;
+    const apply = () => {
+      const sc = document.querySelector('.diagram-scroll');
+      if (sc && sc.scrollWidth) {
+        sc.scrollLeft = Math.max(0, cfx * sc.scrollWidth - sc.clientWidth / 2);
+        sc.scrollTop = Math.max(0, cfy * sc.scrollHeight - sc.clientHeight / 2);
+      }
+      if (tries++ < 4) requestAnimationFrame(apply);
+    };
+    requestAnimationFrame(apply);
+  }
+  // Guarda el tamaño (zoom) y el encuadre (punto central) actuales en la
+  // diapositiva de diagrama que se está mostrando. Materializa la config si
+  // aún se usaba el plan automático.
+  savePresentFraming(){
+    const sc = document.querySelector('.diagram-scroll');
+    if (!sc) return;
+    const cfx = sc.scrollWidth ? (sc.scrollLeft + sc.clientWidth / 2) / sc.scrollWidth : 0.5;
+    const cfy = sc.scrollHeight ? (sc.scrollTop + sc.clientHeight / 2) / sc.scrollHeight : 0.5;
+    const zoom = this.state.zoom || 0.8;
+    const plan = this.presentPlan();
+    const cur = plan[Math.max(0, Math.min(plan.length - 1, this.state.presentStep || 0))];
+    if (!cur || cur.type !== 'diagram') return;
+    const id = cur.id || this.slideId(cur);
+    const base = (Array.isArray(this.state.presentSlides) && this.state.presentSlides.length)
+      ? this.state.presentSlides.map(x => Object.assign({}, x))
+      : this.seedSlides();
+    const slide = base.find(x => (x.id || this.slideId(x)) === id);
+    if (!slide) return;
+    slide.zoom = zoom; slide.sx = cfx; slide.sy = cfy;
+    this.setState({presentSlides: base, presentFramingSaved: true});
+    this.persist({presentSlides: base});
+    clearTimeout(this.__framingMsgT);
+    this.__framingMsgT = setTimeout(() => this.setState({presentFramingSaved: false}), 1600);
+  }
+  // Ajuste rápido de zoom durante la presentación (afecta la vista en vivo; se
+  // fija a la diapositiva con «Guardar vista»).
+  presentZoomBy(delta){ this.setZoom((this.state.zoom || 0.8) + delta); }
+  // Quita el encuadre guardado de una diapositiva (vuelve al automático) — desde
+  // el editor.
+  presentClearFraming(id){ this._updateDraft(d => { const s = d.find(x => x.id === id); if(s){ delete s.zoom; delete s.sx; delete s.sy; } }); }
   // Expande las actividades hasta el nivel `lvl`, en todas las áreas a la vez:
   // 1 = SOLO las actividades principales (ninguna subactividad desplegada);
   // 2 = principales + su primer nivel de subactividades; 3 = ese más el
@@ -3518,6 +3580,10 @@ class Component extends DCLogic {
       rowOpacity: (s.on !== false) ? '1' : '0.5',
       isCustom: s.type === 'custom',
       customDisplay: s.type === 'custom' ? 'flex' : 'none',
+      // Encuadre guardado (solo diapositivas de diagrama).
+      framingDisplay: (s.type === 'diagram' && s.sx != null) ? 'flex' : 'none',
+      framingLabel: '⤢ Vista guardada · ' + Math.round((s.zoom || 0.8) * 100) + '%',
+      onClearFraming: () => this.presentClearFraming(s.id),
       title: s.title || '',
       note: s.note || '',
       upOpacity: i === 0 ? '0.3' : '1',
@@ -3555,6 +3621,13 @@ class Component extends DCLogic {
       onPresentPrev: () => this.presentGo(-1),
       onPresentNext: () => this.presentGo(1),
       onPresentExit: () => this.exitPresent(),
+      // Ajuste de tamaño/encuadre de la diapositiva de diagrama en vivo.
+      presentZoomPct: Math.round((this.state.zoom || 0.8) * 100) + '%',
+      onPresentZoomOut: (e) => { e.stopPropagation(); this.presentZoomBy(-0.1); },
+      onPresentZoomIn: (e) => { e.stopPropagation(); this.presentZoomBy(0.1); },
+      onSaveFraming: (e) => { e.stopPropagation(); this.savePresentFraming(); },
+      presentFramingLabel: this.state.presentFramingSaved ? '✓  GUARDADA' : '⤢  GUARDAR VISTA',
+      presentFramingBg: this.state.presentFramingSaved ? 'rgba(63,191,168,0.55)' : 'rgba(116,198,211,0.22)',
       diagramToolbarDisplay: present ? 'none' : 'flex',
       // Editor de presentación
       presentEditShow: !!this.state.presentEdit,
