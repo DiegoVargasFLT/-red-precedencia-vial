@@ -1610,8 +1610,23 @@ class Component extends DCLogic {
     const cur = this.reconciledAreas().find(x => x.name === name);
     if(!cur) return;
     const p = ((window.prompt('Prefijo de IDs para «'+name+'»:', cur.prefix) || '').trim().toUpperCase());
-    if(!p) return;
+    if(!p || p === cur.prefix) return;
     this._setAreas(this.reconciledAreas().map(x => x.name === name ? {...x, prefix: p} : x));
+    // Consistencia de códigos: renumerar las actividades existentes del área al
+    // prefijo nuevo (con confirmación — cambia los códigos visibles y sus
+    // referencias). Si se declina, los códigos viejos quedan como históricos.
+    const tops = this.state.nodes.filter(n => n.area === name && !n.parent);
+    const mism = this.state.nodes.filter(n => n.area === name && (n.id.match(/^[A-Z]+/) || [''])[0] !== p).length;
+    if(!mism) return;
+    if(!window.confirm('Hay ' + mism + ' actividad(es) de «' + name + '» con código de otro prefijo. ¿Renumerarlas a «' + p + '-…» ahora? (se actualizan todas las referencias)')) return;
+    let nodes = this.state.nodes, allRen = {};
+    tops.forEach(t => {
+      const tid = allRen[t.id] || t.id;   // por si un top fue renombrado en una pasada previa
+      const r = this._reareaNodes(nodes, tid, name, p);
+      nodes = r.nodes; Object.assign(allRen, r.ren);
+    });
+    this.setNodes(nodes);
+    this._applyRenState(allRen);
   }
   deleteArea(name){
     const count = this.state.nodes.filter(n => n.area === name).length;
@@ -1744,6 +1759,73 @@ class Component extends DCLogic {
 
   updateNode(id, patch){
     this.setNodes(this.state.nodes.map(n => n.id === id ? {...n, ...patch} : n));
+  }
+
+  // ── Consistencia de códigos (id ↔ área) ──────────────────────────────────
+  // Regla del proyecto: el código visible lleva el PREFIJO del área (EAB-04 es
+  // de EAAB, PRE-05 de Predial…). Estas rutinas mantienen la regla en las
+  // modificaciones futuras: cambiar el área de una actividad (o moverla bajo
+  // un padre de otra área) renumera su código y el de su subárbol, y actualiza
+  // TODAS las referencias (parent, dependeDe, expandido, selección).
+  // Helper puro: reasigna área+códigos del subárbol de `id` dentro de `nodes`.
+  // Devuelve {nodes, ren} (ren = mapa oldId→newId; vacío si no hubo renombres).
+  _reareaNodes(nodes, id, newArea, pfxOverride){
+    const byId = {}; nodes.forEach(x => byId[x.id] = x);
+    const n = byId[id];
+    const ren = {};
+    if(!n) return {nodes, ren};
+    const pfx = pfxOverride || this.prefixFor(newArea) || 'ACT';
+    const prefOf = s => (s.match(/^[A-Z]+/) || [''])[0];
+    // Números ya usados con el prefijo destino (cualquier "PFX-NN…" reserva NN).
+    const used = new Set();
+    nodes.forEach(x => { const m = x.id.match(/^([A-Z]+)-(\d+)/); if(m && m[1] === pfx) used.add(parseInt(m[2], 10)); });
+    const nextFree = () => { let i = 1; while(used.has(i)) i++; used.add(i); return pfx + '-' + String(i).padStart(2, '0'); };
+    // Subárbol completo (padres antes que hijas — allDescendants es DFS).
+    const subIds = [id, ...this.allDescendants(id, byId)];
+    const subSet = new Set(subIds);
+    subIds.forEach(sid => {
+      const s = byId[sid];
+      // Sub cuyo id extiende el del padre renombrado hereda el nuevo id del
+      // padre + su sufijo (COM-02-CT-LO, EAB-00A…); si no, siguiente libre.
+      if(s.parent && ren[s.parent] && sid.startsWith(s.parent)) ren[sid] = ren[s.parent] + sid.slice(s.parent.length);
+      else if(prefOf(sid) !== pfx) ren[sid] = nextFree();
+    });
+    const out = nodes.map(x => {
+      const c = {...x};
+      if(subSet.has(x.id)) c.area = newArea;      // el subárbol hereda el área
+      if(ren[c.id]) c.id = ren[c.id];
+      if(c.parent && ren[c.parent]) c.parent = ren[c.parent];
+      if(Array.isArray(c.dependeDe) && c.dependeDe.some(d => ren[d])) c.dependeDe = c.dependeDe.map(d => ren[d] || d);
+      return c;
+    });
+    return {nodes: out, ren};
+  }
+  // Remapea el estado de sesión que referencia ids (expandido / selección).
+  _applyRenState(ren){
+    if(!Object.keys(ren).length) return;
+    const expanded = {};
+    Object.entries(this.state.expanded || {}).forEach(([k, v]) => { expanded[ren[k] || k] = v; });
+    const patch = {expanded};
+    if(this.state.selectedId && ren[this.state.selectedId]) patch.selectedId = ren[this.state.selectedId];
+    this.setState(patch);
+  }
+  changeNodeArea(id, newArea){
+    const n = this.state.nodes.find(x => x.id === id);
+    if(!n || n.area === newArea) return;
+    const r = this._reareaNodes(this.state.nodes, id, newArea);
+    this.setNodes(r.nodes);
+    this._applyRenState(r.ren);
+  }
+  changeNodeParent(id, parentId){
+    let nodes = this.state.nodes.map(x => x.id === id ? {...x, parent: parentId || null} : x);
+    const p = parentId ? nodes.find(x => x.id === parentId) : null;
+    const n = nodes.find(x => x.id === id);
+    let ren = {};
+    // Al volverse subactividad de un padre de OTRA área, adopta el área del
+    // padre (y con ella su prefijo de código), igual que al crearla con addSub.
+    if(p && n && n.area !== p.area){ const r = this._reareaNodes(nodes, id, p.area); nodes = r.nodes; ren = r.ren; }
+    this.setNodes(nodes);
+    this._applyRenState(ren);
   }
 
   toggleDep(id, depId){
@@ -3345,7 +3427,9 @@ class Component extends DCLogic {
     const asOpts = arr => arr.map(v => ({value: v, label: v}));
     const fAreaSelect = showForm ? this.mkCombo('area', {
       valueLabel: selNode.area, options: asOpts(orderedAreas),
-      onPick: v => this.updateNode(selId, {area: v})
+      // Cambiar el área renumera el código al prefijo del área nueva (subárbol
+      // incluido) y actualiza todas las referencias — ver changeNodeArea.
+      onPick: v => this.changeNodeArea(selId, v)
     }) : null;
     const fFaseSelect = showForm ? this.mkCombo('fase', {
       valueLabel: selNode.fase, options: asOpts(FASES),
@@ -3367,7 +3451,9 @@ class Component extends DCLogic {
       fParentSelect = this.mkCombo('parent', {
         valueLabel: selNode.parent ? (selNode.parent + ' · ' + (byId[selNode.parent] ? byId[selNode.parent].titulo : '')) : NONE,
         options: [{value: '', label: NONE}].concat(cands.map(x => ({value: x.id, label: x.id + ' · ' + x.titulo}))),
-        onPick: v => this.updateNode(selId, {parent: v || null})
+        // Mover bajo un padre de otra área adopta el área (y el prefijo de
+        // código) del padre — misma regla que addSub. Ver changeNodeParent.
+        onPick: v => this.changeNodeParent(selId, v)
       });
     }
 
