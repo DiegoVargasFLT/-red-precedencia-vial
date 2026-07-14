@@ -839,11 +839,11 @@
 
   <sc-if value="{{presentDiagramShow}}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:60;pointer-events:none;font-family:'Montserrat',sans-serif">
-    <div style="position:absolute;left:0;right:0;top:0;pointer-events:auto;background:linear-gradient(180deg,rgba(14,26,56,0.95) 0%,rgba(14,26,56,0.82) 68%,rgba(14,26,56,0) 100%);padding:20px 44px 40px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;color:#EEF3F9">
+    <div style="position:absolute;left:0;right:0;top:0;pointer-events:auto;background:linear-gradient(180deg,rgba(14,26,56,0.96) 0%,rgba(14,26,56,0.9) 46%,rgba(14,26,56,0) 100%);padding:11px 40px 22px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;color:#EEF3F9">
       <div style="min-width:0">
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#74C6D3">{{presentKicker}} · {{presentStepLabel}}</div>
-        <div style="font-family:'Montserrat',sans-serif;font-size:30px;font-weight:800;color:#FFFFFF;margin-top:6px">{{presentTitle}} &nbsp;<span style="font-size:18px;font-weight:700;color:#74C6D3">{{presentPct}}</span></div>
-        <div style="font-family:'Montserrat',sans-serif;font-size:14px;color:#B9CDE8;margin-top:4px;max-width:680px">{{presentNote}}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.2em;color:#74C6D3">{{presentKicker}} · {{presentStepLabel}}</div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:22px;font-weight:800;color:#FFFFFF;margin-top:2px">{{presentTitle}} &nbsp;<span style="font-size:15px;font-weight:700;color:#74C6D3">{{presentPct}}</span></div>
+        <div style="font-family:'Montserrat',sans-serif;font-size:12.5px;color:#B9CDE8;margin-top:2px;max-width:680px">{{presentNote}}</div>
       </div>
       <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:9px">
         <button onClick="{{onPresentExit}}" title="Salir de la presentación (Esc)" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;padding:8px 14px;border-radius:8px;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">✕  SALIR</button>
@@ -858,7 +858,7 @@
       </div>
     </div>
     <!-- Controles de NIVELES en vivo (se fijan a la diapositiva con «Guardar vista») -->
-    <div style="position:absolute;left:24px;bottom:96px;z-index:2;pointer-events:auto;display:flex;align-items:center;gap:6px;max-width:66vw;overflow-x:auto;background:rgba(20,34,74,0.72);border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:6px 8px">
+    <div style="position:absolute;left:24px;bottom:68px;z-index:2;pointer-events:auto;display:flex;align-items:center;gap:6px;max-width:66vw;overflow-x:auto;background:rgba(20,34,74,0.72);border:1px solid rgba(255,255,255,0.14);border-radius:10px;padding:6px 8px">
       <button onClick="{{onExpandAll}}" title="Expandir todo" style="flex:none;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#EEF3F9;font-size:12px;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">▾</button>
       <button onClick="{{onCollapseAll}}" title="Colapsar todo" style="flex:none;width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.16);color:#EEF3F9;font-size:12px;cursor:pointer" style-hover="background:rgba(255,255,255,0.18)">▸</button>
       <span style="flex:none;width:1px;height:18px;background:rgba(255,255,255,0.18);margin:0 2px"></span>
@@ -872,7 +872,7 @@
         <button onClick="{{a.onClick}}" title="Mostrar el esqueleto de áreas hasta este nivel" style="flex:none;min-width:26px;height:26px;border-radius:7px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;padding:0 7px" style-hover="background:rgba(255,255,255,0.18)">{{a.lv}}</button>
       </sc-for>
     </div>
-    <div style="position:absolute;left:0;right:0;bottom:0;pointer-events:none;display:flex;align-items:center;justify-content:center;gap:22px;padding:26px 40px 26px;background:linear-gradient(0deg,rgba(14,26,56,0.92) 0%,rgba(14,26,56,0) 100%)">
+    <div style="position:absolute;left:0;right:0;bottom:0;pointer-events:none;display:flex;align-items:center;justify-content:center;gap:22px;padding:14px 40px 16px;background:linear-gradient(0deg,rgba(14,26,56,0.94) 0%,rgba(14,26,56,0) 100%)">
       <button onClick="{{onPresentPrev}}" style="pointer-events:auto;opacity:{{presentPrevOpacity}};background:rgba(20,34,74,0.85);border:1px solid rgba(255,255,255,0.22);color:#EEF3F9;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;padding:11px 20px;border-radius:9px;cursor:pointer" style-hover="background:rgba(34,65,122,0.95)">←  ANTERIOR</button>
       <div style="pointer-events:auto;display:flex;align-items:center;gap:7px">
         <sc-for list="{{presentDots}}" as="d" hint-placeholder-count="6">
@@ -2321,6 +2321,10 @@ class Component extends DCLogic {
     const compact = this.props.modoCompacto ?? false;
     const curv = this.props.curvatura ?? 0.5;
     const showFase = this.props.mostrarFase ?? true;
+    // En modo presentación (diagrama sobre overlay oscuro) las formas y líneas se
+    // intensifican para que no se pierdan: bordes de tarjeta más marcados y flechas
+    // más gruesas/opacas. `pres` gobierna ese refuerzo desde el render del diagrama.
+    const pres = !!this.state.present;
 
     const nodes = this.state.nodes;
     const sc = this.scMap();
@@ -2957,7 +2961,7 @@ class Component extends DCLogic {
         areaActEls.push(React.createElement('path', {
           key: 'aa-' + a + '-' + n.id,
           d: 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2,
-          fill: 'none', stroke: (areaColorMap[a] || '#7486A6'), strokeWidth: 1.4, opacity: 0.45
+          fill: 'none', stroke: (areaColorMap[a] || '#7486A6'), strokeWidth: pres ? 2 : 1.4, opacity: pres ? 0.85 : 0.45
         }));
       });
     });
@@ -2997,8 +3001,8 @@ class Component extends DCLogic {
         color: sc[n.estado] || '#5E7196',
         estadoU: (n.estado||'').toUpperCase(),
         opacity: op,
-        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? dColor + '80' : '#D9E1EC'),
-        bg: sel ? '#E4F1FB' : (isSub ? dColor + '0E' : '#FFFFFF'),
+        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? (dColor + (pres ? 'C0' : '80')) : (pres ? '#8AA0C0' : '#C6D2E1')),
+        bg: sel ? '#E4F1FB' : (isSub ? (dColor + (pres ? '1F' : '0E')) : '#FFFFFF'),
         depthDot: isSub ? dColor : 'transparent',
         depthDotShow: isSub ? 'inline-block' : 'none',
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
@@ -3070,11 +3074,11 @@ class Component extends DCLogic {
       const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
       const cross = sn.area !== n.area;
       const inChain = chain ? (chain.has(a) && chain.has(b)) : false;
-      let opacity = cross ? 0.8 : 0.55, w = 1.4;
-      if (chain) { opacity = inChain ? 1 : 0.06; w = inChain ? 2.2 : 1.2; }
+      let opacity = cross ? (pres ? 0.95 : 0.8) : (pres ? 0.85 : 0.55), w = pres ? 2 : 1.4;
+      if (chain) { opacity = inChain ? 1 : (pres ? 0.1 : 0.06); w = inChain ? (pres ? 2.8 : 2.2) : 1.2; }
       paths.push(React.createElement('path', {
         key: a + '>' + b, d: dPath, fill: 'none',
-        stroke: cross ? '#61B1E3' : '#B9C6D8',
+        stroke: cross ? (pres ? '#4AA0DB' : '#61B1E3') : (pres ? '#7C8FAE' : '#B9C6D8'),
         strokeWidth: w, opacity,
         markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
       }));
@@ -3097,19 +3101,19 @@ class Component extends DCLogic {
       const yBottom = Math.max(...kidYs);
       guidePaths.push(React.createElement('path', {
         key: 'gv-' + n.id, d: 'M ' + gx + ' ' + yTop + ' L ' + gx + ' ' + yBottom,
-        fill: 'none', stroke: color, strokeWidth: 1.4, strokeDasharray: '2,3', opacity: 0.5
+        fill: 'none', stroke: color, strokeWidth: pres ? 1.8 : 1.4, strokeDasharray: '2,3', opacity: pres ? 0.8 : 0.5
       }));
       kids.forEach(cId => {
         const cy = kidY(cId);
         guidePaths.push(React.createElement('path', {
           key: 'gh-' + cId, d: 'M ' + gx + ' ' + cy + ' L ' + pos[cId].x + ' ' + cy,
-          fill: 'none', stroke: color, strokeWidth: 1.4, strokeDasharray: '2,3', opacity: 0.5
+          fill: 'none', stroke: color, strokeWidth: pres ? 1.8 : 1.4, strokeDasharray: '2,3', opacity: pres ? 0.8 : 0.5
         }));
       });
     });
     const edgesSvg = React.createElement('svg',
       {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
-      React.createElement('defs', null, this.marker('arwS', '#B9C6D8'), this.marker('arwC', '#61B1E3')),
+      React.createElement('defs', null, this.marker('arwS', pres ? '#7C8FAE' : '#B9C6D8'), this.marker('arwC', pres ? '#4AA0DB' : '#61B1E3')),
       areaActEls,
       guidePaths,
       paths);
@@ -3753,8 +3757,8 @@ class Component extends DCLogic {
       // En el diagrama guiado de la presentación, el overlay superior (título)
       // y la barra inferior (controles) son opacos: se empuja el lienzo hacia
       // abajo y se le deja margen al pie para que NADA quede tapado.
-      diagramPadTop: presentVals.presentDiagramShow ? 150 : 0,
-      diagramPadBot: presentVals.presentDiagramShow ? 120 : 0,
+      diagramPadTop: presentVals.presentDiagramShow ? 92 : 0,
+      diagramPadBot: presentVals.presentDiagramShow ? 74 : 0,
       // Margen lateral en presentación → permite arrastrar el diagrama al centro.
       diagramPadX: presentVals.presentDiagramShow ? PRESENT_PAD_X : 0,
       projectName: this.state.projectName,
