@@ -2846,7 +2846,34 @@ class Component extends DCLogic {
       pos[id] = {x, y: py, w: NW, h: selfH, indent: 0, depth: depthOf(id)};
       return Math.max(selfH, childrenH);
     };
-    topVis.forEach(n => placeSub(n.id, colX[clv(n)] + shiftOf(n.area, clv(n)), laneY[n.area] + LP_T + yOff[n.id]));
+    // Colocación consciente de la fase: el corrimiento por rama (`shiftOf`) es
+    // POR CARRIL, así que las ramas expandidas de una fase en un carril NO
+    // empujan las columnas de otro carril. Eso hacía que un hito de Liquidación
+    // (otro carril) quedara a la izquierda del borde real de las ramas de
+    // «Entrega a Beneficiarios» y que su BANDA se solapara —tarjetas de
+    // Beneficiarios caían bajo la banda de Liquidación. Se coloca fase por fase
+    // en orden y cada fase arranca a la derecha del borde real (incluidas ramas)
+    // de todas las fases anteriores (`phaseFloorX`), de modo que las bandas se
+    // toquen sin solaparse y cada tarjeta quede en su etapa.
+    const FASE_RANK = {'Preconstrucción':0,'Construcción':1,'Entrega a Beneficiarios':2,'Liquidación':3};
+    const rankOf = n => (FASE_RANK[n.fase] != null ? FASE_RANK[n.fase] : 2);
+    const subtreeRight = (id) => {
+      let r = pos[id] ? pos[id].x + pos[id].w : 0;
+      (expanded[id] ? visChildrenOf(id) : []).forEach(cid => { r = Math.max(r, subtreeRight(cid)); });
+      return r;
+    };
+    const ranksPresent = [...new Set(topVis.map(rankOf))].sort((a, b) => a - b);
+    let prevPhaseRight = 0;
+    ranksPresent.forEach(r => {
+      const phaseFloorX = prevPhaseRight ? prevPhaseRight + CG : 0;
+      let rMax = 0;
+      topVis.filter(n => rankOf(n) === r).forEach(n => {
+        const startX = Math.max(colX[clv(n)] + shiftOf(n.area, clv(n)), phaseFloorX);
+        placeSub(n.id, startX, laneY[n.area] + LP_T + yOff[n.id]);
+        rMax = Math.max(rMax, subtreeRight(n.id));
+      });
+      prevPhaseRight = Math.max(prevPhaseRight, rMax);
+    });
     Object.keys(pos).forEach(id => { canvasW = Math.max(canvasW, pos[id].x + pos[id].w + 40); });
 
     // Bandas de fase, desde las posiciones REALES: cada banda abarca del borde
