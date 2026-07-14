@@ -2880,7 +2880,15 @@ class Component extends DCLogic {
       let rMax = 0;
       topVis.filter(n => rankOf(n) === r).forEach(n => {
         const startX = Math.max(colX[clv(n)] + shiftOf(n.area, clv(n)), phaseFloorX);
-        placeSub(n.id, startX, laneY[n.area] + LP_T + yOff[n.id]);
+        // Centrado vertical del carril: el alto del carril lo fija su columna
+        // más alta (laneMax); las columnas más cortas quedaban pegadas ARRIBA
+        // con todo el vacío abajo. Cada pila de columna se corre media
+        // diferencia hacia abajo para quedar centrada en el área del carril.
+        // Todo el bloque de la columna se mueve junto (mismo offset por celda),
+        // así que el orden/apilado interno no cambia y no hay solapes nuevos.
+        const stackH = (colH[n.area + '|' + clv(n)] || SG) - SG;
+        const centerOff = Math.max(0, (laneMax[n.area] - stackH) / 2);
+        placeSub(n.id, startX, laneY[n.area] + LP_T + centerOff + yOff[n.id]);
         rMax = Math.max(rMax, subtreeRight(n.id));
       });
       prevPhaseRight = Math.max(prevPhaseRight, rMax);
