@@ -2994,6 +2994,15 @@ class Component extends DCLogic {
       const kidCount = nodes.filter(x => x.parent === n.id).length;
       const isSub = !!n.parent;
       const dColor = isSub ? depthColor(depth) : null;
+      // Fondo SÓLIDO para subactividades: el tinte por alpha (dColor+'0E')
+      // dejaba la tarjeta casi transparente y las flechas que pasan por detrás
+      // se veían A TRAVÉS de ella. Se mezcla el mismo tinte sobre blanco a un
+      // color opaco equivalente — idéntico a la vista, pero la tarjeta ahora
+      // oculta las líneas que cruzan por debajo (SVG z:1 < tarjetas z:2).
+      const tintOnWhite = (hex, a2) => {
+        const v = i => Math.round(255 * (1 - a2) + parseInt(hex.slice(i, i + 2), 16) * a2);
+        return 'rgb(' + v(1) + ',' + v(3) + ',' + v(5) + ')';
+      };
       return {
         id: n.id, titulo: n.titulo, fase: n.fase,
         idLabel: (isSub ? '↳ ' : '') + n.id,
@@ -3010,7 +3019,7 @@ class Component extends DCLogic {
         estadoU: (n.estado||'').toUpperCase(),
         opacity: op,
         bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? (dColor + (pres ? 'C0' : '80')) : (pres ? '#8AA0C0' : '#C6D2E1')),
-        bg: sel ? '#E4F1FB' : (isSub ? (dColor + (pres ? '1F' : '0E')) : '#FFFFFF'),
+        bg: sel ? '#E4F1FB' : (isSub ? tintOnWhite(dColor, pres ? 0.12 : 0.055) : '#FFFFFF'),
         depthDot: isSub ? dColor : 'transparent',
         depthDotShow: isSub ? 'inline-block' : 'none',
         metaDisplay: (compact || !showFase) ? 'none' : 'flex',
