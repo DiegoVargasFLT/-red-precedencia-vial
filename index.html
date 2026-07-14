@@ -2842,7 +2842,14 @@ class Component extends DCLogic {
       let yc = yTop;
       kids.forEach((cid, i) => { if(i) yc += BRANCH_GAPY; yc += placeSub(cid, childX, yc); });
       const childrenH = yc - yTop;
-      const py = yTop + Math.max(0, (childrenH - selfH) / 2);
+      // Centrar el padre entre el CENTRO de su PRIMERA y su ÚLTIMA hija (centrado
+      // de árbol clásico), NO contra el alto total del bloque: así el abanico de
+      // conectores queda simétrico aunque una rama sea mucho más alta que las
+      // otras (p.ej. PRD-01 con PRD-02 —7 hijas— junto a ramas de 1 hija). Se
+      // acota al bloque de hijas para no solaparse con nodos hermanos.
+      const c0 = pos[kids[0]].y + hOf(byId[kids[0]]) / 2;
+      const cN = pos[kids[kids.length - 1]].y + hOf(byId[kids[kids.length - 1]]) / 2;
+      const py = Math.max(yTop, Math.min((c0 + cN) / 2 - selfH / 2, yTop + childrenH - selfH));
       pos[id] = {x, y: py, w: NW, h: selfH, indent: 0, depth: depthOf(id)};
       return Math.max(selfH, childrenH);
     };
