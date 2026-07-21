@@ -499,8 +499,8 @@
 
 
     <div style="flex:1;position:relative;min-width:0">
-     <div class="diagram-scroll" style="position:absolute;inset:0;overflow:auto">
-      <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;margin-top:{{diagramPadTop}}px;margin-bottom:{{diagramPadBot}}px;margin-left:{{diagramPadX}}px;margin-right:{{diagramPadX}}px;zoom:{{zoom}};background-image:radial-gradient(circle, rgba(97,177,227,0.10) 1px, transparent 1.4px);background-size:26px 26px">
+     <div class="diagram-scroll" style="position:absolute;inset:0;overflow:auto;background:{{canvasBg}}">
+      <div onClick="{{onCanvasClick}}" style="position:relative;min-width:100%;min-height:100%;width:{{canvasW}}px;height:{{canvasH}}px;margin-top:{{diagramPadTop}}px;margin-bottom:{{diagramPadBot}}px;margin-left:{{diagramPadX}}px;margin-right:{{diagramPadX}}px;zoom:{{zoom}};background:{{canvasBg}};background-image:radial-gradient(circle, {{gridDot}} 1px, transparent 1.4px);background-size:26px 26px">
         <sc-for list="{{fasesBands}}" as="f" hint-placeholder-count="4">
           <div style="position:absolute;left:{{f.x}}px;top:0;width:{{f.w}}px;height:{{canvasH}}px;background:{{f.bg}};border-left:1px dashed {{f.bd}};pointer-events:none;white-space:nowrap">
             <span style="position:sticky;left:196px;display:inline-block;margin-top:8px;margin-left:12px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,0.88);border:1px solid {{f.bd}};box-shadow:0 1px 3px rgba(31,59,111,.06);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.14em;color:{{f.fg}}">{{f.label}}</span>
@@ -511,7 +511,7 @@
         </sc-for>
         {{edgesSvg}}
         <sc-for list="{{nodeVMs}}" as="n" hint-placeholder-count="6">
-          <div onClick="{{n.onClick}}" title="{{n.tip}}" class="node-card" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:1px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease,transform .14s ease,box-shadow .16s ease">
+          <div onClick="{{n.onClick}}" title="{{n.tip}}" class="node-card" style="position:absolute;left:{{n.x}}px;top:{{n.y}}px;width:{{n.w}}px;height:{{n.h}}px;opacity:{{n.opacity}};z-index:{{n.z}};background:{{n.bg}};border:{{n.bw}}px solid {{n.bd}};border-left:3px solid {{n.color}};padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;transition:opacity 140ms ease,border-color 140ms ease,transform .14s ease,box-shadow .16s ease">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px">
               <span style="display:flex;align-items:center;gap:5px;min-width:0">
                 <button onClick="{{n.onToggleSubs}}" title="{{n.subsTip}}" style="display:{{n.subsDisplay}};font-family:'IBM Plex Mono',monospace;font-size:8.5px;line-height:1;background:#EEF3F9;border:1px solid #C7D6E8;color:#1F3B6F;padding:2px 6px;cursor:pointer;border-radius:6px;flex:none">{{n.subsMark}}</button>
@@ -2716,7 +2716,7 @@ class Component extends DCLogic {
         // La línea divisoria horizontal se OCULTA cuando el carril está
         // comprimido (área plegada o sin actividades propias) — así no quedan
         // líneas largas cruzando el lienzo hacia áreas/grupos vacíos.
-        color: areaColor, line: (i === 0 || wouldBeEmpty) ? 'transparent' : areaColor + '80',
+        color: areaColor, line: (i === 0 || wouldBeEmpty) ? 'transparent' : areaColor + 'B3',
         // La línea divisoria del carril arranca en `LEFT` (donde empiezan las
         // columnas de fase), NO en 0: así los divisores horizontales solo se
         // ven sobre Beneficiarios/Liquidación, no cruzando el esquema de
@@ -2859,11 +2859,14 @@ class Component extends DCLogic {
     // bandas de fase (fondo por etapa del proyecto) — se calculan DESPUÉS del
     // posicionamiento (pos), porque con el corrimiento POR CARRIL una misma
     // columna puede quedar a distinto x según el área; ver más abajo.
+    // Bandas de fase más marcadas para proyector: en presentación (pres) suben
+    // aún más para leerse en salas iluminadas; en vista normal ya notablemente
+    // más intensas que el 5–6% previo (casi invisible).
     const FASE_STYLES = {
-      'Preconstrucción': {bg: 'rgba(97,177,227,0.05)', fg: '#61B1E3'},
-      'Construcción': {bg: 'rgba(2,88,80,0.055)', fg: '#025850'},
-      'Entrega a Beneficiarios': {bg: 'rgba(255,218,40,0.06)', fg: '#1F3B6F'},
-      'Liquidación': {bg: 'rgba(51,38,100,0.06)', fg: '#332664'}
+      'Preconstrucción': {bg: pres ? 'rgba(97,177,227,0.20)' : 'rgba(97,177,227,0.13)', fg: '#61B1E3'},
+      'Construcción': {bg: pres ? 'rgba(2,88,80,0.19)' : 'rgba(2,88,80,0.12)', fg: '#025850'},
+      'Entrega a Beneficiarios': {bg: pres ? 'rgba(31,59,111,0.16)' : 'rgba(31,59,111,0.10)', fg: '#1F3B6F'},
+      'Liquidación': {bg: pres ? 'rgba(51,38,100,0.19)' : 'rgba(51,38,100,0.12)', fg: '#332664'}
     };
     const fasesBands = [];
 
@@ -3051,7 +3054,7 @@ class Component extends DCLogic {
         areaActEls.push(React.createElement('path', {
           key: 'aa-' + a + '-' + n.id,
           d: 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + (x2 - dx) + ' ' + y2 + ', ' + x2 + ' ' + y2,
-          fill: 'none', stroke: (areaColorMap[a] || '#7486A6'), strokeWidth: pres ? 2 : 1.4, opacity: pres ? 0.85 : 0.45
+          fill: 'none', stroke: (areaColorMap[a] || '#7486A6'), strokeWidth: pres ? 2.2 : 1.8, opacity: pres ? 0.9 : 0.72
         }));
       });
     });
@@ -3100,7 +3103,8 @@ class Component extends DCLogic {
         color: sc[n.estado] || '#5E7196',
         estadoU: (n.estado||'').toUpperCase(),
         opacity: op,
-        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? (dColor + (pres ? 'C0' : '80')) : (pres ? '#8AA0C0' : '#C6D2E1')),
+        bd: sel ? (sc[n.estado] || '#5E7196') : (isSub ? (dColor + (pres ? 'E0' : 'B0')) : (pres ? '#6E86A8' : '#9DB0C9')),
+        bw: pres ? 1.8 : 1.4,
         bg: sel ? '#E4F1FB' : (isSub ? tintOnWhite(dColor, pres ? 0.12 : 0.055) : '#FFFFFF'),
         depthDot: isSub ? dColor : 'transparent',
         depthDotShow: isSub ? 'inline-block' : 'none',
@@ -3123,16 +3127,27 @@ class Component extends DCLogic {
     //    tienen asignada individualmente. Solo se ven líneas por subactividad
     //    cuando esa subactividad tiene su propia dependencia explícita.
     const visSet = new Set(visible.map(n => n.id));
+    // Nodo del área en el mini-mapa como PSEUDO-extremo de una dependencia:
+    // cuando un área está PLEGADA (clic en su recuadro), sus actividades tope
+    // se ocultan y —como el "área" no es un ancestro en la cadena `parent`— la
+    // flecha de dependencia quedaba sin extremo visible y se descartaba (bug:
+    // al cerrar ESP / Componentes Transversales desaparecía la línea hacia el
+    // recuadro de Liquidación). Se reenruta al recuadro del área en el mini-mapa.
+    const areaPseudo = {}; // 'area:<área>' -> nodo del mini-mapa {x,w,cy}
+    visAreas.forEach(a => { const an = mmPos[areaNodeKey[a]]; if (an) areaPseudo['area:' + a] = an; });
     // Jerarquía de N niveles: si el nodo está oculto, sube por la cadena de
     // ancestros hasta encontrar el primero visible (puede ser varios niveles
-    // arriba si hay varios colapsados en cascada).
+    // arriba si hay varios colapsados en cascada). Si NINGÚN ancestro es
+    // visible pero el área del nodo sí tiene recuadro en el mini-mapa (área
+    // plegada), se usa ese recuadro como extremo.
     const endpointsOf = id => {
-      let cur = id;
+      let cur = id, area = byId[id] && byId[id].area;
       while (cur) {
         if (visSet.has(cur)) return [cur];
         const nd = byId[cur];
         cur = nd && nd.parent;
       }
+      if (area && areaPseudo['area:' + area]) return ['area:' + area];
       return [];
     };
     // Para el dedup (evitar redibujar a nivel de grupo lo que ya existe a nivel
@@ -3164,20 +3179,27 @@ class Component extends DCLogic {
     collectEdges(false);
     collectEdges(true);
     const paths = [];
+    // Resuelve un extremo (id real o pseudo 'area:<área>') a coordenadas y área.
+    const resolveEP = (id) => {
+      const ap = areaPseudo[id];
+      if (ap) return { xr: ap.x + ap.w, xl: ap.x, cy: ap.cy, area: id.slice(5) };
+      const p = pos[id], nd = byId[id];
+      if (!p || !nd) return null;
+      return { xr: p.x + (p.w != null ? p.w : NW), xl: p.x, cy: p.y + hOf(nd) / 2, area: nd.area };
+    };
     edgeDefs.forEach(([a, b]) => {
-      const s = pos[a], t = pos[b];
-      const sn = byId[a], n = byId[b];
-      if (!s || !t || !sn || !n) return;
-      const x1 = s.x + (s.w != null ? s.w : NW), y1 = s.y + hOf(sn)/2, x2 = t.x, y2 = t.y + hOf(n)/2;
+      const S = resolveEP(a), T = resolveEP(b);
+      if (!S || !T) return;
+      const x1 = S.xr, y1 = S.cy, x2 = T.xl, y2 = T.cy;
       const dx = Math.max(40, (x2 - x1) * curv);
       const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
-      const cross = sn.area !== n.area;
+      const cross = S.area !== T.area;
       const inChain = chain ? (chain.has(a) && chain.has(b)) : false;
-      let opacity = cross ? (pres ? 0.95 : 0.8) : (pres ? 0.85 : 0.55), w = pres ? 2 : 1.4;
-      if (chain) { opacity = inChain ? 1 : (pres ? 0.1 : 0.06); w = inChain ? (pres ? 2.8 : 2.2) : 1.2; }
+      let opacity = cross ? (pres ? 0.98 : 0.92) : (pres ? 0.9 : 0.75), w = pres ? 2.2 : 1.7;
+      if (chain) { opacity = inChain ? 1 : (pres ? 0.12 : 0.08); w = inChain ? (pres ? 3 : 2.4) : 1.4; }
       paths.push(React.createElement('path', {
         key: a + '>' + b, d: dPath, fill: 'none',
-        stroke: cross ? (pres ? '#4AA0DB' : '#61B1E3') : (pres ? '#7C8FAE' : '#B9C6D8'),
+        stroke: cross ? (pres ? '#2C7CBE' : '#2E86C8') : (pres ? '#5C7093' : '#8496AE'),
         strokeWidth: w, opacity,
         markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
       }));
@@ -3200,19 +3222,19 @@ class Component extends DCLogic {
       const yBottom = Math.max(...kidYs);
       guidePaths.push(React.createElement('path', {
         key: 'gv-' + n.id, d: 'M ' + gx + ' ' + yTop + ' L ' + gx + ' ' + yBottom,
-        fill: 'none', stroke: color, strokeWidth: pres ? 1.8 : 1.4, strokeDasharray: '2,3', opacity: pres ? 0.8 : 0.5
+        fill: 'none', stroke: color, strokeWidth: pres ? 1.8 : 1.4, strokeDasharray: '2,3', opacity: pres ? 0.85 : 0.72
       }));
       kids.forEach(cId => {
         const cy = kidY(cId);
         guidePaths.push(React.createElement('path', {
           key: 'gh-' + cId, d: 'M ' + gx + ' ' + cy + ' L ' + pos[cId].x + ' ' + cy,
-          fill: 'none', stroke: color, strokeWidth: pres ? 1.8 : 1.4, strokeDasharray: '2,3', opacity: pres ? 0.8 : 0.5
+          fill: 'none', stroke: color, strokeWidth: pres ? 1.8 : 1.4, strokeDasharray: '2,3', opacity: pres ? 0.85 : 0.72
         }));
       });
     });
     const edgesSvg = React.createElement('svg',
       {width: canvasW, height: canvasH, style: {position:'absolute', left:0, top:0, pointerEvents:'none', zIndex:1}},
-      React.createElement('defs', null, this.marker('arwS', pres ? '#7C8FAE' : '#B9C6D8'), this.marker('arwC', pres ? '#4AA0DB' : '#61B1E3')),
+      React.createElement('defs', null, this.marker('arwS', pres ? '#5C7093' : '#8496AE'), this.marker('arwC', pres ? '#2C7CBE' : '#2E86C8')),
       areaActEls,
       guidePaths,
       paths);
@@ -3857,6 +3879,11 @@ class Component extends DCLogic {
     return {
       ...presentVals,
       canvasW, canvasH, lanes, mmNodes, mmPaths, mmW, mmH, nodeVMs, edgesSvg, chips, fasesBands,
+      // Fondo del lienzo más marcado para proyector en sala clara (gris-azul
+      // medio); en presentación un punto más oscuro. La rejilla de puntos se
+      // oscurece a un azul-tinta para seguir visible sobre el fondo nuevo.
+      canvasBg: pres ? '#CBD5E4' : '#D8E0EC',
+      gridDot: pres ? 'rgba(31,59,111,0.16)' : 'rgba(31,59,111,0.12)',
       // En el diagrama guiado de la presentación, el overlay superior (título)
       // y la barra inferior (controles) son opacos: se empuja el lienzo hacia
       // abajo y se le deja margen al pie para que NADA quede tapado.
