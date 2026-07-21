@@ -473,6 +473,7 @@
     <div style="width:1px;align-self:stretch;background:#D9E1EC;margin:0 2px"></div>
     <button onClick="{{onExpandAll}}" title="Desplegar todo: grupos, áreas y subactividades" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#025850;border:1px solid #D9E1EC" style-hover="border-color:#025850">▾ EXPANDIR TODO</button>
     <button onClick="{{onCollapseAll}}" title="Plegar todo: grupos, áreas y subactividades" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:#5E7196;border:1px solid #D9E1EC" style-hover="border-color:#61B1E3;color:#1F3B6F">▸ COLAPSAR TODO</button>
+    <button onClick="{{onToggleAreaLinks}}" title="{{areaLinksTip}}" style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.04em;padding:5px 10px;cursor:pointer;background:transparent;color:{{areaLinksFg}};border:1px solid {{areaLinksBd}}" style-hover="border-color:#61B1E3">{{areaLinksLabel}}</button>
     <sc-if value="{{hasAreaLevels}}" hint-placeholder-val="{{ false }}">
       <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.1em;color:#94A1BA;margin-left:2px" title="Desplegar el árbol de grupos y áreas por nivel">ÁREAS</span>
       <sc-for list="{{areaLevelButtons}}" as="lv" hint-placeholder-count="3">
@@ -852,6 +853,7 @@
           <button onClick="{{t.onClick}}" title="{{t.tip}}" style="width:22px;height:22px;border-radius:6px;background:{{t.swatch}};border:2px solid {{t.ring}};padding:0;cursor:pointer" style-hover="filter:brightness(1.15)"></button>
         </sc-for>
         <span style="width:1px;height:20px;background:{{presentChromeBd}};margin:0 3px"></span>
+        <button onClick="{{onToggleAreaLinks}}" title="{{areaLinksTip}}" style="background:{{presentChromeBtn}};border:1px solid {{presentChromeBd}};color:{{presentChromeFg}};font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.05em;padding:6px 9px;border-radius:8px;cursor:pointer" style-hover="filter:brightness(1.2)">{{areaLinksLabel}}</button>
         <button onClick="{{onPresentZoomOut}}" title="Alejar (o rueda del mouse)" style="width:26px;height:26px;border-radius:7px;background:{{presentChromeBtn}};border:1px solid {{presentChromeBd}};color:{{presentChromeFg}};font-size:15px;line-height:1;cursor:pointer" style-hover="filter:brightness(1.2)">−</button>
         <span style="min-width:40px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{presentChromeFg}}">{{presentZoomPct}}</span>
         <button onClick="{{onPresentZoomIn}}" title="Acercar (o rueda del mouse)" style="width:26px;height:26px;border-radius:7px;background:{{presentChromeBtn}};border:1px solid {{presentChromeBd}};color:{{presentChromeFg}};font-size:15px;line-height:1;cursor:pointer" style-hover="filter:brightness(1.2)">+</button>
@@ -1219,6 +1221,9 @@ class Component extends DCLogic {
       // Tema de color de la presentación (preferencia de quien proyecta; se
       // guarda en localStorage, no en el tablero — ver PRESENT_THEMES).
       presentTheme: (typeof window !== 'undefined' && localStorage.getItem(PRESENT_THEME_KEY)) || 'claro',
+      // Ocultar los conectores del esqueleto de áreas/grupos (preferencia de
+      // vista, también en localStorage).
+      hideAreaLinks: (typeof window !== 'undefined' && localStorage.getItem('rp-hide-area-links') === '1'),
       // Config de diapositivas de la presentación (null = plan automático) y
       // estado del editor.
       presentSlides: (doc && Array.isArray(doc.presentSlides)) ? doc.presentSlides : null,
@@ -2227,6 +2232,11 @@ class Component extends DCLogic {
     this.setState({presentTheme: id});
     try { localStorage.setItem(PRESENT_THEME_KEY, id); } catch(e){}
   }
+  toggleAreaLinks(){
+    const v = !this.state.hideAreaLinks;
+    this.setState({hideAreaLinks: v});
+    try { localStorage.setItem('rp-hide-area-links', v ? '1' : '0'); } catch(e){}
+  }
   cyclePresentTheme(){
     const i = PRESENT_THEMES.findIndex(t => t.id === this.state.presentTheme);
     this.setPresentTheme(PRESENT_THEMES[(i + 1 + PRESENT_THEMES.length) % PRESENT_THEMES.length].id);
@@ -2483,6 +2493,7 @@ class Component extends DCLogic {
     // Tema de color activo de la presentación. `PT` es null fuera de la
     // presentación: la vista normal de trabajo conserva sus colores de siempre.
     const PT = pres ? presentThemeById(this.state.presentTheme) : null;
+    const hideAreaLinks = !!this.state.hideAreaLinks;
     // Aclara un color de marca para que se lea sobre fondo oscuro (mezcla con
     // blanco). Fuera de los temas oscuros devuelve el color tal cual.
     const liftFase = (hex) => {
@@ -2955,6 +2966,7 @@ class Component extends DCLogic {
       });
     };
     mmRoots.forEach(linkMM);
+    if (hideAreaLinks) mmPaths.length = 0;   // también el árbol grupo→área del mini-mapa
     const mmW = Math.max(236, ...mmNodes.map(n => n.x + n.w + 24));
     const mmH = Math.max(canvasH, ...mmNodes.map(n => n.y + n.h + 20));
     canvasH = mmH; // el lienzo debe ser al menos tan alto como el mini-mapa
@@ -3170,7 +3182,11 @@ class Component extends DCLogic {
     const areaNodeKey = {};
     visAreas.forEach(a => { areaNodeKey[a] = 'a:' + a; });
     gsAll.forEach(g => { const s = selfAreaOf(g); if (s) areaNodeKey[s] = 'g:' + g.name; });
-    visAreas.forEach(a => {
+    // Con `hideAreaLinks` se ocultan los conectores del esqueleto de áreas y
+    // grupos (mini-mapa → primeras actividades) para que no compitan con las
+    // flechas de PRECEDENCIA, que son la información del diagrama. Los recuadros
+    // de área y los divisores de carril se mantienen: siguen ubicando cada fila.
+    if (!hideAreaLinks) visAreas.forEach(a => {
       const an = mmPos[areaNodeKey[a]];
       if (!an) return;
       const acts = topVis.filter(n => n.area === a && pos[n.id]);
@@ -3333,15 +3349,18 @@ class Component extends DCLogic {
       if (!p || !nd) return null;
       return { xr: p.x + (p.w != null ? p.w : NW), xl: p.x, cy: p.y + hOf(nd) / 2, h: hOf(nd), area: nd.area };
     };
-    // ── Abanicos: repartir los puntos de entrada y salida ──────────────────
+    // ── Abanicos: UNA sola flecha por tarjeta de llegada ───────────────────
     // Cuando varias actividades desembocan en la misma (p.ej. todo el proyecto
-    // en «CIERRE CONVENIO»), TODAS las flechas llegaban al mismo punto —el
-    // centro del borde izquierdo— y el haz se convertía en una mancha en la que
-    // no se distingue una línea de otra. Ahora cada línea del abanico entra por
-    // una altura distinta del borde de la tarjeta, y el reparto se hace ORDENANDO
-    // por la altura del otro extremo: así las líneas del abanico no se cruzan
-    // entre sí y se leen como un peine. Lo mismo en la salida de una actividad
-    // con varias sucesoras.
+    // en «CIERRE CONVENIO»), antes se dibujaba una punta de flecha por cada
+    // conexión y el borde de la tarjeta quedaba erizado de flechas apiladas.
+    // Ahora todas las líneas del abanico CONFLUYEN en un punto de unión a la
+    // izquierda de la tarjeta y de ahí sale UNA sola flecha recta hacia ella:
+    // se lee «todo esto desemboca aquí» de un vistazo. Los tramos hasta el punto
+    // de unión son rectos (solo con una pequeña salida horizontal desde su
+    // tarjeta), no curvas, para que el haz se vea ordenado.
+    // La SALIDA sí se reparte a lo alto del borde derecho, ordenando por la
+    // altura del destino, para que las líneas que arrancan de una misma tarjeta
+    // no salgan superpuestas ni se crucen entre sí.
     const fanOffset = {};                       // 'a>b' → [dySalida, dyEntrada]
     const spreadFan = (groups, keyFor, slot) => {
       Object.keys(groups).forEach(k => {
@@ -3365,7 +3384,15 @@ class Component extends DCLogic {
       (outBy[a] = outBy[a] || []).push(b);
     });
     spreadFan(outBy, (src, dst) => src + '>' + dst, 0);   // salidas: borde derecho
-    spreadFan(inBy, (dst, src) => src + '>' + dst, 1);    // entradas: borde izquierdo
+    // Punto de unión de cada abanico de llegada (solo si hay 2 o más entradas).
+    const JOIN_GAP = 34;
+    const joinAt = {};
+    Object.keys(inBy).forEach(t => {
+      if (inBy[t].length < 2) return;
+      const T = resolveEP(t);
+      if (!T) return;
+      joinAt[t] = {x: T.xl - JOIN_GAP, y: T.cy};
+    });
     // ── Ruteo con RODEO de tarjetas ────────────────────────────────────────
     // Una línea recta entre dos actividades lejanas cruzaba POR DEBAJO de las
     // tarjetas intermedias: se veía un enredo de diagonales que entran y salen
@@ -3469,7 +3496,11 @@ class Component extends DCLogic {
       const S = resolveEP(a), T = resolveEP(b);
       if (!S || !T) return;
       const fo = fanOffset[a + '>' + b] || [0, 0];
-      const x1 = S.xr, y1 = S.cy + fo[0], x2 = T.xl, y2 = T.cy + fo[1];
+      const join = joinAt[b];
+      // Con abanico de llegada la línea termina en el punto de unión (sin punta);
+      // la flecha la pone un único trazo compartido, más abajo.
+      const x1 = S.xr, y1 = S.cy + fo[0];
+      const x2 = join ? join.x : T.xl, y2 = join ? join.y : T.cy;
       // Curvatura ACOTADA: con dx proporcional a la distancia, un conector que
       // cruza varias columnas (p.ej. Predial → «Escrituración», ya en
       // Liquidación) salía casi horizontal y se solapaba con los demás del
@@ -3477,9 +3508,14 @@ class Component extends DCLogic {
       // horizontal pero el tramo largo es una diagonal recta, así cada línea del
       // abanico queda separada y se sigue con la vista.
       const dx = Math.min(Math.max(40, (x2 - x1) * curv), 130);
-      const direct = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+      // Hacia un punto de unión el trazo es RECTO tras una breve salida
+      // horizontal (los dos puntos de control finales caen sobre la unión);
+      // hacia una tarjeta suelta se conserva la curva simétrica de siempre.
+      const direct = join
+        ? 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + dx) + ' ' + y1 + ', ' + x2 + ' ' + y2 + ', ' + x2 + ' ' + y2
+        : 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
       // Solo se rodea si el trazo directo realmente cruza alguna tarjeta.
-      const ex = [[x1, y1], [x2, y2]];
+      const ex = [[x1, y1], [x2, y2], [T.xl, T.cy]];
       const dPath = segHitsCard(x1, y1, x2, y2, ex)
         ? (detourPath(x1, y1, x2, y2, ex) || direct)
         : direct;
@@ -3487,11 +3523,30 @@ class Component extends DCLogic {
       const inChain = chain ? (chain.has(a) && chain.has(b)) : false;
       let opacity = cross ? (PT ? PT.edgeCrossOp : 0.92) : (PT ? PT.edgeSameOp : 0.75), w = PT ? PT.edgeW : 1.7;
       if (chain) { opacity = inChain ? 1 : (pres ? 0.12 : 0.08); w = inChain ? (PT ? PT.edgeW + 0.8 : 2.4) : 1.4; }
+      const stroke = cross ? (PT ? PT.edgeCross : '#2E86C8') : (PT ? PT.edgeSame : '#8496AE');
       paths.push(React.createElement('path', {
-        key: a + '>' + b, d: dPath, fill: 'none',
-        stroke: cross ? (PT ? PT.edgeCross : '#2E86C8') : (PT ? PT.edgeSame : '#8496AE'),
-        strokeWidth: w, opacity,
-        markerEnd: 'url(#' + (cross ? 'arwC' : 'arwS') + ')'
+        key: a + '>' + b, d: dPath, fill: 'none', stroke, strokeWidth: w, opacity,
+        markerEnd: join ? undefined : ('url(#' + (cross ? 'arwC' : 'arwS') + ')')
+      }));
+      if (join) {
+        // Se anota el estilo del tramo compartido: gana el de mayor presencia
+        // (una dependencia cruzada de área manda sobre una interna) para que la
+        // única flecha represente bien al haz.
+        const cur = joinAt[b];
+        if (!cur.style || (cross && !cur.style.cross) || opacity > cur.style.opacity) {
+          cur.style = {cross, stroke, w, opacity};
+        }
+      }
+    });
+    // La flecha ÚNICA de cada abanico: del punto de unión al borde de la tarjeta.
+    Object.keys(joinAt).forEach(t => {
+      const j = joinAt[t], T = resolveEP(t);
+      if (!T || !j.style) return;
+      paths.push(React.createElement('path', {
+        key: 'join>' + t, fill: 'none',
+        d: 'M ' + j.x + ' ' + j.y + ' L ' + T.xl + ' ' + T.cy,
+        stroke: j.style.stroke, strokeWidth: j.style.w, opacity: j.style.opacity,
+        markerEnd: 'url(#' + (j.style.cross ? 'arwC' : 'arwS') + ')'
       }));
     });
     // Guías de jerarquía: conector en forma de abanico (punteado, color del
@@ -4188,6 +4243,14 @@ class Component extends DCLogic {
       // Fondo del lienzo más marcado para proyector en sala clara (gris-azul
       // medio); en presentación un punto más oscuro. La rejilla de puntos se
       // oscurece a un azul-tinta para seguir visible sobre el fondo nuevo.
+      // Toggle de los conectores del esqueleto de áreas/grupos.
+      onToggleAreaLinks: (e) => { e.stopPropagation(); this.toggleAreaLinks(); },
+      areaLinksLabel: hideAreaLinks ? '⤫ LÍNEAS DE ÁREA' : '⤬ LÍNEAS DE ÁREA',
+      areaLinksTip: hideAreaLinks
+        ? 'Volver a mostrar los conectores de áreas y grupos'
+        : 'Ocultar los conectores de áreas y grupos para que no se confundan con las flechas de precedencia',
+      areaLinksFg: hideAreaLinks ? '#AD1924' : '#5E7196',
+      areaLinksBd: hideAreaLinks ? '#AD1924' : '#D9E1EC',
       canvasBg: PT ? PT.canvas : '#D8E0EC',
       gridDot: PT ? PT.grid : 'rgba(31,59,111,0.12)',
       // La cabecera de la presentación ya no es una banda a todo lo ancho con
