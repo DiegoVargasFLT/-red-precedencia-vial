@@ -2620,22 +2620,40 @@ class Component extends DCLogic {
     const clvMap = {}; usedLevels.forEach((L, i) => { clvMap[L] = i; });
     const clv = (n) => (clvMap[levels[n.id]] != null ? clvMap[levels[n.id]] : 0);
     const maxLevelAll = usedLevels.length ? usedLevels.length - 1 : 0;
+    const colX = [LEFT];
+    for (let L = 1; L <= maxLevelAll + 1; L++) colX[L] = colX[L - 1] + (NW + CG);
+    // `extraByLane[área][L]` existe SOLO si ese carril tiene alguna actividad en
+    // esa columna; su valor es la profundidad extra (0 = sin subactividades
+    // desplegadas) de la rama más honda de esa celda.
     const extraByLane = {};
     topVis.forEach(n => {
       const per = extraByLane[n.area] || (extraByLane[n.area] = {});
       const L = clv(n);
       const d = branchDepth(n.id) - 1;
-      if (d > (per[L] || 0)) per[L] = d;
+      per[L] = Math.max(per[L] || 0, d);
     });
+    // Corrimiento por carril SIN acumulación ciega: el corrimiento existe solo
+    // para que una columna no se monte sobre la rama desplegada de la columna
+    // ANTERIOR del MISMO carril. Antes se acumulaba (`acc += ...`) y se sumaba a
+    // TODAS las columnas siguientes, incluidas las que están muchas columnas
+    // después (típicamente en otra fase) y que ya tenían espacio de sobra: eso
+    // empujaba actividades como «Escrituración» (Predial, Liquidación) cientos
+    // de píxeles a la derecha de sus compañeras de columna, con conectores
+    // larguísimos e ilegibles. Ahora cada columna se coloca en su x normal y
+    // solo se corre lo justo si choca con el borde real de la columna anterior;
+    // las columnas vacías del carril absorben el sobrante y el corrimiento se
+    // reinicia solo (sh = 0).
     const laneShift = {};
     Object.keys(extraByLane).forEach(a => {
       const per = extraByLane[a], sh = laneShift[a] = {};
-      let acc = 0;
-      for (let L = 0; L <= maxLevelAll; L++) { sh[L] = acc; acc += (per[L] || 0) * (NW + BRANCH_GAPX); }
+      let prevRight = -Infinity;   // borde derecho real de la última columna CON contenido
+      for (let L = 0; L <= maxLevelAll; L++) {
+        const x = Math.max(colX[L], prevRight === -Infinity ? colX[L] : prevRight + CG);
+        sh[L] = x - colX[L];
+        if (per[L] !== undefined) prevRight = x + NW + per[L] * (NW + BRANCH_GAPX);
+      }
     });
     const shiftOf = (a, L) => (laneShift[a] && laneShift[a][L]) || 0;
-    const colX = [LEFT];
-    for (let L = 1; L <= maxLevelAll + 1; L++) colX[L] = colX[L - 1] + (NW + CG);
 
     const yOff = {}, colH = {};
     topVis.forEach(n => {
@@ -2973,9 +2991,25 @@ class Component extends DCLogic {
     let prevPhaseRight = 0;
     ranksPresent.forEach(r => {
       const phaseFloorX = prevPhaseRight ? prevPhaseRight + CG : 0;
+      const phaseNodes = topVis.filter(n => rankOf(n) === r);
+      // El piso de fase DESPLAZA la fase completa (mismo delta para todas sus
+      // actividades); antes recortaba cada nodo por separado con un `max`, así
+      // que dos columnas distintas de la fase acababan en la MISMA x —p.ej.
+      // «Escrituración» (Predial) y «Conciliación Contable», que depende de
+      // ella, quedaban pegadas en la misma columna y la flecha entre ambas se
+      // volvía ilegible. Con el delta común se conserva la separación entre
+      // columnas dentro de la fase.
+      let natMin = Infinity;
+      const natX = {};
+      phaseNodes.forEach(n => {
+        const x = colX[clv(n)] + shiftOf(n.area, clv(n));
+        natX[n.id] = x;
+        if (x < natMin) natMin = x;
+      });
+      const phaseDelta = Math.max(0, phaseFloorX - (natMin === Infinity ? 0 : natMin));
       let rMax = 0;
-      topVis.filter(n => rankOf(n) === r).forEach(n => {
-        const startX = Math.max(colX[clv(n)] + shiftOf(n.area, clv(n)), phaseFloorX);
+      phaseNodes.forEach(n => {
+        const startX = natX[n.id] + phaseDelta;
         // Centrado vertical del carril: el alto del carril lo fija su columna
         // más alta (laneMax); las columnas más cortas quedaban pegadas ARRIBA
         // con todo el vacío abajo. Cada pila de columna se corre media
@@ -3202,7 +3236,13 @@ class Component extends DCLogic {
       const S = resolveEP(a), T = resolveEP(b);
       if (!S || !T) return;
       const x1 = S.xr, y1 = S.cy, x2 = T.xl, y2 = T.cy;
-      const dx = Math.max(40, (x2 - x1) * curv);
+      // Curvatura ACOTADA: con dx proporcional a la distancia, un conector que
+      // cruza varias columnas (p.ej. Predial → «Escrituración», ya en
+      // Liquidación) salía casi horizontal y se solapaba con los demás del
+      // abanico — una mancha ilegible. Con el tope, el enlace sale y entra en
+      // horizontal pero el tramo largo es una diagonal recta, así cada línea del
+      // abanico queda separada y se sigue con la vista.
+      const dx = Math.min(Math.max(40, (x2 - x1) * curv), 130);
       const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
       const cross = S.area !== T.area;
       const inChain = chain ? (chain.has(a) && chain.has(b)) : false;
