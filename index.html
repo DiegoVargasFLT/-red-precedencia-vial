@@ -3333,6 +3333,105 @@ class Component extends DCLogic {
       if (!p || !nd) return null;
       return { xr: p.x + (p.w != null ? p.w : NW), xl: p.x, cy: p.y + hOf(nd) / 2, area: nd.area };
     };
+    // ── Ruteo con RODEO de tarjetas ────────────────────────────────────────
+    // Una línea recta entre dos actividades lejanas cruzaba POR DEBAJO de las
+    // tarjetas intermedias: se veía un enredo de diagonales que entran y salen
+    // de los recuadros y no se sabe de dónde a dónde va cada una. Ahora, si el
+    // trazo directo choca con alguna tarjeta, el conector se desvía en ángulo
+    // recto: sale en horizontal, baja/sube por un PASILLO libre (una franja de
+    // alto sin tarjetas, normalmente el borde entre dos carriles) y entra en
+    // horizontal al destino. Los conectores cortos que no chocan con nada
+    // conservan la curva suave de siempre.
+    const OB_PAD = 7;                       // margen alrededor de cada tarjeta
+    const obstacles = [];
+    Object.keys(pos).forEach(id => {
+      const p = pos[id], nd = byId[id];
+      if (!p || !nd) return;
+      obstacles.push({id, x0: p.x - OB_PAD, y0: p.y - OB_PAD,
+        x1: p.x + (p.w != null ? p.w : NW) + OB_PAD, y1: p.y + hOf(nd) + OB_PAD});
+    });
+    mmNodes.forEach(m => obstacles.push({id: 'mm:' + m.key,
+      x0: m.x - OB_PAD, y0: m.y - OB_PAD, x1: m.x + m.w + OB_PAD, y1: m.y + m.h + OB_PAD}));
+    // ¿El segmento (ax,ay)-(bx,by) toca alguna tarjeta? Se exceptúan las
+    // tarjetas de los EXTREMOS del conector (`exempt` = puntos de origen y
+    // destino): su propio recuadro no cuenta como obstáculo.
+    const inRect = (o, x, y) => x >= o.x0 && x <= o.x1 && y >= o.y0 && y <= o.y1;
+    const segHitsCard = (ax, ay, bx, by, exempt) => obstacles.some(o => {
+      if (exempt && exempt.some(p => inRect(o, p[0], p[1]))) return false;
+      if (Math.max(ax, bx) < o.x0 || Math.min(ax, bx) > o.x1) return false;
+      if (Math.max(ay, by) < o.y0 || Math.min(ay, by) > o.y1) return false;
+      if (ay === by || ax === bx) return true;            // tramos ortogonales
+      // segmento oblicuo contra rectángulo (Liang–Barsky)
+      let t0 = 0, t1 = 1;
+      const dxs = bx - ax, dys = by - ay;
+      const clip = (p, q) => {
+        if (p === 0) return q >= 0;
+        const r = q / p;
+        if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+        else { if (r < t0) return false; if (r < t1) t1 = r; }
+        return true;
+      };
+      return clip(-dxs, ax - o.x0) && clip(dxs, o.x1 - ax) && clip(-dys, ay - o.y0) && clip(dys, o.y1 - ay);
+    });
+    // Pasillos horizontales candidatos: el borde superior e inferior de cada
+    // carril (la zona de respiro LP_T/LP_B, siempre libre de tarjetas) más el
+    // pie del lienzo. Se validan igual antes de usarlos.
+    const corridors = [];
+    visAreas.forEach(a => {
+      if (laneY[a] == null || !isFinite(laneY[a]) || !isFinite(laneHmap[a])) return;
+      corridors.push(laneY[a] + 7);
+      corridors.push(laneY[a] + laneHmap[a] - 7);
+    });
+    if (isFinite(canvasH)) corridors.push(canvasH - 16);
+    // Para cada pasillo, los tramos de x que SÍ están tapados por una tarjeta:
+    // así comprobar si un pasillo sirve entre dos x es mirar una lista corta en
+    // vez de recorrer las ~160 tarjetas en cada intento.
+    const corridorBlocks = corridors.map(y =>
+      obstacles.filter(o => y >= o.y0 && y <= o.y1).map(o => [o.x0, o.x1]));
+    const corridorFree = (i, xa, xb) =>
+      !corridorBlocks[i].some(iv => iv[1] >= xa && iv[0] <= xb);
+    const usedCorridor = {};   // reparto: varias líneas en el mismo pasillo no se pisan
+    let detourBudget = 300;    // tope de cálculo por render (seguro anti-cuelgue)
+    // Trazo ortogonal con esquinas redondeadas por una lista de puntos.
+    const orthoPath = (pts, r) => {
+      let d = 'M ' + pts[0][0] + ' ' + pts[0][1];
+      for (let i = 1; i < pts.length - 1; i++) {
+        const [px, py] = pts[i - 1], [cx, cy] = pts[i], [nx, ny] = pts[i + 1];
+        const inLen = Math.hypot(cx - px, cy - py), outLen = Math.hypot(nx - cx, ny - cy);
+        const ri = Math.min(r, inLen / 2, outLen / 2);
+        d += ' L ' + (cx - Math.sign(cx - px) * ri) + ' ' + (cy - Math.sign(cy - py) * ri);
+        d += ' Q ' + cx + ' ' + cy + ' ' + (cx + Math.sign(nx - cx) * ri) + ' ' + (cy + Math.sign(ny - cy) * ri);
+      }
+      const last = pts[pts.length - 1];
+      return d + ' L ' + last[0] + ' ' + last[1];
+    };
+    // Busca un desvío válido; null si no hay ninguno (se usa la curva directa).
+    const detourPath = (x1, y1, x2, y2, ex) => {
+      if (x2 - x1 < 120 || detourBudget <= 0) return null;   // corto, o sin presupuesto
+      detourBudget--;
+      const stubs = [34, 58, 84];
+      // Índices de pasillo ordenados por cercanía al punto medio del enlace.
+      const idx = corridors.map((y, i) => i).sort((p, q) =>
+        Math.abs(corridors[p] - (y1 + y2) / 2) - Math.abs(corridors[q] - (y1 + y2) / 2)).slice(0, 8);
+      for (const ci of idx) {
+        const yc0 = corridors[ci];
+        for (const s of stubs) {
+          const xa = x1 + s, xb = x2 - s;
+          if (xb - xa < 40) continue;
+          if (!corridorFree(ci, xa, xb)) break;   // pasillo tapado: probar el siguiente
+          const k = Math.round(yc0);
+          const yc = yc0 + ((usedCorridor[k] || 0) % 4) * 4;   // reparto anti-solape
+          if (segHitsCard(x1, y1, xa, y1, ex)) continue;
+          if (segHitsCard(xa, y1, xa, yc, ex)) continue;
+          if (segHitsCard(xb, yc, xb, y2, ex)) continue;
+          if (segHitsCard(xb, y2, x2, y2, ex)) continue;
+          usedCorridor[k] = (usedCorridor[k] || 0) + 1;
+          return orthoPath([[x1, y1], [xa, y1], [xa, yc], [xb, yc], [xb, y2], [x2, y2]], 12);
+        }
+      }
+      return null;
+    };
+
     edgeDefs.forEach(([a, b]) => {
       const S = resolveEP(a), T = resolveEP(b);
       if (!S || !T) return;
@@ -3344,7 +3443,12 @@ class Component extends DCLogic {
       // horizontal pero el tramo largo es una diagonal recta, así cada línea del
       // abanico queda separada y se sigue con la vista.
       const dx = Math.min(Math.max(40, (x2 - x1) * curv), 130);
-      const dPath = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+      const direct = 'M ' + x1 + ' ' + y1 + ' C ' + (x1+dx) + ' ' + y1 + ', ' + (x2-dx) + ' ' + y2 + ', ' + x2 + ' ' + y2;
+      // Solo se rodea si el trazo directo realmente cruza alguna tarjeta.
+      const ex = [[x1, y1], [x2, y2]];
+      const dPath = segHitsCard(x1, y1, x2, y2, ex)
+        ? (detourPath(x1, y1, x2, y2, ex) || direct)
+        : direct;
       const cross = S.area !== T.area;
       const inChain = chain ? (chain.has(a) && chain.has(b)) : false;
       let opacity = cross ? (PT ? PT.edgeCrossOp : 0.92) : (PT ? PT.edgeSameOp : 0.75), w = PT ? PT.edgeW : 1.7;
