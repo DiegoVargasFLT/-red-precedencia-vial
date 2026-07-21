@@ -1601,7 +1601,18 @@ class Component extends DCLogic {
     if(oldName in hidden){ hidden[nuevo] = hidden[oldName]; delete hidden[oldName]; }
     // Mantén los grupos en sync: renombra la referencia al área para que no
     // quede una referencia fantasma (causa de la desincronización anterior).
-    const grupos = this.grupos().map(g => ({...g, areas: (g.areas||[]).map(a => a === oldName ? nuevo : a)}));
+    // ADEMÁS: si el área renombrada es la HOMÓNIMA (self-area) de un grupo, hay
+    // que renombrar TAMBIÉN el grupo — si no, grupo y área dejan de coincidir por
+    // nombre y el mini-mapa los pinta como DOS recuadros (el bug de duplicación).
+    const norm = s => (s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+    const selfRen = {};
+    this.grupos().forEach(g => { if((g.areas||[]).includes(oldName) && norm(g.name) === norm(oldName)) selfRen[g.name] = nuevo; });
+    const grupos = this.grupos().map(g => ({
+      ...g,
+      name: selfRen[g.name] || g.name,
+      parent: (g.parent && selfRen[g.parent]) ? selfRen[g.parent] : g.parent,
+      areas: (g.areas||[]).map(a => a === oldName ? nuevo : a)
+    }));
     this.setState({areas: arr, nodes, hidden, grupos});
     this.persist({areas: arr, nodes, grupos});
     if(this.state.mmSel && this.state.mmSel.kind === 'area' && this.state.mmSel.name === oldName) this.setState({mmSel: {kind:'area', name: nuevo}});
