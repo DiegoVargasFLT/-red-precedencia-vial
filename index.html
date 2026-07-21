@@ -3328,11 +3328,44 @@ class Component extends DCLogic {
     // Resuelve un extremo (id real o pseudo 'area:<área>') a coordenadas y área.
     const resolveEP = (id) => {
       const ap = areaPseudo[id];
-      if (ap) return { xr: ap.x + ap.w, xl: ap.x, cy: ap.cy, area: id.slice(5) };
+      if (ap) return { xr: ap.x + ap.w, xl: ap.x, cy: ap.cy, h: ap.h || MM_H, area: id.slice(5) };
       const p = pos[id], nd = byId[id];
       if (!p || !nd) return null;
-      return { xr: p.x + (p.w != null ? p.w : NW), xl: p.x, cy: p.y + hOf(nd) / 2, area: nd.area };
+      return { xr: p.x + (p.w != null ? p.w : NW), xl: p.x, cy: p.y + hOf(nd) / 2, h: hOf(nd), area: nd.area };
     };
+    // ── Abanicos: repartir los puntos de entrada y salida ──────────────────
+    // Cuando varias actividades desembocan en la misma (p.ej. todo el proyecto
+    // en «CIERRE CONVENIO»), TODAS las flechas llegaban al mismo punto —el
+    // centro del borde izquierdo— y el haz se convertía en una mancha en la que
+    // no se distingue una línea de otra. Ahora cada línea del abanico entra por
+    // una altura distinta del borde de la tarjeta, y el reparto se hace ORDENANDO
+    // por la altura del otro extremo: así las líneas del abanico no se cruzan
+    // entre sí y se leen como un peine. Lo mismo en la salida de una actividad
+    // con varias sucesoras.
+    const fanOffset = {};                       // 'a>b' → [dySalida, dyEntrada]
+    const spreadFan = (groups, keyFor, slot) => {
+      Object.keys(groups).forEach(k => {
+        const list = groups[k];
+        const anchor = resolveEP(k);
+        if (!anchor || list.length < 2) return;
+        const usable = Math.max(0, (anchor.h || NH) - 16);
+        const step = Math.min(13, usable / (list.length - 1));
+        const span = step * (list.length - 1);
+        list.map(o => ({o, cy: (resolveEP(o) || {cy: 0}).cy}))
+          .sort((p, q) => p.cy - q.cy)
+          .forEach((it, i) => {
+            const key = keyFor(k, it.o);
+            (fanOffset[key] = fanOffset[key] || [0, 0])[slot] = -span / 2 + i * step;
+          });
+      });
+    };
+    const inBy = {}, outBy = {};
+    edgeDefs.forEach(([a, b]) => {
+      (inBy[b] = inBy[b] || []).push(a);
+      (outBy[a] = outBy[a] || []).push(b);
+    });
+    spreadFan(outBy, (src, dst) => src + '>' + dst, 0);   // salidas: borde derecho
+    spreadFan(inBy, (dst, src) => src + '>' + dst, 1);    // entradas: borde izquierdo
     // ── Ruteo con RODEO de tarjetas ────────────────────────────────────────
     // Una línea recta entre dos actividades lejanas cruzaba POR DEBAJO de las
     // tarjetas intermedias: se veía un enredo de diagonales que entran y salen
@@ -3435,7 +3468,8 @@ class Component extends DCLogic {
     edgeDefs.forEach(([a, b]) => {
       const S = resolveEP(a), T = resolveEP(b);
       if (!S || !T) return;
-      const x1 = S.xr, y1 = S.cy, x2 = T.xl, y2 = T.cy;
+      const fo = fanOffset[a + '>' + b] || [0, 0];
+      const x1 = S.xr, y1 = S.cy + fo[0], x2 = T.xl, y2 = T.cy + fo[1];
       // Curvatura ACOTADA: con dx proporcional a la distancia, un conector que
       // cruza varias columnas (p.ej. Predial → «Escrituración», ya en
       // Liquidación) salía casi horizontal y se solapaba con los demás del
