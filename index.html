@@ -3077,17 +3077,22 @@ class Component extends DCLogic {
       // ella, quedaban pegadas en la misma columna y la flecha entre ambas se
       // volvía ilegible. Con el delta común se conserva la separación entre
       // columnas dentro de la fase.
-      let natMin = Infinity;
-      const natX = {};
-      phaseNodes.forEach(n => {
-        const x = colX[clv(n)] + shiftOf(n.area, clv(n));
-        natX[n.id] = x;
-        if (x < natMin) natMin = x;
-      });
-      const phaseDelta = Math.max(0, phaseFloorX - (natMin === Infinity ? 0 : natMin));
+      //
+      // El delta se mide desde la COLUMNA BASE (`colX`), no desde la x ya
+      // corrida por carril, y se combina con `shiftOf` mediante un MÁXIMO, no
+      // sumándolos: los dos son cotas mínimas que suelen venir del MISMO
+      // obstáculo (la rama desplegada más ancha de la fase anterior). Sumarlos
+      // contaba ese obstáculo dos veces y mandaba la tarjeta del carril ancho
+      // muy lejos a la derecha de sus compañeras de columna — era el caso de
+      // «Acta de Entrega y Recibo» (EAAB), que quedaba ~700 px más a la derecha
+      // que el resto de Liquidación por las ramas desplegadas de su propio
+      // carril.
+      let colMin = Infinity;
+      phaseNodes.forEach(n => { if (clv(n) < colMin) colMin = clv(n); });
+      const phaseDelta = Math.max(0, phaseFloorX - (colMin === Infinity ? 0 : colX[colMin]));
       let rMax = 0;
       phaseNodes.forEach(n => {
-        const startX = natX[n.id] + phaseDelta;
+        const startX = colX[clv(n)] + Math.max(phaseDelta, shiftOf(n.area, clv(n)));
         // Centrado vertical del carril: el alto del carril lo fija su columna
         // más alta (laneMax); las columnas más cortas quedaban pegadas ARRIBA
         // con todo el vacío abajo. Cada pila de columna se corre media
